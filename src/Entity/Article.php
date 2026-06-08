@@ -4,14 +4,32 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
 use App\Enum\ArticleStatus;
 use App\Repository\ArticleRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
+#[ApiResource(
+    normalizationContext: ['groups' => ['api:read', 'article:read']],
+    denormalizationContext: ['groups' => ['article:write']],
+    operations: [
+        new GetCollection(),
+        new Get(),
+        new Post(),
+        new Patch(),
+        new Delete(),
+    ]
+)]
 #[ORM\Entity(repositoryClass: ArticleRepository::class)]
 #[ORM\Table(name: 'articles')]
 #[ORM\Index(name: 'idx_articles_status', columns: ['status'])]
@@ -19,34 +37,43 @@ class Article extends ContentItem
 {
     #[ORM\ManyToOne(inversedBy: 'articles')]
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    #[Groups(['article:read', 'article:write'])]
     private ?KeywordCluster $keywordCluster = null;
 
     #[ORM\ManyToOne(inversedBy: 'primaryArticles')]
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    #[Groups(['article:read', 'article:write'])]
     private ?Keyword $primaryKeyword = null;
 
     #[ORM\Column(length: 500, nullable: true)]
     #[Assert\Length(max: 500)]
+    #[Groups(['article:read', 'article:write'])]
     private ?string $slug = null;
 
     #[ORM\Column(enumType: ArticleStatus::class)]
+    #[Groups(['article:read', 'article:write'])]
     private ArticleStatus $status = ArticleStatus::DRAFT;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['article:read', 'article:write'])]
     private ?int $wordCount = null;
 
     #[ORM\Column(type: 'smallint', nullable: true)]
     #[Assert\Range(min: 0, max: 100)]
+    #[Groups(['article:read'])]
     private ?int $seoScore = null;
 
     #[ORM\Column(type: 'smallint', nullable: true)]
     #[Assert\Range(min: 0, max: 100)]
+    #[Groups(['article:read'])]
     private ?int $geoScore = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['article:read', 'article:write'])]
     private ?string $contentMarkdown = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['article:read'])]
     private ?string $contentHtml = null;
 
     /** @var array<string, mixed>|null */

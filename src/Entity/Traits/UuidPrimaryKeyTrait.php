@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace App\Entity\Traits;
 
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 trait UuidPrimaryKeyTrait
 {
     #[ORM\Id]
     #[ORM\Column(type: 'guid')]
+    #[Groups(['api:read'])]
     private string $id;
 
     public function getId(): string

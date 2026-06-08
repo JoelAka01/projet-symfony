@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
 use App\Entity\Traits\TimestampableTrait;
 use App\Entity\Traits\UuidPrimaryKeyTrait;
 use App\Enum\UserRole;
@@ -15,8 +18,17 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Serializer\Attribute\Ignore;
 use Symfony\Component\Validator\Constraints as Assert;
 
+#[ApiResource(
+    normalizationContext: ['groups' => ['api:read', 'user:read']],
+    operations: [
+        new GetCollection(),
+        new Get(),
+    ]
+)]
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: 'users')]
 #[ORM\UniqueConstraint(name: 'uniq_users_email', columns: ['email'])]
@@ -30,9 +42,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Assert\NotBlank]
     #[Assert\Email]
     #[Assert\Length(max: 255)]
+    #[Groups(['user:read'])]
     private string $email = '';
 
     #[ORM\Column(name: 'password_hash', length: 255)]
+    #[Ignore]
     private string $passwordHash = '';
 
     #[ORM\Column(length: 100)]
@@ -46,6 +60,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private string $lastName = '';
 
     #[ORM\Column(enumType: UserRole::class)]
+    #[Groups(['user:read'])]
     private UserRole $role = UserRole::VIEWER;
 
     #[ORM\Column]
@@ -64,9 +79,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?\DateTimeImmutable $passwordResetTokenExpiresAt = null;
 
     #[ORM\Column(name: 'is_2fa_enabled')]
+    #[Ignore]
     private bool $is2faEnabled = false;
 
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, nullable: true)]
+    #[Groups(['user:read'])]
     private ?\DateTimeImmutable $lastLoginAt = null;
 
     /** @var Collection<int, OrganizationUser> */

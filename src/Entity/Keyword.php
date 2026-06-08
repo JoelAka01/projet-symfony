@@ -4,6 +4,12 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
 use App\Entity\Traits\TimestampableTrait;
 use App\Entity\Traits\UuidPrimaryKeyTrait;
 use App\Repository\KeywordRepository;
@@ -11,8 +17,20 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
+#[ApiResource(
+    normalizationContext: ['groups' => ['api:read', 'keyword:read']],
+    denormalizationContext: ['groups' => ['keyword:write']],
+    operations: [
+        new GetCollection(),
+        new Get(),
+        new Post(),
+        new Patch(),
+        new Delete(),
+    ]
+)]
 #[ORM\Entity(repositoryClass: KeywordRepository::class)]
 #[ORM\Table(name: 'keywords')]
 #[ORM\Index(name: 'idx_keywords_project_term', columns: ['project_id', 'term'])]
@@ -24,37 +42,46 @@ class Keyword
 
     #[ORM\ManyToOne(inversedBy: 'keywords')]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
+    #[Groups(['keyword:read', 'keyword:write'])]
     private ?Project $project = null;
 
     #[ORM\ManyToOne(inversedBy: 'keywords')]
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    #[Groups(['keyword:read', 'keyword:write'])]
     private ?KeywordCluster $keywordCluster = null;
 
     #[ORM\Column(length: 500)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 500)]
+    #[Groups(['keyword:read', 'keyword:write'])]
     private string $term = '';
 
     #[ORM\Column(nullable: true)]
     #[Assert\PositiveOrZero]
+    #[Groups(['keyword:read', 'keyword:write'])]
     private ?int $searchVolume = null;
 
     #[ORM\Column(type: 'smallint', nullable: true)]
     #[Assert\Range(min: 0, max: 100)]
+    #[Groups(['keyword:read', 'keyword:write'])]
     private ?int $difficulty = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2, nullable: true)]
+    #[Groups(['keyword:read', 'keyword:write'])]
     private ?string $cpc = null;
 
     #[ORM\Column(length: 80, nullable: true)]
     #[Assert\Length(max: 80)]
+    #[Groups(['keyword:read', 'keyword:write'])]
     private ?string $intent = null;
 
     #[ORM\Column]
+    #[Groups(['keyword:read', 'keyword:write'])]
     private bool $isFanoutKeyword = false;
 
     #[ORM\Column(length: 80, nullable: true)]
     #[Assert\Length(max: 80)]
+    #[Groups(['keyword:read', 'keyword:write'])]
     private ?string $source = null;
 
     /** @var Collection<int, KeywordRanking> */

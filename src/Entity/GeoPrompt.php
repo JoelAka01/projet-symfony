@@ -4,6 +4,12 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
 use App\Entity\Traits\TimestampableTrait;
 use App\Entity\Traits\UuidPrimaryKeyTrait;
 use App\Repository\GeoPromptRepository;
@@ -11,8 +17,20 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
+#[ApiResource(
+    normalizationContext: ['groups' => ['api:read', 'geoprompt:read']],
+    denormalizationContext: ['groups' => ['geoprompt:write']],
+    operations: [
+        new GetCollection(),
+        new Get(),
+        new Post(),
+        new Patch(),
+        new Delete(),
+    ]
+)]
 #[ORM\Entity(repositoryClass: GeoPromptRepository::class)]
 #[ORM\Table(name: 'geo_prompts')]
 #[ORM\Index(name: 'idx_geo_prompts_project_active', columns: ['project_id', 'is_active'])]
@@ -23,21 +41,26 @@ class GeoPrompt
 
     #[ORM\ManyToOne(inversedBy: 'geoPrompts')]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
+    #[Groups(['geoprompt:read', 'geoprompt:write'])]
     private ?Project $project = null;
 
     #[ORM\ManyToOne(inversedBy: 'geoPrompts')]
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    #[Groups(['geoprompt:read', 'geoprompt:write'])]
     private ?Keyword $keyword = null;
 
     #[ORM\Column(type: Types::TEXT)]
     #[Assert\NotBlank]
+    #[Groups(['geoprompt:read', 'geoprompt:write'])]
     private string $promptText = '';
 
     #[ORM\Column(length: 255, nullable: true)]
     #[Assert\Length(max: 255)]
+    #[Groups(['geoprompt:read', 'geoprompt:write'])]
     private ?string $topic = null;
 
     #[ORM\Column]
+    #[Groups(['geoprompt:read', 'geoprompt:write'])]
     private bool $isActive = true;
 
     /** @var Collection<int, GeoResult> */
