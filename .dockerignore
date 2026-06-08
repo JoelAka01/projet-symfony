@@ -1,0 +1,9 @@
+.git
+.idea
+.phpunit.cache
+.runtime-logs
+.vscode
+assets/vendor
+public/assets
+var
+vendor
