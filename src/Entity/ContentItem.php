@@ -9,6 +9,7 @@ use App\Entity\Traits\UuidPrimaryKeyTrait;
 use App\Repository\ContentItemRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ContentItemRepository::class)]
@@ -23,14 +24,17 @@ abstract class ContentItem
 
     #[ORM\ManyToOne(inversedBy: 'contentItems')]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
+    #[Groups(['article:read', 'article:write'])]
     protected ?Project $project = null;
 
     #[ORM\Column(length: 500)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 500)]
+    #[Groups(['article:read', 'article:write'])]
     protected string $title = '';
 
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, nullable: true)]
+    #[Groups(['article:read', 'article:write'])]
     protected ?\DateTimeImmutable $publishedAt = null;
 
     public function __construct()

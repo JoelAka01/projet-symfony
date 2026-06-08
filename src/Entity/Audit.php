@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
 use App\Entity\Traits\UuidPrimaryKeyTrait;
 use App\Enum\AuditStatus;
 use App\Repository\AuditRepository;
@@ -11,8 +14,16 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
+#[ApiResource(
+    normalizationContext: ['groups' => ['api:read', 'audit:read']],
+    operations: [
+        new GetCollection(),
+        new Get(),
+    ]
+)]
 #[ORM\Entity(repositoryClass: AuditRepository::class)]
 #[ORM\Table(name: 'audits')]
 #[ORM\Index(name: 'idx_audits_project_status', columns: ['project_id', 'status'])]
@@ -22,22 +33,28 @@ class Audit
 
     #[ORM\ManyToOne(inversedBy: 'audits')]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
+    #[Groups(['audit:read'])]
     private ?Project $project = null;
 
     #[ORM\ManyToOne(inversedBy: 'audits')]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
+    #[Groups(['audit:read'])]
     private ?Domain $domain = null;
 
     #[ORM\Column(enumType: AuditStatus::class)]
+    #[Groups(['audit:read'])]
     private AuditStatus $status = AuditStatus::QUEUED;
 
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, nullable: true)]
+    #[Groups(['audit:read'])]
     private ?\DateTimeImmutable $crawlStartedAt = null;
 
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, nullable: true)]
+    #[Groups(['audit:read'])]
     private ?\DateTimeImmutable $crawlFinishedAt = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['audit:read'])]
     private ?int $pagesCrawled = null;
 
     #[ORM\Column(nullable: true)]
@@ -53,20 +70,25 @@ class Audit
 
     #[ORM\Column(type: 'smallint', nullable: true)]
     #[Assert\Range(min: 0, max: 100)]
+    #[Groups(['audit:read'])]
     private ?int $seoScore = null;
 
     #[ORM\Column(type: 'smallint', nullable: true)]
     #[Assert\Range(min: 0, max: 100)]
+    #[Groups(['audit:read'])]
     private ?int $coreWebVitalsScore = null;
 
     /** @var array<string, mixed>|null */
     #[ORM\Column(type: Types::JSON, nullable: true, options: ['jsonb' => true])]
+    #[Groups(['audit:read'])]
     private ?array $metadata = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['audit:read'])]
     private ?string $errorMessage = null;
 
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE)]
+    #[Groups(['audit:read'])]
     private \DateTimeImmutable $createdAt;
 
     /** @var Collection<int, AuditPage> */

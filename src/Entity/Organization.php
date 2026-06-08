@@ -4,14 +4,32 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
 use App\Entity\Traits\TimestampableTrait;
 use App\Entity\Traits\UuidPrimaryKeyTrait;
 use App\Repository\OrganizationRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
+#[ApiResource(
+    normalizationContext: ['groups' => ['api:read', 'organization:read']],
+    denormalizationContext: ['groups' => ['organization:write']],
+    operations: [
+        new GetCollection(),
+        new Get(),
+        new Post(),
+        new Patch(),
+        new Delete(),
+    ]
+)]
 #[ORM\Entity(repositoryClass: OrganizationRepository::class)]
 #[ORM\Table(name: 'organizations')]
 class Organization
@@ -22,14 +40,17 @@ class Organization
     #[ORM\Column(length: 180)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 180)]
+    #[Groups(['organization:read', 'organization:write'])]
     private string $name = '';
 
     #[ORM\Column(length: 255, nullable: true)]
     #[Assert\Email]
     #[Assert\Length(max: 255)]
+    #[Groups(['organization:read', 'organization:write'])]
     private ?string $billingEmail = null;
 
     #[ORM\Column]
+    #[Groups(['organization:read', 'organization:write'])]
     private bool $whiteLabelEnabled = false;
 
     /** @var Collection<int, OrganizationUser> */

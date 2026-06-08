@@ -4,16 +4,33 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
 use App\Entity\Traits\TimestampableTrait;
 use App\Entity\Traits\UuidPrimaryKeyTrait;
 use App\Enum\ProjectStatus;
 use App\Repository\ProjectRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
+#[ApiResource(
+    normalizationContext: ['groups' => ['api:read', 'project:read']],
+    denormalizationContext: ['groups' => ['project:write']],
+    operations: [
+        new GetCollection(),
+        new Get(),
+        new Post(),
+        new Patch(),
+        new Delete(),
+    ]
+)]
 #[ORM\Entity(repositoryClass: ProjectRepository::class)]
 #[ORM\Table(name: 'projects')]
 #[ORM\Index(name: 'idx_projects_status', columns: ['status'])]
@@ -24,34 +41,42 @@ class Project
 
     #[ORM\ManyToOne(inversedBy: 'projects')]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
+    #[Groups(['project:read', 'project:write'])]
     private ?Organization $organization = null;
 
     #[ORM\ManyToOne(inversedBy: 'ownedProjects')]
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    #[Groups(['project:read', 'project:write'])]
     private ?User $owner = null;
 
     #[ORM\Column(length: 180)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 180)]
+    #[Groups(['project:read', 'project:write'])]
     private string $name = '';
 
     #[ORM\Column(enumType: ProjectStatus::class)]
+    #[Groups(['project:read', 'project:write'])]
     private ProjectStatus $status = ProjectStatus::ACTIVE;
 
     #[ORM\Column(length: 10, nullable: true)]
     #[Assert\Length(max: 10)]
+    #[Groups(['project:read', 'project:write'])]
     private ?string $defaultLanguage = null;
 
     #[ORM\Column(length: 10, nullable: true)]
     #[Assert\Length(max: 10)]
+    #[Groups(['project:read', 'project:write'])]
     private ?string $targetCountry = null;
 
     #[ORM\Column(type: 'smallint', nullable: true)]
     #[Assert\Range(min: 0, max: 100)]
+    #[Groups(['project:read'])]
     private ?int $seoScore = null;
 
     #[ORM\Column(type: 'smallint', nullable: true)]
     #[Assert\Range(min: 0, max: 100)]
+    #[Groups(['project:read'])]
     private ?int $geoScore = null;
 
     /** @var Collection<int, User> */
