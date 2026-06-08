@@ -12,6 +12,8 @@ Project for a SEO, GEO, and AI visibility SaaS platform.
 ## Install With Docker
 
 ```bash
+make install
+# or manually:
 docker compose up -d --build
 ```
 
@@ -20,11 +22,14 @@ Local URLs:
 - Application: http://localhost:8080
 - Mailpit: http://localhost:8025
 
-Run Symfony commands in Docker:
+Run Symfony commands in Docker (ensure containers are running with `make up` first):
 
 ```bash
-docker compose exec php php bin/console about
-docker compose exec php php bin/console doctrine:database:create --if-not-exists
+make migrate
+make fixtures
+make test
+make phpstan
+# or manually:
 docker compose exec php php bin/console doctrine:migrations:migrate
 docker compose exec php php bin/console doctrine:fixtures:load
 docker compose exec php php bin/phpunit
@@ -80,14 +85,24 @@ php bin/phpunit
 vendor/bin/phpstan analyse
 ```
 
-Makefile shortcuts:
+Makefile shortcuts (Docker):
 
 ```bash
-make install
-make migrate
-make fixtures
-make test
-make phpstan
+make install        # Build and start Docker services
+make up             # Start Docker containers
+make migrate        # Run migrations (Docker)
+make fixtures       # Load fixtures (Docker)
+make test           # Run tests (Docker)
+make phpstan        # Run static analysis (Docker)
+```
+
+Makefile shortcuts (Local without Docker):
+
+```bash
+make migrate-local  # Run migrations locally
+make fixtures-local # Load fixtures locally
+make test-local     # Run tests locally
+make phpstan-local  # Run static analysis locally
 ```
 
 ## Demo Credentials
