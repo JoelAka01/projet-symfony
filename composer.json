@@ -1,6 +1,6 @@
 {
     "type": "project",
-    "name": "seo-geo-ai",
+    "name": "ai/seo-geo",
     "description": "project for a SEO, GEO, and AI visibility platform.",
     "license": "proprietary",
     "minimum-stability": "stable",
