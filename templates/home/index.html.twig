@@ -1,0 +1,30 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}SEO GEO AI Platform{% endblock %}
+
+{% block body %}
+    <section class="hero">
+        <p class="eyebrow">Symfony initialization</p>
+        <h1>SEO, GEO and AI visibility workspace</h1>
+        <p>
+            The application is ready for the school project foundation:
+            Twig renders this page, Doctrine is configured for PostgreSQL,
+            and the next steps can add entities, fixtures, security, and API endpoints.
+        </p>
+    </section>
+
+    <ul class="checklist" aria-label="Project stack status">
+        <li>
+            <strong>Twig</strong>
+            <span>Server-rendered templates are enabled and inherited from a shared base layout.</span>
+        </li>
+        <li>
+            <strong>Doctrine</strong>
+            <span>ORM and migrations are configured for PostgreSQL in local and Docker environments.</span>
+        </li>
+        <li>
+            <strong>Tooling</strong>
+            <span>Fixtures, Faker, PHPUnit, PHPStan, Mailer, Serializer, and HttpClient are installed.</span>
+        </li>
+    </ul>
+{% endblock %}
