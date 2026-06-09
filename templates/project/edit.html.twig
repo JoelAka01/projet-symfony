@@ -1,0 +1,19 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Edit {{ project.name }} | SEO GEO AI{% endblock %}
+
+{% block body %}
+    <section class="auth-shell">
+        <div class="auth-panel wide">
+            <p class="eyebrow">Project settings</p>
+            <h1>Edit {{ project.name }}</h1>
+            <p class="muted">Changing the website URL updates the single root target used by future crawls.</p>
+
+            {% include 'project/_form.html.twig' with {
+                form: form,
+                button_label: 'Save changes',
+                cancel_path: path('app_project_show', { id: project.id })
+            } %}
+        </div>
+    </section>
+{% endblock %}
