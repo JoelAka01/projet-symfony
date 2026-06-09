@@ -1,0 +1,19 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}New project | SEO GEO AI{% endblock %}
+
+{% block body %}
+    <section class="auth-shell">
+        <div class="auth-panel wide">
+            <p class="eyebrow">Project setup</p>
+            <h1>Create project</h1>
+            <p class="muted">Add the website root URL that future crawls will fetch and analyze.</p>
+
+            {% include 'project/_form.html.twig' with {
+                form: form,
+                button_label: 'Create project',
+                cancel_path: path('app_project_index')
+            } %}
+        </div>
+    </section>
+{% endblock %}

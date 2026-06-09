@@ -13,28 +13,35 @@
             {% endif %}
         </p>
         <div class="hero-actions">
-            <a class="button secondary" href="{{ path('app_dashboard') }}">Back to dashboard</a>
-            {% if is_granted('LAUNCH_AUDIT', project) and project.domains is not empty %}
+            <a class="button secondary" href="{{ path('app_project_index') }}">Back to projects</a>
+            {% if is_granted('PROJECT_EDIT', project) %}
+                <a class="button secondary" href="{{ path('app_project_edit', { id: project.id }) }}">Edit project</a>
+            {% endif %}
+            {% if is_granted('LAUNCH_AUDIT', project) and primaryDomain %}
                 <form method="post" action="{{ path('app_project_audit_launch', { id: project.id }) }}">
                     <input type="hidden" name="_token" value="{{ csrf_token('launch_audit_' ~ project.id) }}">
                     <button class="button primary" type="submit">Launch crawl</button>
+                </form>
+            {% endif %}
+            {% if is_granted('PROJECT_DELETE', project) and project.status.value != 'ARCHIVED' %}
+                <form method="post" action="{{ path('app_project_archive', { id: project.id }) }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('archive_project_' ~ project.id) }}">
+                    <button class="button secondary" type="submit">Archive</button>
                 </form>
             {% endif %}
         </div>
     </section>
 
     <section>
-        <h2>Domains</h2>
-        {% if project.domains is empty %}
-            <p class="muted">No domain is attached to this project yet.</p>
+        <h2>Website</h2>
+        {% if not primaryDomain %}
+            <p class="muted">No website URL is attached to this project yet.</p>
         {% else %}
             <ul class="checklist" aria-label="Project domains">
-                {% for domain in project.domains %}
-                    <li>
-                        <strong>{{ domain.rootDomain }}</strong>
-                        <span>{{ domain.verifiedAt ? 'Verified' : 'Not verified yet' }}</span>
-                    </li>
-                {% endfor %}
+                <li>
+                    <strong>{{ primaryDomain.rootDomain }}</strong>
+                    <span>{{ primaryDomain.verifiedAt ? 'Verified' : 'Not verified yet' }}</span>
+                </li>
             </ul>
         {% endif %}
     </section>
