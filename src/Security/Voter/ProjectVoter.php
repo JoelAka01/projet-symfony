@@ -22,6 +22,7 @@ final class ProjectVoter extends Voter
     public const EDIT = 'PROJECT_EDIT';
     public const MANAGE = 'PROJECT_MANAGE';
     public const CRAWL = 'PROJECT_CRAWL';
+    public const LAUNCH_AUDIT = 'LAUNCH_AUDIT';
     public const DELETE = 'PROJECT_DELETE';
 
     private const ATTRIBUTES = [
@@ -29,6 +30,7 @@ final class ProjectVoter extends Voter
         self::EDIT,
         self::MANAGE,
         self::CRAWL,
+        self::LAUNCH_AUDIT,
         self::DELETE,
     ];
 
@@ -55,7 +57,7 @@ final class ProjectVoter extends Voter
         return match ($attribute) {
             self::VIEW => $this->canView($subject, $user),
             self::EDIT, self::MANAGE => $this->canManage($subject, $user, $token),
-            self::CRAWL => ProjectStatus::ACTIVE === $subject->getStatus()
+            self::CRAWL, self::LAUNCH_AUDIT => ProjectStatus::ACTIVE === $subject->getStatus()
                 && $this->canManage($subject, $user, $token),
             self::DELETE => $this->canDelete($subject, $user),
             default => false,
