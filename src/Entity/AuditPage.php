@@ -15,6 +15,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: AuditPageRepository::class)]
 #[ORM\Table(name: 'audit_pages')]
 #[ORM\Index(name: 'idx_audit_pages_audit_status', columns: ['audit_id', 'status_code'])]
+#[ORM\Index(name: 'idx_audit_pages_audit_normalized_url', columns: ['audit_id', 'normalized_url'])]
 #[ORM\Index(name: 'idx_audit_pages_content_hash', columns: ['content_hash'])]
 class AuditPage
 {
@@ -33,10 +34,19 @@ class AuditPage
     #[ORM\Column(length: 1000, nullable: true)]
     #[Assert\Url]
     #[Assert\Length(max: 1000)]
+    private ?string $normalizedUrl = null;
+
+    #[ORM\Column(length: 1000, nullable: true)]
+    #[Assert\Url]
+    #[Assert\Length(max: 1000)]
     private ?string $canonicalUrl = null;
 
     #[ORM\Column(type: 'smallint', nullable: true)]
     private ?int $statusCode = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    #[Assert\Length(max: 255)]
+    private ?string $contentType = null;
 
     #[ORM\Column(length: 500, nullable: true)]
     #[Assert\Length(max: 500)]
@@ -48,14 +58,29 @@ class AuditPage
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $h1 = null;
 
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $robotsMeta = null;
+
     #[ORM\Column(nullable: true)]
     private ?int $wordCount = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $internalLinksCount = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $externalLinksCount = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $imagesWithoutAltCount = null;
 
     #[ORM\Column(nullable: true)]
     private ?int $loadTimeMs = null;
 
     #[ORM\Column]
     private bool $isIndexable = true;
+
+    #[ORM\Column]
+    private bool $structuredDataPresent = false;
 
     #[ORM\Column]
     private bool $isOrphan = false;
@@ -66,6 +91,9 @@ class AuditPage
 
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $errorMessage = null;
 
     /** @var Collection<int, AuditIssue> */
     #[ORM\OneToMany(mappedBy: 'auditPage', targetEntity: AuditIssue::class)]
@@ -102,6 +130,18 @@ class AuditPage
         return $this;
     }
 
+    public function getNormalizedUrl(): ?string
+    {
+        return $this->normalizedUrl;
+    }
+
+    public function setNormalizedUrl(?string $normalizedUrl): static
+    {
+        $this->normalizedUrl = $normalizedUrl;
+
+        return $this;
+    }
+
     public function getCanonicalUrl(): ?string
     {
         return $this->canonicalUrl;
@@ -122,6 +162,18 @@ class AuditPage
     public function setStatusCode(?int $statusCode): static
     {
         $this->statusCode = $statusCode;
+
+        return $this;
+    }
+
+    public function getContentType(): ?string
+    {
+        return $this->contentType;
+    }
+
+    public function setContentType(?string $contentType): static
+    {
+        $this->contentType = null === $contentType ? null : substr($contentType, 0, 255);
 
         return $this;
     }
@@ -162,6 +214,18 @@ class AuditPage
         return $this;
     }
 
+    public function getRobotsMeta(): ?string
+    {
+        return $this->robotsMeta;
+    }
+
+    public function setRobotsMeta(?string $robotsMeta): static
+    {
+        $this->robotsMeta = $robotsMeta;
+
+        return $this;
+    }
+
     public function getWordCount(): ?int
     {
         return $this->wordCount;
@@ -170,6 +234,42 @@ class AuditPage
     public function setWordCount(?int $wordCount): static
     {
         $this->wordCount = $wordCount;
+
+        return $this;
+    }
+
+    public function getInternalLinksCount(): ?int
+    {
+        return $this->internalLinksCount;
+    }
+
+    public function setInternalLinksCount(?int $internalLinksCount): static
+    {
+        $this->internalLinksCount = $internalLinksCount;
+
+        return $this;
+    }
+
+    public function getExternalLinksCount(): ?int
+    {
+        return $this->externalLinksCount;
+    }
+
+    public function setExternalLinksCount(?int $externalLinksCount): static
+    {
+        $this->externalLinksCount = $externalLinksCount;
+
+        return $this;
+    }
+
+    public function getImagesWithoutAltCount(): ?int
+    {
+        return $this->imagesWithoutAltCount;
+    }
+
+    public function setImagesWithoutAltCount(?int $imagesWithoutAltCount): static
+    {
+        $this->imagesWithoutAltCount = $imagesWithoutAltCount;
 
         return $this;
     }
@@ -194,6 +294,18 @@ class AuditPage
     public function setIsIndexable(bool $isIndexable): static
     {
         $this->isIndexable = $isIndexable;
+
+        return $this;
+    }
+
+    public function hasStructuredData(): bool
+    {
+        return $this->structuredDataPresent;
+    }
+
+    public function setStructuredDataPresent(bool $structuredDataPresent): static
+    {
+        $this->structuredDataPresent = $structuredDataPresent;
 
         return $this;
     }
@@ -230,6 +342,18 @@ class AuditPage
     public function setCreatedAt(\DateTimeImmutable $createdAt): static
     {
         $this->createdAt = $createdAt;
+
+        return $this;
+    }
+
+    public function getErrorMessage(): ?string
+    {
+        return $this->errorMessage;
+    }
+
+    public function setErrorMessage(?string $errorMessage): static
+    {
+        $this->errorMessage = $errorMessage;
 
         return $this;
     }

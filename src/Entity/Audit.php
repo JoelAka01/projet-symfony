@@ -40,6 +40,17 @@ class Audit
     #[ORM\Column(nullable: true)]
     private ?int $pagesCrawled = null;
 
+    #[ORM\Column(nullable: true)]
+    private ?int $pagesFailed = null;
+
+    #[ORM\Column(nullable: true)]
+    #[Assert\Range(min: 1, max: 500)]
+    private ?int $maxPages = null;
+
+    #[ORM\Column(nullable: true)]
+    #[Assert\Range(min: 0, max: 20)]
+    private ?int $maxDepth = null;
+
     #[ORM\Column(type: 'smallint', nullable: true)]
     #[Assert\Range(min: 0, max: 100)]
     private ?int $seoScore = null;
@@ -165,6 +176,42 @@ class Audit
     public function setPagesCrawled(?int $pagesCrawled): static
     {
         $this->pagesCrawled = $pagesCrawled;
+
+        return $this;
+    }
+
+    public function getPagesFailed(): ?int
+    {
+        return $this->pagesFailed;
+    }
+
+    public function setPagesFailed(?int $pagesFailed): static
+    {
+        $this->pagesFailed = $pagesFailed;
+
+        return $this;
+    }
+
+    public function getMaxPages(): ?int
+    {
+        return $this->maxPages;
+    }
+
+    public function setMaxPages(?int $maxPages): static
+    {
+        $this->maxPages = $maxPages;
+
+        return $this;
+    }
+
+    public function getMaxDepth(): ?int
+    {
+        return $this->maxDepth;
+    }
+
+    public function setMaxDepth(?int $maxDepth): static
+    {
+        $this->maxDepth = $maxDepth;
 
         return $this;
     }
