@@ -25,4 +25,25 @@
             <span>{{ app.user.lastLoginAt ? app.user.lastLoginAt|date('Y-m-d H:i') : 'First session' }}</span>
         </li>
     </ul>
+
+    <section>
+        <h2>Projects you can access</h2>
+
+        {% if projects is empty %}
+            <p>No project is attached to this account yet.</p>
+        {% else %}
+            <ul class="checklist" aria-label="Authorized projects">
+                {% for project in projects %}
+                    <li>
+                        <strong>{{ project.name }}</strong>
+                        <span>
+                            {{ project.status.value|lower|capitalize }}
+                            · {{ is_granted('PROJECT_EDIT', project) ? 'Editable' : 'Read-only' }}
+                            · {{ is_granted('PROJECT_CRAWL', project) ? 'Crawl allowed' : 'Crawl locked' }}
+                        </span>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </section>
 {% endblock %}
