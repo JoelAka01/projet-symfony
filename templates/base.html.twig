@@ -15,11 +15,29 @@
         <header class="site-header">
             <nav class="site-nav" aria-label="Main navigation">
                 <a class="brand" href="{{ path('app_home') }}">SEO GEO AI</a>
-                <span class="nav-status">Symfony + Twig + Doctrine</span>
+                <div class="nav-links">
+                    {% if app.user %}
+                        <a href="{{ path('app_dashboard') }}">Dashboard</a>
+                        <a href="{{ path('app_logout') }}">Logout</a>
+                    {% else %}
+                        <a href="{{ path('app_login') }}">Login</a>
+                        <a class="nav-button" href="{{ path('app_register') }}">Register</a>
+                    {% endif %}
+                </div>
             </nav>
         </header>
 
         <main class="page">
+            <div class="flash-stack" aria-live="polite">
+                {% for label, messages in app.flashes %}
+                    {% for message in messages %}
+                        <div class="flash flash-{{ label }}" role="status">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+
             {% block body %}{% endblock %}
         </main>
     </body>

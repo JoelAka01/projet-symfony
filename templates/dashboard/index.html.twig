@@ -1,0 +1,28 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Dashboard | SEO GEO AI{% endblock %}
+
+{% block body %}
+    <section class="hero compact">
+        <p class="eyebrow">Dashboard</p>
+        <h1>Welcome, {{ app.user.displayName }}</h1>
+        <p>
+            Your authenticated workspace is ready for projects, website crawls, and AI-backed SEO analysis.
+        </p>
+    </section>
+
+    <ul class="checklist" aria-label="Account status">
+        <li>
+            <strong>Email verified</strong>
+            <span>{{ app.user.verified ? 'Yes' : 'No' }}</span>
+        </li>
+        <li>
+            <strong>Role</strong>
+            <span>{{ app.user.roles|join(', ') }}</span>
+        </li>
+        <li>
+            <strong>Last login</strong>
+            <span>{{ app.user.lastLoginAt ? app.user.lastLoginAt|date('Y-m-d H:i') : 'First session' }}</span>
+        </li>
+    </ul>
+{% endblock %}
