@@ -7,8 +7,16 @@
         <p class="eyebrow">Symfony initialization</p>
         <h1>SEO, GEO and AI visibility workspace</h1>
         <p>
-            Twig renders this page, Doctrine is configured for PostgreSQL,
+            Twig renders this page, Doctrine is configured for PostgreSQL, and authenticated users can manage SEO/GEO workspaces.
         </p>
+        <div class="hero-actions">
+            {% if app.user %}
+                <a class="button primary" href="{{ path('app_dashboard') }}">Open dashboard</a>
+            {% else %}
+                <a class="button primary" href="{{ path('app_register') }}">Create account</a>
+                <a class="button secondary" href="{{ path('app_login') }}">Sign in</a>
+            {% endif %}
+        </div>
     </section>
 
     <ul class="checklist" aria-label="Project stack status">
