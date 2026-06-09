@@ -1,0 +1,50 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Login | SEO GEO AI{% endblock %}
+
+{% block body %}
+    <section class="auth-shell">
+        <div class="auth-panel">
+            <p class="eyebrow">Account access</p>
+            <h1>Login</h1>
+
+            {% if error %}
+                <div class="flash flash-error" role="alert">
+                    {{ error.messageKey|trans(error.messageData, 'security') }}
+                </div>
+            {% endif %}
+
+            <form method="post" class="form-stack">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+                <label for="inputEmail">Email address</label>
+                <input
+                    id="inputEmail"
+                    type="email"
+                    name="email"
+                    value="{{ last_username }}"
+                    autocomplete="email"
+                    required
+                    autofocus
+                >
+
+                <label for="inputPassword">Password</label>
+                <input
+                    id="inputPassword"
+                    type="password"
+                    name="password"
+                    autocomplete="current-password"
+                    required
+                >
+
+                <button class="button primary" type="submit">Login</button>
+            </form>
+
+            <div class="auth-links">
+                <a href="{{ path('app_forgot_password_request') }}">Forgot password?</a>
+                <a href="{{ path('app_verify_email_resend') }}">Resend verification email</a>
+                <a href="{{ path('app_register') }}">Create an account</a>
+            </div>
+        </div>
+    </section>
+{% endblock %}
