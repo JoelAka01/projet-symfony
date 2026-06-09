@@ -1,0 +1,18 @@
+{{ form_start(form, { attr: { class: 'form-stack project-form' } }) }}
+    {{ form_row(form.name) }}
+    {{ form_row(form.websiteUrl) }}
+
+    <div class="form-grid">
+        {{ form_row(form.defaultLanguage) }}
+        {{ form_row(form.targetCountry) }}
+    </div>
+
+    {% if form.status is defined %}
+        {{ form_row(form.status) }}
+    {% endif %}
+
+    <div class="form-actions">
+        <button class="button primary" type="submit">{{ button_label }}</button>
+        <a class="button secondary" href="{{ cancel_path }}">Cancel</a>
+    </div>
+{{ form_end(form) }}
