@@ -109,6 +109,7 @@ make phpstan-local  # Run static analysis locally
 
 ```text
 Admin:   admin@example.com   / password
+Manager: manager@example.com / password
 User:    user@example.com    / password
 ```
 
