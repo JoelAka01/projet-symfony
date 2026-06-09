@@ -1,0 +1,93 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Audit {{ audit.id }} | SEO Crawl{% endblock %}
+
+{% block body %}
+    <section class="hero compact">
+        <p class="eyebrow">SEO crawl</p>
+        <h1>{{ project.name }}</h1>
+        <p>
+            {{ audit.domain.rootDomain }}
+            · {{ audit.status.value|lower|capitalize }}
+            · {{ audit.crawlStartedAt ? audit.crawlStartedAt|date('Y-m-d H:i') : audit.createdAt|date('Y-m-d H:i') }}
+        </p>
+        <div class="hero-actions">
+            <a class="button secondary" href="{{ path('app_project_show', { id: project.id }) }}">Back to project</a>
+        </div>
+    </section>
+
+    <ul class="checklist" aria-label="Audit KPIs">
+        <li>
+            <strong>SEO score</strong>
+            <span>{{ audit.seoScore is not null ? audit.seoScore ~ '/100' : 'Pending' }}</span>
+        </li>
+        <li>
+            <strong>Status</strong>
+            <span>{{ audit.status.value|lower|capitalize }}</span>
+        </li>
+        <li>
+            <strong>Pages crawled</strong>
+            <span>{{ audit.pagesCrawled ?? 0 }} / {{ audit.maxPages ?? 'default' }}</span>
+        </li>
+        <li>
+            <strong>Pages failed</strong>
+            <span>{{ audit.pagesFailed ?? 0 }}</span>
+        </li>
+        <li>
+            <strong>Max depth</strong>
+            <span>{{ audit.maxDepth ?? 'default' }}</span>
+        </li>
+        <li>
+            <strong>Finished</strong>
+            <span>{{ audit.crawlFinishedAt ? audit.crawlFinishedAt|date('Y-m-d H:i') : 'Not finished' }}</span>
+        </li>
+    </ul>
+
+    {% if audit.errorMessage %}
+        <section>
+            <h2>Crawl error</h2>
+            <p class="muted">{{ audit.errorMessage }}</p>
+        </section>
+    {% endif %}
+
+    <section>
+        <h2>Issues by severity</h2>
+        {% for severity, issues in issuesBySeverity %}
+            <section class="issue-group">
+                <h3>{{ severity|capitalize }} ({{ issues|length }})</h3>
+                {% if issues is empty %}
+                    <p class="muted">No {{ severity }} issue found.</p>
+                {% else %}
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Page</th>
+                                    <th>Finding</th>
+                                    <th>Recommendation</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for issue in issues %}
+                                    <tr>
+                                        <td>{{ issue.issueType|replace({'_': ' '})|title }}</td>
+                                        <td>
+                                            {% if issue.auditPage %}
+                                                <a href="{{ issue.auditPage.url }}" rel="noreferrer" target="_blank">{{ issue.auditPage.url }}</a>
+                                            {% else %}
+                                                Audit
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ issue.message }}</td>
+                                        <td>{{ issue.recommendation }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endif %}
+            </section>
+        {% endfor %}
+    </section>
+{% endblock %}

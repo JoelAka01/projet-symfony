@@ -35,7 +35,7 @@
             <ul class="checklist" aria-label="Authorized projects">
                 {% for project in projects %}
                     <li>
-                        <strong>{{ project.name }}</strong>
+                        <strong><a href="{{ path('app_project_show', { id: project.id }) }}">{{ project.name }}</a></strong>
                         <span>
                             {{ project.status.value|lower|capitalize }}
                             · {{ is_granted('PROJECT_EDIT', project) ? 'Editable' : 'Read-only' }}
