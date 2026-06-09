@@ -1,0 +1,17 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Choose New Password | SEO GEO AI{% endblock %}
+
+{% block body %}
+    <section class="auth-shell">
+        <div class="auth-panel">
+            <p class="eyebrow">Password reset</p>
+            <h1>Choose a new password</h1>
+
+            {{ form_start(resetForm, { attr: { class: 'form-stack' } }) }}
+                {{ form_row(resetForm.plainPassword) }}
+                <button class="button primary" type="submit">Update password</button>
+            {{ form_end(resetForm) }}
+        </div>
+    </section>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Reset Password | SEO GEO AI{% endblock %}
+
+{% block body %}
+    <section class="auth-shell">
+        <div class="auth-panel">
+            <p class="eyebrow">Password reset</p>
+            <h1>Reset your password</h1>
+
+            {{ form_start(requestForm, { attr: { class: 'form-stack' } }) }}
+                {{ form_row(requestForm.email) }}
+                <button class="button primary" type="submit">Send reset link</button>
+            {{ form_end(requestForm) }}
+
+            <div class="auth-links">
+                <a href="{{ path('app_login') }}">Back to login</a>
+            </div>
+        </div>
+    </section>
+{% endblock %}
