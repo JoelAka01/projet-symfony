@@ -17,7 +17,7 @@ migrate-local:
 	php bin/console doctrine:migrations:migrate
 
 fixtures:
-	@docker compose ps php --quiet 2>nul | findstr . >nul || (echo Error: Docker services not running. Run 'make up' first. && exit /b 1)
+	docker compose exec php rm -rf var/cache/* || true
 	docker compose exec php php bin/console doctrine:fixtures:load
 
 fixtures-local:
