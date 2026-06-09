@@ -35,8 +35,33 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(name: 'password_hash', length: 255)]
     private string $passwordHash = '';
 
+    #[ORM\Column(length: 100)]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 100)]
+    private string $firstName = '';
+
+    #[ORM\Column(length: 100)]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 100)]
+    private string $lastName = '';
+
     #[ORM\Column(enumType: UserRole::class)]
     private UserRole $role = UserRole::VIEWER;
+
+    #[ORM\Column]
+    private bool $isVerified = false;
+
+    #[ORM\Column(length: 64, nullable: true)]
+    private ?string $emailVerificationTokenHash = null;
+
+    #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $emailVerificationTokenExpiresAt = null;
+
+    #[ORM\Column(length: 64, nullable: true)]
+    private ?string $passwordResetTokenHash = null;
+
+    #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $passwordResetTokenExpiresAt = null;
 
     #[ORM\Column(name: 'is_2fa_enabled')]
     private bool $is2faEnabled = false;
@@ -92,6 +117,37 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->email;
     }
 
+    public function getFirstName(): string
+    {
+        return $this->firstName;
+    }
+
+    public function setFirstName(string $firstName): self
+    {
+        $this->firstName = trim($firstName);
+
+        return $this;
+    }
+
+    public function getLastName(): string
+    {
+        return $this->lastName;
+    }
+
+    public function setLastName(string $lastName): self
+    {
+        $this->lastName = trim($lastName);
+
+        return $this;
+    }
+
+    public function getDisplayName(): string
+    {
+        $displayName = trim(sprintf('%s %s', $this->firstName, $this->lastName));
+
+        return '' === $displayName ? $this->email : $displayName;
+    }
+
     /** @return list<string> */
     public function getRoles(): array
     {
@@ -130,6 +186,82 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setPasswordHash(string $passwordHash): self
     {
         $this->passwordHash = $passwordHash;
+
+        return $this;
+    }
+
+    public function isVerified(): bool
+    {
+        return $this->isVerified;
+    }
+
+    public function setIsVerified(bool $isVerified): self
+    {
+        $this->isVerified = $isVerified;
+
+        return $this;
+    }
+
+    public function getEmailVerificationTokenHash(): ?string
+    {
+        return $this->emailVerificationTokenHash;
+    }
+
+    public function setEmailVerificationTokenHash(?string $emailVerificationTokenHash): self
+    {
+        $this->emailVerificationTokenHash = $emailVerificationTokenHash;
+
+        return $this;
+    }
+
+    public function getEmailVerificationTokenExpiresAt(): ?\DateTimeImmutable
+    {
+        return $this->emailVerificationTokenExpiresAt;
+    }
+
+    public function setEmailVerificationTokenExpiresAt(?\DateTimeImmutable $emailVerificationTokenExpiresAt): self
+    {
+        $this->emailVerificationTokenExpiresAt = $emailVerificationTokenExpiresAt;
+
+        return $this;
+    }
+
+    public function clearEmailVerificationToken(): self
+    {
+        $this->emailVerificationTokenHash = null;
+        $this->emailVerificationTokenExpiresAt = null;
+
+        return $this;
+    }
+
+    public function getPasswordResetTokenHash(): ?string
+    {
+        return $this->passwordResetTokenHash;
+    }
+
+    public function setPasswordResetTokenHash(?string $passwordResetTokenHash): self
+    {
+        $this->passwordResetTokenHash = $passwordResetTokenHash;
+
+        return $this;
+    }
+
+    public function getPasswordResetTokenExpiresAt(): ?\DateTimeImmutable
+    {
+        return $this->passwordResetTokenExpiresAt;
+    }
+
+    public function setPasswordResetTokenExpiresAt(?\DateTimeImmutable $passwordResetTokenExpiresAt): self
+    {
+        $this->passwordResetTokenExpiresAt = $passwordResetTokenExpiresAt;
+
+        return $this;
+    }
+
+    public function clearPasswordResetToken(): self
+    {
+        $this->passwordResetTokenHash = null;
+        $this->passwordResetTokenExpiresAt = null;
 
         return $this;
     }
