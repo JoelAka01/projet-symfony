@@ -1,0 +1,20 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Check Email | SEO GEO AI{% endblock %}
+
+{% block body %}
+    <section class="auth-shell">
+        <div class="auth-panel">
+            <p class="eyebrow">Password reset</p>
+            <h1>Check your email</h1>
+            <p class="muted">
+                If an account exists for that email address, a password reset link has been sent. The link expires in 1 hour.
+            </p>
+
+            <div class="auth-links">
+                <a href="{{ path('app_login') }}">Back to login</a>
+                <a href="{{ path('app_forgot_password_request') }}">Try another email</a>
+            </div>
+        </div>
+    </section>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Resend Verification | SEO GEO AI{% endblock %}
+
+{% block body %}
+    <section class="auth-shell">
+        <div class="auth-panel">
+            <p class="eyebrow">Email verification</p>
+            <h1>Resend verification email</h1>
+
+            {{ form_start(resendForm, { attr: { class: 'form-stack' } }) }}
+                {{ form_row(resendForm.email) }}
+                <button class="button primary" type="submit">Send verification link</button>
+            {{ form_end(resendForm) }}
+
+            <div class="auth-links">
+                <a href="{{ path('app_login') }}">Back to login</a>
+            </div>
+        </div>
+    </section>
+{% endblock %}
