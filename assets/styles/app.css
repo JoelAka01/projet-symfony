@@ -106,6 +106,10 @@ a {
     gap: 12px;
 }
 
+.hero-actions form {
+    margin: 0;
+}
+
 .button {
     display: inline-flex;
     align-items: center;
@@ -189,6 +193,48 @@ a {
     color: #055160;
     border-color: #b6effb;
     background: #cff4fc;
+}
+
+.table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    margin-top: 16px;
+    border: 1px solid #d9e2ec;
+    border-radius: 8px;
+    background: #ffffff;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 680px;
+}
+
+th,
+td {
+    padding: 14px 16px;
+    border-bottom: 1px solid #d9e2ec;
+    text-align: left;
+    vertical-align: top;
+}
+
+th {
+    color: #102a43;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+}
+
+td {
+    color: #52606d;
+    line-height: 1.5;
+}
+
+tr:last-child td {
+    border-bottom: 0;
+}
+
+.issue-group {
+    margin-top: 28px;
 }
 
 .auth-shell {
