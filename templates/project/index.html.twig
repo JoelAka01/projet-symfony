@@ -1,0 +1,66 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Projects | SEO GEO AI{% endblock %}
+
+{% block body %}
+    <section class="hero compact">
+        <p class="eyebrow">Projects</p>
+        <h1>Website projects</h1>
+        <p>Each project manages one website URL used as the root target for real crawler audits.</p>
+        <div class="hero-actions">
+            <a class="button primary" href="{{ path('app_project_new') }}">New project</a>
+            <a class="button secondary" href="{{ path('app_dashboard') }}">Dashboard</a>
+        </div>
+    </section>
+
+    <section>
+        {% if projects is empty %}
+            <div class="empty-state">
+                <h2>No projects yet</h2>
+                <p class="muted">Create a project with a public website URL before launching crawls or AI analysis.</p>
+                <a class="button primary" href="{{ path('app_project_new') }}">Create first project</a>
+            </div>
+        {% else %}
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Project</th>
+                            <th>Website</th>
+                            <th>Status</th>
+                            <th>SEO score</th>
+                            <th>Updated</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for project in projects %}
+                            {% set primaryDomain = project.domains|first %}
+                            <tr>
+                                <td><strong><a href="{{ path('app_project_show', { id: project.id }) }}">{{ project.name }}</a></strong></td>
+                                <td>{{ primaryDomain ? primaryDomain.rootDomain : 'No website URL' }}</td>
+                                <td>{{ project.status.value|lower|capitalize }}</td>
+                                <td>{{ project.seoScore is not null ? project.seoScore ~ '/100' : 'Not audited' }}</td>
+                                <td>{{ project.updatedAt|date('Y-m-d H:i') }}</td>
+                                <td>
+                                    <div class="row-actions">
+                                        <a href="{{ path('app_project_show', { id: project.id }) }}">View</a>
+                                        {% if is_granted('PROJECT_EDIT', project) %}
+                                            <a href="{{ path('app_project_edit', { id: project.id }) }}">Edit</a>
+                                        {% endif %}
+                                        {% if is_granted('PROJECT_DELETE', project) and project.status.value != 'ARCHIVED' %}
+                                            <form method="post" action="{{ path('app_project_archive', { id: project.id }) }}">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('archive_project_' ~ project.id) }}">
+                                                <button class="link-button" type="submit">Archive</button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </section>
+{% endblock %}
