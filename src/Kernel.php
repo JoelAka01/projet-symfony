@@ -14,6 +14,7 @@ class Kernel extends BaseKernel
 // extends Symfony's base kernel to support a custom cache directory
  // via the APP_CACHE_DIR env variable (falls back to symfony default).
 //cache is stored in APP_CACHE_DIR/{environment} when set.
+
     public function getCacheDir(): string
     {
         $cacheDir = $_SERVER['APP_CACHE_DIR'] ?? $_ENV['APP_CACHE_DIR'] ?? null;
@@ -22,5 +23,15 @@ class Kernel extends BaseKernel
         }
 
         return parent::getCacheDir();
+    }
+
+    public function getLogDir(): string
+    {
+        $logDir = $_SERVER['APP_LOG_DIR'] ?? $_ENV['APP_LOG_DIR'] ?? null;
+        if (is_string($logDir) && '' !== $logDir) {
+            return rtrim($logDir, '/\\');
+        }
+
+        return parent::getLogDir();
     }
 }

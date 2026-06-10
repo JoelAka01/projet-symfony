@@ -1,10 +1,11 @@
 when@dev:
     web_profiler:
-        toolbar: true
+        toolbar: '%kernel.debug%'
 
     framework:
         profiler:
-            collect_serializer_data: true
+            collect: '%kernel.debug%'
+            collect_serializer_data: '%kernel.debug%'
 
 when@test:
     framework:
