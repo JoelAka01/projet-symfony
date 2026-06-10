@@ -115,9 +115,14 @@ jobs:
         with:
           dependency-versions: locked
 
-      - name: Créer le schéma de base de données
+      - name: Créer la base de données de test
+        run: php bin/console doctrine:database:create --if-not-exists
+        # En APP_ENV=test, Symfony ajoute automatiquement le suffixe "_test" au
+        # nom de la DB défini dans DATABASE_URL. "app_test" devient "app_test_test".
+        # Cette commande crée "app_test_test" si elle n'existe pas encore.
+
+      - name: Appliquer les migrations
         run: php bin/console doctrine:migrations:migrate --no-interaction
-        # Si une migration est incorrecte, ce step le révèle immédiatement.
 
       - name: Lancer les tests avec couverture
         run: |
@@ -195,7 +200,10 @@ jobs:
           name: coverage
           path: coverage/
 
-      - name: Créer le schéma de base de données
+      - name: Créer la base de données de test
+        run: php bin/console doctrine:database:create --if-not-exists
+
+      - name: Appliquer les migrations
         run: php bin/console doctrine:migrations:migrate --no-interaction
 
       - name: Lancer Infection
