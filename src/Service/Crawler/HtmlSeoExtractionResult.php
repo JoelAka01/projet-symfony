@@ -11,6 +11,7 @@ final class HtmlSeoExtractionResult
      * @param list<string> $h2Headings
      * @param list<string> $internalLinks
      * @param list<string> $externalLinks
+     * @param array<string, mixed> $metadata
      */
     public function __construct(
         public readonly ?string $title,
@@ -24,5 +25,7 @@ final class HtmlSeoExtractionResult
         public readonly array $externalLinks,
         public readonly int $imagesWithoutAltCount,
         public readonly bool $hasStructuredData,
-    ) {}
+        public readonly array $metadata = [],
+    ) {
+    }
 }
