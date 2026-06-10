@@ -5,7 +5,9 @@
 {% block body %}
     {% set ai = insights.ai %}
     {% set aiCompleted = ai.status == 'completed' %}
-    {% set isProcessing = audit.status.value in ['QUEUED', 'RUNNING'] %}
+    {% set aiRunning = ai.status in ['queued', 'running'] %}
+    {% set isProcessing = audit.status.value in ['QUEUED', 'RUNNING'] or aiRunning %}
+    {% set canRetryAi = audit.status.value == 'COMPLETED' and ai.status in ['failed', 'not_configured'] %}
 
     <section class="hero compact">
         <p class="eyebrow">SEO analysis dashboard</p>
@@ -17,6 +19,12 @@
         </p>
         <div class="hero-actions">
             <a class="button secondary" href="{{ path('app_project_show', { id: project.id }) }}">Back to project</a>
+            {% if canRetryAi %}
+                <form method="post" action="{{ path('app_audit_ai_retry', { id: audit.id }) }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('retry_ai_' ~ audit.id) }}">
+                    <button class="button primary" type="submit">Retry Claude analysis</button>
+                </form>
+            {% endif %}
         </div>
     </section>
 
@@ -73,7 +81,7 @@
     {% if isProcessing %}
         <section class="notice">
             <h2>Analysis running</h2>
-            <p>The crawl and Claude SEO critique are being processed by the Messenger worker. This page refreshes automatically.</p>
+            <p>The crawl or Claude SEO critique is being processed by the Messenger worker. This page refreshes automatically.</p>
         </section>
         <script>
             window.setTimeout(() => window.location.reload(), 5000);
@@ -651,39 +659,50 @@
 
     <section class="panel full-panel">
         <h2>Issues</h2>
-        {% for severity, issues in issuesBySeverity %}
+        {% for severity, groups in issueGroupsBySeverity %}
             <section class="issue-group">
-                <h3>{{ severity|capitalize }} ({{ issues|length }})</h3>
-                {% if issues is empty %}
+                <h3>{{ severity|capitalize }} ({{ insights.severity_counts[severity] ?? 0 }})</h3>
+                {% if groups is empty %}
                     <p class="muted">No {{ severity }} issue found.</p>
                 {% else %}
-                    <div class="table-wrap">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Type</th>
-                                    <th>Page</th>
-                                    <th>Finding</th>
-                                    <th>Recommendation</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for issue in issues %}
-                                    <tr>
-                                        <td>{{ issue.issueType|replace({'_': ' '})|title }}</td>
-                                        <td>
-                                            {% if issue.auditPage %}
-                                                <a href="{{ issue.auditPage.url }}" rel="noreferrer" target="_blank">{{ issue.auditPage.url }}</a>
-                                            {% else %}
-                                                Audit
-                                            {% endif %}
-                                        </td>
-                                        <td>{{ issue.message }}</td>
-                                        <td>{{ issue.recommendation }}</td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                    <div class="issue-type-list">
+                        {% for group in groups %}
+                            <details class="issue-type-group" {% if group.issues|length == 1 %}open{% endif %}>
+                                <summary>
+                                    <span>
+                                        <strong>{{ group.label }}</strong>
+                                        <small>{{ group.issues|length }} {{ group.issues|length == 1 ? 'occurrence' : 'occurrences' }}</small>
+                                    </span>
+                                    <span class="issue-toggle" aria-hidden="true"></span>
+                                </summary>
+                                <div class="table-wrap issue-table-wrap">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Page</th>
+                                                <th>Finding</th>
+                                                <th>Recommendation</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for issue in group.issues %}
+                                                <tr>
+                                                    <td>
+                                                        {% if issue.auditPage %}
+                                                            <a href="{{ issue.auditPage.url }}" rel="noreferrer" target="_blank">{{ issue.auditPage.url }}</a>
+                                                        {% else %}
+                                                            Audit
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>{{ issue.message }}</td>
+                                                    <td>{{ issue.recommendation }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </details>
+                        {% endfor %}
                     </div>
                 {% endif %}
             </section>
