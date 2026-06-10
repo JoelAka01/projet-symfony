@@ -4,6 +4,4 @@ declare(strict_types=1);
 
 namespace App\Exception;
 
-final class InvalidWebsiteUrlException extends \InvalidArgumentException
-{
-}
+final class InvalidWebsiteUrlException extends \InvalidArgumentException {}

@@ -29,3 +29,11 @@ _backup/
 sujet-tp-symfony.md
 
 AGENTS.md
+
+###> friendsofphp/php-cs-fixer ###
+/.php-cs-fixer.cache
+###< friendsofphp/php-cs-fixer ###
+
+###> infection/infection ###
+/var/infection/
+###< infection/infection ###

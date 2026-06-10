@@ -10,9 +10,7 @@ use App\Entity\AuditPage;
 
 final class SeoIssueDetector
 {
-    public function __construct(private readonly CrawlerUrlNormalizer $urlNormalizer)
-    {
-    }
+    public function __construct(private readonly CrawlerUrlNormalizer $urlNormalizer) {}
 
     /**
      * @param array<string, true> $seenTitles

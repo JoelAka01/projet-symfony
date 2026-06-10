@@ -39,7 +39,7 @@ final class ProjectController extends AbstractController
 
         $projects = array_values(array_filter(
             $projectRepository->findDashboardProjectsForUser($user),
-            fn (Project $project): bool => $authorizationChecker->isGranted(ProjectVoter::VIEW, $project),
+            fn(Project $project): bool => $authorizationChecker->isGranted(ProjectVoter::VIEW, $project),
         ));
 
         return $this->render('project/index.html.twig', [
@@ -85,7 +85,7 @@ final class ProjectController extends AbstractController
         $audits = $project->getAudits()->toArray();
         usort(
             $audits,
-            static fn (Audit $left, Audit $right): int => $right->getCreatedAt() <=> $left->getCreatedAt(),
+            static fn(Audit $left, Audit $right): int => $right->getCreatedAt() <=> $left->getCreatedAt(),
         );
 
         return $this->render('project/show.html.twig', [
@@ -134,7 +134,7 @@ final class ProjectController extends AbstractController
     ): RedirectResponse {
         $this->denyAccessUnlessGranted(ProjectVoter::DELETE, $project);
 
-        if (!$this->isCsrfTokenValid('archive_project_'.$project->getId(), (string) $request->request->get('_token', ''))) {
+        if (!$this->isCsrfTokenValid('archive_project_' . $project->getId(), (string) $request->request->get('_token', ''))) {
             throw $this->createAccessDeniedException('Invalid project archive CSRF token.');
         }
 
@@ -155,7 +155,7 @@ final class ProjectController extends AbstractController
     ): RedirectResponse {
         $this->denyAccessUnlessGranted('LAUNCH_AUDIT', $project);
 
-        if (!$this->isCsrfTokenValid('launch_audit_'.$project->getId(), (string) $request->request->get('_token', ''))) {
+        if (!$this->isCsrfTokenValid('launch_audit_' . $project->getId(), (string) $request->request->get('_token', ''))) {
             throw $this->createAccessDeniedException('Invalid audit launch CSRF token.');
         }
 
@@ -189,7 +189,7 @@ final class ProjectController extends AbstractController
                 ->setCrawlFinishedAt(new \DateTimeImmutable());
             $entityManager->flush();
 
-            $this->addFlash('error', 'The crawl failed: '.$exception->getMessage());
+            $this->addFlash('error', 'The crawl failed: ' . $exception->getMessage());
         }
 
         return $this->redirectToRoute('app_audit_show', ['id' => $audit->getId()]);

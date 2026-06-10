@@ -9,9 +9,7 @@ use App\Service\Crawler\CrawlerUrlNormalizer;
 
 final class ProjectWebsiteUrlNormalizer
 {
-    public function __construct(private readonly CrawlerUrlNormalizer $urlNormalizer)
-    {
-    }
+    public function __construct(private readonly CrawlerUrlNormalizer $urlNormalizer) {}
 
     public function normalize(string $websiteUrl): ?string
     {

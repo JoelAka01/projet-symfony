@@ -16,5 +16,4 @@ final class ProjectPagesTest extends WebTestCase
 
         self::assertResponseRedirects('/login');
     }
-
 }

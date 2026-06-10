@@ -11,9 +11,7 @@ use Symfony\Component\Security\Http\Event\LoginSuccessEvent;
 
 final class LastLoginSubscriber implements EventSubscriberInterface
 {
-    public function __construct(private readonly EntityManagerInterface $entityManager)
-    {
-    }
+    public function __construct(private readonly EntityManagerInterface $entityManager) {}
 
     public static function getSubscribedEvents(): array
     {

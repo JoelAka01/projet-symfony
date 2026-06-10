@@ -36,11 +36,11 @@ final class ResetPasswordFormType extends AbstractType
                 new Assert\Length(
                     min: 10,
                     max: 4096,
-                    minMessage: 'Your password should be at least {{ limit }} characters.'
+                    minMessage: 'Your password should be at least {{ limit }} characters.',
                 ),
                 new Assert\Regex(
                     pattern: '/^(?=.*[A-Za-z])(?=.*\d).+$/',
-                    message: 'Use at least one letter and one number.'
+                    message: 'Use at least one letter and one number.',
                 ),
             ],
         ]);

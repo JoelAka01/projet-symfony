@@ -20,8 +20,7 @@ final class AccountEmailService
         private readonly string $fromEmail,
         #[Autowire(param: 'app.mailer_from_name')]
         private readonly string $fromName,
-    ) {
-    }
+    ) {}
 
     public function sendVerificationEmail(User $user, string $token): void
     {

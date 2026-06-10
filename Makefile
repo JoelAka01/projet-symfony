@@ -35,7 +35,27 @@ phpstan:
 	docker compose exec php vendor/bin/phpstan analyse
 
 phpstan-local:
-	vendor\bin\phpstan analyse
+	vendor/bin/phpstan analyse
+
+lint:
+	docker compose exec php vendor/bin/php-cs-fixer check --diff
+
+lint-local:
+	vendor/bin/php-cs-fixer check --diff
+
+lint-fix:
+	docker compose exec php vendor/bin/php-cs-fixer fix
+
+lint-fix-local:
+	vendor/bin/php-cs-fixer fix
+
+mutation:
+	docker compose exec php vendor/bin/infection --threads=max --show-mutations --no-progress
+
+mutation-local:
+	vendor/bin/infection --threads=max --show-mutations --no-progress
+
+ci-local: lint-local phpstan-local test-local
 
 logs:
 	docker compose logs -f --tail=100 php
@@ -64,5 +84,12 @@ help:
 	@echo "  test-local    - Run PHPUnit locally"
 	@echo "  phpstan       - Run PHPStan in Docker"
 	@echo "  phpstan-local - Run PHPStan locally"
+	@echo "  lint          - Check code style (PHP CS Fixer) in Docker"
+	@echo "  lint-local    - Check code style locally"
+	@echo "  lint-fix      - Auto-fix code style in Docker"
+	@echo "  lint-fix-local- Auto-fix code style locally"
+	@echo "  mutation      - Run mutation tests (Infection) in Docker"
+	@echo "  mutation-local- Run mutation tests locally"
+	@echo "  ci-local      - Run lint + phpstan + tests locally (simule la CI)"
 	@echo "  logs          - Follow the logs of the PHP container"
 	@echo "  help          - Show this help message"

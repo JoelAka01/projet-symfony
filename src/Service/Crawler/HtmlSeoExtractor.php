@@ -6,15 +6,13 @@ namespace App\Service\Crawler;
 
 final class HtmlSeoExtractor
 {
-    public function __construct(private readonly CrawlerUrlNormalizer $urlNormalizer)
-    {
-    }
+    public function __construct(private readonly CrawlerUrlNormalizer $urlNormalizer) {}
 
     public function extract(string $html, string $url, string $startHostname): HtmlSeoExtractionResult
     {
         $document = new \DOMDocument('1.0', 'UTF-8');
         $previousUseInternalErrors = libxml_use_internal_errors(true);
-        $document->loadHTML('<?xml encoding="UTF-8">'.$html, LIBXML_NOWARNING | LIBXML_NOERROR | LIBXML_NONET);
+        $document->loadHTML('<?xml encoding="UTF-8">' . $html, LIBXML_NOWARNING | LIBXML_NOERROR | LIBXML_NONET);
         libxml_clear_errors();
         libxml_use_internal_errors($previousUseInternalErrors);
 

@@ -39,7 +39,7 @@ final class AccountTokenService
         return $this->isTokenValid(
             $user->getEmailVerificationTokenHash(),
             $user->getEmailVerificationTokenExpiresAt(),
-            $token
+            $token,
         );
     }
 
@@ -48,7 +48,7 @@ final class AccountTokenService
         return $this->isTokenValid(
             $user->getPasswordResetTokenHash(),
             $user->getPasswordResetTokenExpiresAt(),
-            $token
+            $token,
         );
     }
 

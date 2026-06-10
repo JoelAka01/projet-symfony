@@ -18,8 +18,7 @@ final class ProjectManager
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly ProjectWebsiteUrlNormalizer $websiteUrlNormalizer,
-    ) {
-    }
+    ) {}
 
     public function createForUser(Project $project, User $owner, string $websiteUrl): void
     {
@@ -100,7 +99,7 @@ final class ProjectManager
 
         $organization = new Organization();
         $organization
-            ->setName($owner->getDisplayName().' workspace')
+            ->setName($owner->getDisplayName() . ' workspace')
             ->setBillingEmail($owner->getEmail());
 
         $organizationUser = new OrganizationUser();

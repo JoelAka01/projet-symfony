@@ -24,8 +24,7 @@ final class WebsiteCrawlerService
         private readonly SeoIssueDetector $issueDetector,
         private readonly SeoScoreCalculator $scoreCalculator,
         private readonly LoggerInterface $logger,
-    ) {
-    }
+    ) {}
 
     public function getConfiguredMaxPages(): int
     {
@@ -227,10 +226,10 @@ final class WebsiteCrawlerService
     }
 
     /**
-     * @param array<string, list<string>> $headers
+     * @param array<string, list<string>>    $headers
      * @param list<array{0: string, 1: int}> $queue
-     * @param array<string, true> $queued
-     * @param array<string, true> $visited
+     * @param array<string, true>            $queued
+     * @param array<string, true>            $visited
      */
     private function enqueueRedirectIfAllowed(
         array $headers,
@@ -266,10 +265,10 @@ final class WebsiteCrawlerService
     }
 
     /**
-     * @param list<string> $links
+     * @param list<string>                   $links
      * @param list<array{0: string, 1: int}> $queue
-     * @param array<string, true> $queued
-     * @param array<string, true> $visited
+     * @param array<string, true>            $queued
+     * @param array<string, true>            $visited
      */
     private function enqueueLinks(array $links, int $maxPages, array &$queue, array &$queued, array $visited, int $depth): void
     {

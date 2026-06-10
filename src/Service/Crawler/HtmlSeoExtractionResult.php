@@ -24,6 +24,5 @@ final class HtmlSeoExtractionResult
         public readonly array $externalLinks,
         public readonly int $imagesWithoutAltCount,
         public readonly bool $hasStructuredData,
-    ) {
-    }
+    ) {}
 }

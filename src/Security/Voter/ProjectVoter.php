@@ -34,9 +34,7 @@ final class ProjectVoter extends Voter
         self::DELETE,
     ];
 
-    public function __construct(private readonly RoleHierarchyInterface $roleHierarchy)
-    {
-    }
+    public function __construct(private readonly RoleHierarchyInterface $roleHierarchy) {}
 
     protected function supports(string $attribute, mixed $subject): bool
     {

@@ -29,7 +29,7 @@ use Symfony\Component\Validator\Constraints as Assert;
         new Post(),
         new Patch(),
         new Delete(),
-    ]
+    ],
 )]
 #[ORM\Entity(repositoryClass: DomainRepository::class)]
 #[ORM\Table(name: 'domains')]
