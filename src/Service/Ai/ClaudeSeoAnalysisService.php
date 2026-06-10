@@ -171,9 +171,10 @@ Strict rules:
 - Cover the crawled website as a whole, not only the first page. Use all_pages_compact, sample_pages, top_issues, duplicate_metadata, keyword_evidence, and aggregate_page_metrics.
 - Prioritize recommendations by estimated SEO/GEO/ranking impact, then effort.
 - Return only valid JSON. No markdown, no comments, no preamble.
+- Keep output concise enough to finish: most strings should stay under 240 characters, arrays should usually contain 3-6 items, and avoid repeating the same evidence.
 
 Analysis depth expected:
-- If data is enough, provide at least 8 recommendations and up to 15.
+- If data is enough, provide 6 to 10 highest-impact recommendations.
 - Every recommendation must reference exact crawler evidence.
 - For title/meta/H1 fixes, provide before_example and after_example when the current value exists.
 - For missing sections, state the exact section to add and the user intent it supports.
