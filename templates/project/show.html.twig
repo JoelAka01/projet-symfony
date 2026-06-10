@@ -20,7 +20,7 @@
             {% if is_granted('LAUNCH_AUDIT', project) and primaryDomain %}
                 <form method="post" action="{{ path('app_project_audit_launch', { id: project.id }) }}">
                     <input type="hidden" name="_token" value="{{ csrf_token('launch_audit_' ~ project.id) }}">
-                    <button class="button primary" type="submit">Launch crawl</button>
+                    <button class="button primary" type="submit">Run crawl and AI analysis</button>
                 </form>
             {% endif %}
             {% if is_granted('PROJECT_DELETE', project) and project.status.value != 'ARCHIVED' %}

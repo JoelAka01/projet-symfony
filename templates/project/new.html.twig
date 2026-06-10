@@ -7,12 +7,13 @@
         <div class="auth-panel wide">
             <p class="eyebrow">Project setup</p>
             <h1>Create project</h1>
-            <p class="muted">Add the website root URL that future crawls will fetch and analyze.</p>
+            <p class="muted">Add the website root URL. Creating the project launches the real crawl and Claude SEO analysis.</p>
 
             {% include 'project/_form.html.twig' with {
                 form: form,
-                button_label: 'Create project',
-                cancel_path: path('app_project_index')
+                button_label: 'Create project and analyze',
+                cancel_path: path('app_project_index'),
+                analysis_mode: true
             } %}
         </div>
     </section>

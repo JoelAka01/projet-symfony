@@ -1,4 +1,10 @@
-{{ form_start(form, { attr: { class: 'form-stack project-form' } }) }}
+{% set is_analysis_mode = analysis_mode|default(false) %}
+{% set form_attrs = { class: 'form-stack project-form' } %}
+{% if is_analysis_mode %}
+    {% set form_attrs = form_attrs|merge({ 'data-analysis-form': 'true' }) %}
+{% endif %}
+
+{{ form_start(form, { attr: form_attrs }) }}
     {{ form_row(form.name) }}
     {{ form_row(form.websiteUrl) }}
 
@@ -12,7 +18,17 @@
     {% endif %}
 
     <div class="form-actions">
-        <button class="button primary" type="submit">{{ button_label }}</button>
+        <button class="button primary" type="submit" {% if is_analysis_mode %}data-analysis-submit{% endif %}>{{ button_label }}</button>
         <a class="button secondary" href="{{ cancel_path }}">Cancel</a>
     </div>
+
+    {% if is_analysis_mode %}
+        <div class="analysis-loading" data-analysis-loading hidden role="status" aria-live="assertive">
+            <span class="spinner" aria-hidden="true"></span>
+            <span>
+                <strong>Queueing analysis</strong>
+                The project is being saved, then the Messenger worker will crawl the site and run Claude SEO analysis.
+            </span>
+        </div>
+    {% endif %}
 {{ form_end(form) }}
