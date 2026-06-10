@@ -6,12 +6,16 @@ services:
     working_dir: /var/www/html
     volumes:
       - .:/var/www/html:rw
+      - app_vendor:/var/www/html/vendor
+      - app_var:/var/www/html/var
       - composer_cache:/tmp/composer
     environment:
       APP_ENV: dev
       APP_DEBUG: 0
       APP_SECRET: change-me-in-env-local
       APP_CACHE_DIR: /tmp/symfony-cache
+      APP_LOG_DIR: /tmp/symfony-log
+      PHP_CLI_SERVER_WORKERS: 8
       DEFAULT_URI: http://localhost:8080
       DATABASE_URL: postgresql://app:app@database:5432/app?serverVersion=16&charset=utf8
       MESSENGER_TRANSPORT_DSN: doctrine://default?auto_setup=1
@@ -25,6 +29,9 @@ services:
       CLAUDE_API_KEY: ${CLAUDE_API_KEY:-}
       CLAUDE_MODEL: ${CLAUDE_MODEL:-claude-haiku-4-5-20251001}
       CLAUDE_API_BASE_URL: ${CLAUDE_API_BASE_URL:-https://api.anthropic.com}
+      CLAUDE_MAX_TOKENS: ${CLAUDE_MAX_TOKENS:-8000}
+      CLAUDE_TIMEOUT_SECONDS: ${CLAUDE_TIMEOUT_SECONDS:-180}
+      CLAUDE_MAX_DURATION_SECONDS: ${CLAUDE_MAX_DURATION_SECONDS:-240}
     depends_on:
       database:
         condition: service_healthy
@@ -41,12 +48,15 @@ services:
     working_dir: /var/www/html
     volumes:
       - .:/var/www/html:rw
+      - app_vendor:/var/www/html/vendor
+      - app_var:/var/www/html/var
       - composer_cache:/tmp/composer
     environment:
       APP_ENV: dev
       APP_DEBUG: 0
       APP_SECRET: change-me-in-env-local
       APP_CACHE_DIR: /tmp/symfony-cache
+      APP_LOG_DIR: /tmp/symfony-log
       DEFAULT_URI: http://localhost:8080
       DATABASE_URL: postgresql://app:app@database:5432/app?serverVersion=16&charset=utf8
       MESSENGER_TRANSPORT_DSN: doctrine://default?auto_setup=1
@@ -60,6 +70,9 @@ services:
       CLAUDE_API_KEY: ${CLAUDE_API_KEY:-}
       CLAUDE_MODEL: ${CLAUDE_MODEL:-claude-haiku-4-5-20251001}
       CLAUDE_API_BASE_URL: ${CLAUDE_API_BASE_URL:-https://api.anthropic.com}
+      CLAUDE_MAX_TOKENS: ${CLAUDE_MAX_TOKENS:-8000}
+      CLAUDE_TIMEOUT_SECONDS: ${CLAUDE_TIMEOUT_SECONDS:-180}
+      CLAUDE_MAX_DURATION_SECONDS: ${CLAUDE_MAX_DURATION_SECONDS:-240}
     depends_on:
       database:
         condition: service_healthy
@@ -93,3 +106,5 @@ services:
 volumes:
   database_data:
   composer_cache:
+  app_vendor:
+  app_var:
