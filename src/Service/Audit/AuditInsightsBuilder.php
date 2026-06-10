@@ -83,6 +83,7 @@ final class AuditInsightsBuilder
         $pages = array_values($audit->getPages()->toArray());
         /** @var list<AuditIssue> $issues */
         $issues = array_values($audit->getIssues()->toArray());
+        $pageIssueCounts = $this->pageIssueCounts($issues);
 
         return [
             'domain' => $audit->getDomain()?->getRootDomain(),
@@ -107,15 +108,33 @@ final class AuditInsightsBuilder
             ],
             'crawler_quality_profile' => $insights['quality_profile'],
             'aggregate_page_metrics' => $insights['page_stats'],
+            'site_content_signals' => $this->siteContentSignals($pages),
+            'keyword_evidence' => $this->keywordEvidence($pages),
+            'duplicate_metadata' => $this->duplicateMetadata($pages),
             'top_pages_by_issue_count' => array_slice($insights['top_pages'], 0, 8),
+            'all_pages_compact' => [
+                'included_pages' => min(count($pages), 120),
+                'total_crawled_pages' => count($pages),
+                'pages' => array_map(
+                    fn (AuditPage $page): array => $this->compactPagePayload($page, $pageIssueCounts[spl_object_id($page)] ?? 0),
+                    array_slice($pages, 0, 120),
+                ),
+            ],
             'sample_pages' => array_map(
                 fn (AuditPage $page): array => $this->pagePayload($page),
-                array_slice($pages, 0, 15),
+                array_slice($pages, 0, 25),
             ),
             'top_issues' => array_map(
                 fn (AuditIssue $issue): array => $this->issuePayload($issue),
-                array_slice($issues, 0, 30),
+                array_slice($issues, 0, 50),
             ),
+            'analysis_limitations' => [
+                'The crawler stores compact page excerpts, not full page HTML.',
+                'Keyword evidence is derived from crawled URLs, titles, meta descriptions, headings, and stored body excerpts only.',
+                'No search volume, keyword difficulty, backlinks, competitor rankings, or conversion data is available unless present in the crawl facts.',
+                'The crawler does not execute JavaScript, so JS-rendered content may be underrepresented.',
+                'Only pages inside the configured crawl limits are available for site-wide conclusions.',
+            ],
             'instructional_boundary' => 'Use only these crawler facts for objective claims. Do not invent HTTP status, headings, metadata, links, page speed, indexability, or issue counts.',
         ];
     }
@@ -225,6 +244,25 @@ final class AuditInsightsBuilder
         );
     }
 
+    /**
+     * @param list<AuditIssue> $issues
+     *
+     * @return array<int, int>
+     */
+    private function pageIssueCounts(array $issues): array
+    {
+        $pageIssueCounts = [];
+
+        foreach ($issues as $issue) {
+            $page = $issue->getAuditPage();
+            if ($page instanceof AuditPage) {
+                $pageIssueCounts[spl_object_id($page)] = ($pageIssueCounts[spl_object_id($page)] ?? 0) + 1;
+            }
+        }
+
+        return $pageIssueCounts;
+    }
+
     /** @param array<string, int> $counts */
     private function chartRows(array $counts): array
     {
@@ -290,6 +328,14 @@ final class AuditInsightsBuilder
                 'model' => null,
                 'summary' => null,
                 'recommendations' => [],
+                'keyword_analysis' => [],
+                'technical_seo' => [],
+                'on_page_seo' => [],
+                'content_strategy' => [],
+                'geo_analysis' => [],
+                'serp_features' => [],
+                'priority_matrix' => [],
+                'action_plan_30_60_90' => [],
             ];
         }
 
@@ -301,6 +347,16 @@ final class AuditInsightsBuilder
         $value['short_answer_blocks'] = is_array($value['short_answer_blocks'] ?? null) ? $value['short_answer_blocks'] : [];
         $value['content_opportunities'] = is_array($value['content_opportunities'] ?? null) ? $value['content_opportunities'] : [];
         $value['technical_risks'] = is_array($value['technical_risks'] ?? null) ? $value['technical_risks'] : [];
+        $value['executive_summary'] = is_array($value['executive_summary'] ?? null) ? $value['executive_summary'] : [];
+        $value['audience_and_intent'] = is_array($value['audience_and_intent'] ?? null) ? $value['audience_and_intent'] : [];
+        $value['keyword_analysis'] = is_array($value['keyword_analysis'] ?? null) ? $value['keyword_analysis'] : [];
+        $value['technical_seo'] = is_array($value['technical_seo'] ?? null) ? $value['technical_seo'] : [];
+        $value['on_page_seo'] = is_array($value['on_page_seo'] ?? null) ? $value['on_page_seo'] : [];
+        $value['content_strategy'] = is_array($value['content_strategy'] ?? null) ? $value['content_strategy'] : [];
+        $value['geo_analysis'] = is_array($value['geo_analysis'] ?? null) ? $value['geo_analysis'] : [];
+        $value['serp_features'] = is_array($value['serp_features'] ?? null) ? $value['serp_features'] : [];
+        $value['priority_matrix'] = is_array($value['priority_matrix'] ?? null) ? $value['priority_matrix'] : [];
+        $value['action_plan_30_60_90'] = is_array($value['action_plan_30_60_90'] ?? null) ? $value['action_plan_30_60_90'] : [];
 
         return $value;
     }
@@ -308,13 +364,18 @@ final class AuditInsightsBuilder
     /** @return array<string, mixed> */
     private function pagePayload(AuditPage $page): array
     {
+        $metadata = $page->getMetadata() ?? [];
+
         return [
             'url' => $page->getUrl(),
             'status_code' => $page->getStatusCode(),
             'content_type' => $page->getContentType(),
             'title' => $page->getTitle(),
+            'title_length' => $metadata['title_length'] ?? (null === $page->getTitle() ? 0 : strlen($page->getTitle())),
             'meta_description' => $page->getMetaDescription(),
+            'meta_description_length' => $metadata['meta_description_length'] ?? (null === $page->getMetaDescription() ? 0 : strlen($page->getMetaDescription())),
             'h1' => $page->getH1(),
+            'headings' => $metadata['headings'] ?? [],
             'canonical_url' => $page->getCanonicalUrl(),
             'robots_meta' => $page->getRobotsMeta(),
             'word_count' => $page->getWordCount(),
@@ -324,7 +385,40 @@ final class AuditInsightsBuilder
             'load_time_ms' => $page->getLoadTimeMs(),
             'indexable' => $page->isIndexable(),
             'structured_data' => $page->hasStructuredData(),
+            'structured_data_types' => $metadata['structured_data_types'] ?? [],
+            'language' => $metadata['language'] ?? null,
+            'viewport_meta_present' => $metadata['viewport_meta_present'] ?? null,
+            'image_count' => $metadata['image_count'] ?? null,
+            'paragraph_count' => $metadata['paragraph_count'] ?? null,
+            'list_count' => $metadata['list_count'] ?? null,
+            'open_graph' => $metadata['open_graph'] ?? [],
+            'twitter' => $metadata['twitter'] ?? [],
+            'top_terms' => $metadata['top_terms'] ?? [],
+            'body_excerpt' => $metadata['body_excerpt'] ?? null,
+            'html_size_bytes' => $metadata['html_size_bytes'] ?? null,
             'error' => $page->getErrorMessage(),
+        ];
+    }
+
+    private function compactPagePayload(AuditPage $page, int $issueCount): array
+    {
+        $metadata = $page->getMetadata() ?? [];
+
+        return [
+            'url' => $page->getUrl(),
+            'status_code' => $page->getStatusCode(),
+            'issue_count' => $issueCount,
+            'title' => $page->getTitle(),
+            'title_length' => $metadata['title_length'] ?? (null === $page->getTitle() ? 0 : strlen($page->getTitle())),
+            'meta_description_length' => $metadata['meta_description_length'] ?? (null === $page->getMetaDescription() ? 0 : strlen($page->getMetaDescription())),
+            'h1' => $page->getH1(),
+            'word_count' => $page->getWordCount(),
+            'indexable' => $page->isIndexable(),
+            'canonical_url' => $page->getCanonicalUrl(),
+            'load_time_ms' => $page->getLoadTimeMs(),
+            'images_without_alt' => $page->getImagesWithoutAltCount(),
+            'structured_data_types' => $metadata['structured_data_types'] ?? [],
+            'top_terms' => array_slice(is_array($metadata['top_terms'] ?? null) ? $metadata['top_terms'] : [], 0, 8),
         ];
     }
 
@@ -339,6 +433,173 @@ final class AuditInsightsBuilder
             'recommendation' => $issue->getRecommendation(),
             'url' => $issue->getAuditPage()?->getUrl(),
         ];
+    }
+
+    /** @param list<AuditPage> $pages */
+    private function siteContentSignals(array $pages): array
+    {
+        $termCounts = [];
+        $titles = [];
+        $h1s = [];
+        $pagesWithBodyExcerpt = 0;
+
+        foreach ($pages as $page) {
+            $metadata = $page->getMetadata() ?? [];
+            if (null !== $page->getTitle()) {
+                $titles[] = $page->getTitle();
+            }
+
+            if (null !== $page->getH1()) {
+                array_push($h1s, ...array_filter(array_map('trim', explode("\n", $page->getH1()))));
+            }
+
+            if (is_string($metadata['body_excerpt'] ?? null) && '' !== $metadata['body_excerpt']) {
+                ++$pagesWithBodyExcerpt;
+            }
+
+            foreach (is_array($metadata['top_terms'] ?? null) ? $metadata['top_terms'] : [] as $term) {
+                if (!is_array($term) || !is_scalar($term['term'] ?? null) || !is_numeric($term['count'] ?? null)) {
+                    continue;
+                }
+
+                $keyword = strtolower((string) $term['term']);
+                $termCounts[$keyword] = ($termCounts[$keyword] ?? 0) + (int) $term['count'];
+            }
+        }
+
+        arsort($termCounts);
+
+        $aggregateTerms = [];
+        foreach (array_slice($termCounts, 0, 30, true) as $term => $count) {
+            $aggregateTerms[] = [
+                'term' => $term,
+                'count' => $count,
+            ];
+        }
+
+        return [
+            'unique_titles' => array_values(array_unique(array_slice($titles, 0, 40))),
+            'unique_h1s' => array_values(array_unique(array_slice($h1s, 0, 40))),
+            'aggregate_top_terms' => $aggregateTerms,
+            'pages_with_body_excerpt' => $pagesWithBodyExcerpt,
+            'body_excerpt_coverage' => $this->percent($pagesWithBodyExcerpt, max(1, count($pages))),
+        ];
+    }
+
+    /** @param list<AuditPage> $pages */
+    private function keywordEvidence(array $pages): array
+    {
+        $signals = $this->siteContentSignals($pages);
+        $keywords = [];
+
+        foreach (array_slice($signals['aggregate_top_terms'], 0, 20) as $termData) {
+            if (!is_array($termData) || !is_scalar($termData['term'] ?? null)) {
+                continue;
+            }
+
+            $term = (string) $termData['term'];
+            $placements = [
+                'url' => 0,
+                'title' => 0,
+                'meta_description' => 0,
+                'h1' => 0,
+                'body_excerpt' => 0,
+            ];
+            $examplePages = [];
+
+            foreach ($pages as $page) {
+                $metadata = $page->getMetadata() ?? [];
+                if ($this->containsTerm($page->getUrl(), $term)) {
+                    ++$placements['url'];
+                }
+
+                if ($this->containsTerm($page->getTitle(), $term)) {
+                    ++$placements['title'];
+                }
+
+                if ($this->containsTerm($page->getMetaDescription(), $term)) {
+                    ++$placements['meta_description'];
+                }
+
+                if ($this->containsTerm($page->getH1(), $term)) {
+                    ++$placements['h1'];
+                }
+
+                if ($this->containsTerm(is_string($metadata['body_excerpt'] ?? null) ? $metadata['body_excerpt'] : null, $term)) {
+                    ++$placements['body_excerpt'];
+                }
+
+                if (count($examplePages) < 5 && (
+                    $this->containsTerm($page->getTitle(), $term)
+                    || $this->containsTerm($page->getH1(), $term)
+                    || $this->containsTerm(is_string($metadata['body_excerpt'] ?? null) ? $metadata['body_excerpt'] : null, $term)
+                )) {
+                    $examplePages[] = $page->getUrl();
+                }
+            }
+
+            $keywords[] = [
+                'keyword_candidate' => $term,
+                'total_occurrences_in_stored_excerpts' => $termData['count'] ?? null,
+                'pages_observed' => count($examplePages),
+                'placements' => $placements,
+                'example_pages' => $examplePages,
+            ];
+        }
+
+        return [
+            'detected_keyword_candidates' => $keywords,
+            'evidence_limitations' => 'These candidates come from compact crawled excerpts and on-page metadata. They are not search-volume or rank-tracking data.',
+        ];
+    }
+
+    /** @param list<AuditPage> $pages */
+    private function duplicateMetadata(array $pages): array
+    {
+        return [
+            'titles' => $this->duplicatePageValues($pages, static fn (AuditPage $page): ?string => $page->getTitle()),
+            'meta_descriptions' => $this->duplicatePageValues($pages, static fn (AuditPage $page): ?string => $page->getMetaDescription()),
+            'h1s' => $this->duplicatePageValues($pages, static fn (AuditPage $page): ?string => $page->getH1()),
+        ];
+    }
+
+    /**
+     * @param list<AuditPage> $pages
+     *
+     * @return list<array{value: string, count: int, pages: list<string>}>
+     */
+    private function duplicatePageValues(array $pages, \Closure $valueAccessor): array
+    {
+        $values = [];
+
+        foreach ($pages as $page) {
+            $value = $valueAccessor($page);
+            if (!is_string($value) || '' === trim($value)) {
+                continue;
+            }
+
+            $key = strtolower(trim((string) preg_replace('/\s+/', ' ', $value)));
+            $values[$key]['value'] ??= trim($value);
+            $values[$key]['pages'][] = $page->getUrl();
+        }
+
+        $duplicates = [];
+        foreach ($values as $value) {
+            $pagesForValue = array_values(array_unique($value['pages']));
+            if (count($pagesForValue) < 2) {
+                continue;
+            }
+
+            $duplicates[] = [
+                'value' => $value['value'],
+                'count' => count($pagesForValue),
+                'pages' => array_slice($pagesForValue, 0, 8),
+            ];
+        }
+
+        usort($duplicates, static fn (array $left, array $right): int => $right['count'] <=> $left['count']);
+
+        return array_slice($duplicates, 0, 12);
     }
 
     private function categoryForIssue(string $issueType): string
@@ -381,6 +642,18 @@ final class AuditInsightsBuilder
     private function percent(int $value, int $total): int
     {
         return max(0, min(100, (int) round(($value / max(1, $total)) * 100)));
+    }
+
+    private function containsTerm(?string $text, string $term): bool
+    {
+        if (null === $text || '' === $text) {
+            return false;
+        }
+
+        $text = function_exists('mb_strtolower') ? mb_strtolower($text, 'UTF-8') : strtolower($text);
+        $term = function_exists('mb_strtolower') ? mb_strtolower($term, 'UTF-8') : strtolower($term);
+
+        return str_contains($text, $term);
     }
 
     private function scoreLabel(?int $score): string
