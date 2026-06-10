@@ -95,6 +95,10 @@ class AuditPage
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $errorMessage = null;
 
+    /** @var array<string, mixed>|null */
+    #[ORM\Column(type: Types::JSON, nullable: true, options: ['jsonb' => true])]
+    private ?array $metadata = null;
+
     /** @var Collection<int, AuditIssue> */
     #[ORM\OneToMany(mappedBy: 'auditPage', targetEntity: AuditIssue::class)]
     private Collection $issues;
@@ -354,6 +358,20 @@ class AuditPage
     public function setErrorMessage(?string $errorMessage): static
     {
         $this->errorMessage = $errorMessage;
+
+        return $this;
+    }
+
+    /** @return array<string, mixed>|null */
+    public function getMetadata(): ?array
+    {
+        return $this->metadata;
+    }
+
+    /** @param array<string, mixed>|null $metadata */
+    public function setMetadata(?array $metadata): static
+    {
+        $this->metadata = $metadata;
 
         return $this;
     }

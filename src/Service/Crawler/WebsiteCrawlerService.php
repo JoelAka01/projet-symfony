@@ -222,7 +222,8 @@ final class WebsiteCrawlerService
             ->setExternalLinksCount(count($result->externalLinks))
             ->setImagesWithoutAltCount($result->imagesWithoutAltCount)
             ->setStructuredDataPresent($result->hasStructuredData)
-            ->setIsIndexable(null === $result->robotsMeta || !str_contains(strtolower($result->robotsMeta), 'noindex'));
+            ->setIsIndexable(null === $result->robotsMeta || !str_contains(strtolower($result->robotsMeta), 'noindex'))
+            ->setMetadata($result->metadata);
     }
 
     /**
