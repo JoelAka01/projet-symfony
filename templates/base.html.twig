@@ -28,7 +28,7 @@
             </nav>
         </header>
 
-        <main class="page">
+        <main class="{% block main_class %}page{% endblock %}">
             <div class="flash-stack" aria-live="polite">
                 {% for label, messages in app.flashes %}
                     {% for message in messages %}
