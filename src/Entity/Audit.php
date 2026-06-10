@@ -22,7 +22,7 @@ use Symfony\Component\Validator\Constraints as Assert;
     operations: [
         new GetCollection(),
         new Get(),
-    ]
+    ],
 )]
 #[ORM\Entity(repositoryClass: AuditRepository::class)]
 #[ORM\Table(name: 'audits')]

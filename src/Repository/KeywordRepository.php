@@ -27,12 +27,12 @@ class KeywordRepository extends ServiceEntityRepository
             ->setParameter('project', $project)
             ->orderBy('keyword.searchVolume', 'DESC');
 
-        if ($term !== null && trim($term) !== '') {
+        if (null !== $term && '' !== trim($term)) {
             $qb->andWhere('LOWER(keyword.term) LIKE :term')
-                ->setParameter('term', '%'.mb_strtolower(trim($term)).'%');
+                ->setParameter('term', '%' . mb_strtolower(trim($term)) . '%');
         }
 
-        if ($intent !== null && trim($intent) !== '') {
+        if (null !== $intent && '' !== trim($intent)) {
             $qb->andWhere('keyword.intent = :intent')
                 ->setParameter('intent', $intent);
         }

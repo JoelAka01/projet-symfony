@@ -21,9 +21,7 @@ final class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
 {
     use TargetPathTrait;
 
-    public function __construct(private readonly UrlGeneratorInterface $urlGenerator)
-    {
-    }
+    public function __construct(private readonly UrlGeneratorInterface $urlGenerator) {}
 
     public function authenticate(Request $request): Passport
     {
@@ -36,7 +34,7 @@ final class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
             new PasswordCredentials((string) $request->request->get('password', '')),
             [
                 new CsrfTokenBadge('authenticate', (string) $request->request->get('_csrf_token', '')),
-            ]
+            ],
         );
     }
 

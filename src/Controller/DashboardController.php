@@ -19,8 +19,7 @@ final class DashboardController extends AbstractController
     public function index(
         ProjectRepository $projectRepository,
         AuthorizationCheckerInterface $authorizationChecker,
-    ): Response
-    {
+    ): Response {
         $user = $this->getUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
@@ -28,7 +27,7 @@ final class DashboardController extends AbstractController
 
         $projects = array_values(array_filter(
             $projectRepository->findDashboardProjectsForUser($user),
-            fn (Project $project): bool => $authorizationChecker->isGranted(ProjectVoter::VIEW, $project),
+            fn(Project $project): bool => $authorizationChecker->isGranted(ProjectVoter::VIEW, $project),
         ));
 
         return $this->render('dashboard/index.html.twig', [

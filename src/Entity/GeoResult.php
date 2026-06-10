@@ -20,7 +20,7 @@ use Symfony\Component\Validator\Constraints as Assert;
     operations: [
         new GetCollection(),
         new Get(),
-    ]
+    ],
 )]
 #[ORM\Entity(repositoryClass: GeoResultRepository::class)]
 #[ORM\Table(name: 'geo_results')]

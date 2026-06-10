@@ -65,7 +65,7 @@ final class CrawlerUrlNormalizer
         }
 
         if (!preg_match('#^[a-z][a-z0-9+.-]*://#i', $candidate)) {
-            $candidate = 'https://'.$candidate;
+            $candidate = 'https://' . $candidate;
         }
 
         return $this->normalizeAbsoluteUrl($candidate, null, true);
@@ -119,20 +119,20 @@ final class CrawlerUrlNormalizer
         }
 
         if (str_starts_with($url, '//')) {
-            return strtolower((string) $baseParts['scheme']).':'.$url;
+            return strtolower((string) $baseParts['scheme']) . ':' . $url;
         }
 
         if (preg_match('#^[a-z][a-z0-9+.-]*:#i', $url)) {
             return $url;
         }
 
-        $authority = strtolower((string) $baseParts['scheme']).'://'.$baseParts['host'];
+        $authority = strtolower((string) $baseParts['scheme']) . '://' . $baseParts['host'];
         if (isset($baseParts['port'])) {
-            $authority .= ':'.$baseParts['port'];
+            $authority .= ':' . $baseParts['port'];
         }
 
         if (str_starts_with($url, '/')) {
-            return $authority.$url;
+            return $authority . $url;
         }
 
         $basePath = $baseParts['path'] ?? '/';
@@ -141,7 +141,7 @@ final class CrawlerUrlNormalizer
             $baseDir = '/';
         }
 
-        return $authority.$baseDir.$url;
+        return $authority . $baseDir . $url;
     }
 
     private function normalizeAbsoluteUrl(string $url, ?string $requiredHostname, bool $filterNonHtmlAssets): ?string
@@ -181,12 +181,12 @@ final class CrawlerUrlNormalizer
         $port = $parts['port'] ?? null;
         $authority = $host;
         if (is_int($port) && !$this->isDefaultPort($scheme, $port)) {
-            $authority .= ':'.$port;
+            $authority .= ':' . $port;
         }
 
-        $normalizedUrl = $scheme.'://'.$authority.$this->normalizePath($path);
+        $normalizedUrl = $scheme . '://' . $authority . $this->normalizePath($path);
         if (isset($parts['query']) && '' !== $parts['query']) {
-            $normalizedUrl .= '?'.$parts['query'];
+            $normalizedUrl .= '?' . $parts['query'];
         }
 
         if (strlen($normalizedUrl) > 1000) {
@@ -253,7 +253,7 @@ final class CrawlerUrlNormalizer
             $normalizedSegments[] = $segment;
         }
 
-        $normalizedPath = '/'.implode('/', $normalizedSegments);
+        $normalizedPath = '/' . implode('/', $normalizedSegments);
         if ('/' !== $normalizedPath && str_ends_with($path, '/')) {
             $normalizedPath .= '/';
         }
