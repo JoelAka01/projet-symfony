@@ -9,12 +9,22 @@ services:
       - composer_cache:/tmp/composer
     environment:
       APP_ENV: dev
+      APP_DEBUG: 0
       APP_SECRET: change-me-in-env-local
+      APP_CACHE_DIR: /tmp/symfony-cache
       DEFAULT_URI: http://localhost:8080
       DATABASE_URL: postgresql://app:app@database:5432/app?serverVersion=16&charset=utf8
+      MESSENGER_TRANSPORT_DSN: doctrine://default?auto_setup=1
       MAILER_DSN: smtp://mailpit:1025
       MAILER_FROM_EMAIL: ${MAILER_FROM_EMAIL:-no-reply@seo-geo-ai.local}
       MAILER_FROM_NAME: ${MAILER_FROM_NAME:-SEO GEO AI}
+      CRAWLER_MAX_PAGES: ${CRAWLER_MAX_PAGES:-30}
+      CRAWLER_MAX_DEPTH: ${CRAWLER_MAX_DEPTH:-2}
+      CRAWLER_TIMEOUT_SECONDS: ${CRAWLER_TIMEOUT_SECONDS:-10}
+      CRAWLER_DELAY_MS: ${CRAWLER_DELAY_MS:-250}
+      CLAUDE_API_KEY: ${CLAUDE_API_KEY:-}
+      CLAUDE_MODEL: ${CLAUDE_MODEL:-claude-haiku-4-5-20251001}
+      CLAUDE_API_BASE_URL: ${CLAUDE_API_BASE_URL:-https://api.anthropic.com}
     depends_on:
       database:
         condition: service_healthy
@@ -23,6 +33,39 @@ services:
     ports:
       - "8080:8000"
     command: ["sh", "docker/entrypoint.sh"]
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html:rw
+      - composer_cache:/tmp/composer
+    environment:
+      APP_ENV: dev
+      APP_DEBUG: 0
+      APP_SECRET: change-me-in-env-local
+      APP_CACHE_DIR: /tmp/symfony-cache
+      DEFAULT_URI: http://localhost:8080
+      DATABASE_URL: postgresql://app:app@database:5432/app?serverVersion=16&charset=utf8
+      MESSENGER_TRANSPORT_DSN: doctrine://default?auto_setup=1
+      MAILER_DSN: smtp://mailpit:1025
+      MAILER_FROM_EMAIL: ${MAILER_FROM_EMAIL:-no-reply@seo-geo-ai.local}
+      MAILER_FROM_NAME: ${MAILER_FROM_NAME:-SEO GEO AI}
+      CRAWLER_MAX_PAGES: ${CRAWLER_MAX_PAGES:-30}
+      CRAWLER_MAX_DEPTH: ${CRAWLER_MAX_DEPTH:-2}
+      CRAWLER_TIMEOUT_SECONDS: ${CRAWLER_TIMEOUT_SECONDS:-10}
+      CRAWLER_DELAY_MS: ${CRAWLER_DELAY_MS:-250}
+      CLAUDE_API_KEY: ${CLAUDE_API_KEY:-}
+      CLAUDE_MODEL: ${CLAUDE_MODEL:-claude-haiku-4-5-20251001}
+      CLAUDE_API_BASE_URL: ${CLAUDE_API_BASE_URL:-https://api.anthropic.com}
+    depends_on:
+      database:
+        condition: service_healthy
+      php:
+        condition: service_started
+    command: ["sh", "docker/worker-entrypoint.sh"]
 
   database:
     image: postgres:16-alpine
