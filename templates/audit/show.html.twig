@@ -239,6 +239,285 @@
     </section>
 
     {% if aiCompleted %}
+        {% set executive = ai.executive_summary|default({}) %}
+        {% set audience = ai.audience_and_intent|default({}) %}
+        {% set keyword = ai.keyword_analysis|default({}) %}
+        {% set technical = ai.technical_seo|default({}) %}
+        {% set onpage = ai.on_page_seo|default({}) %}
+        {% set contentStrategy = ai.content_strategy|default({}) %}
+        {% set geo = ai.geo_analysis|default({}) %}
+        {% set serp = ai.serp_features|default({}) %}
+        {% set priorityMatrix = ai.priority_matrix|default({}) %}
+        {% set actionPlan = ai.action_plan_30_60_90|default({}) %}
+
+        <section class="panel full-panel">
+            <h2>Executive SEO verdict</h2>
+            <div class="ai-summary">
+                <p>{{ executive.one_liner|default(ai.summary) }}</p>
+                {% if ai.score_rationale %}
+                    <p class="muted">{{ ai.score_rationale }}</p>
+                {% endif %}
+                <dl class="fact-grid compact">
+                    <div>
+                        <dt>Verdict</dt>
+                        <dd>{{ executive.verdict|default('n/a')|replace({'_': ' '})|title }}</dd>
+                    </div>
+                    <div>
+                        <dt>Traffic potential</dt>
+                        <dd>{{ executive.estimated_traffic_potential|default('n/a')|replace({'_': ' '})|title }}</dd>
+                    </div>
+                    <div>
+                        <dt>Competitive difficulty</dt>
+                        <dd>{{ executive.competitive_difficulty|default('n/a')|title }}</dd>
+                    </div>
+                    <div>
+                        <dt>On-page score</dt>
+                        <dd>{{ ai.onpage_score ?? 'n/a' }}</dd>
+                    </div>
+                    <div>
+                        <dt>UX score</dt>
+                        <dd>{{ ai.ux_score ?? 'n/a' }}</dd>
+                    </div>
+                    <div>
+                        <dt>Audience</dt>
+                        <dd>{{ audience.primary_audience|default(ai.target_audience|default('n/a')) }}</dd>
+                    </div>
+                </dl>
+            </div>
+
+            <div class="split-grid">
+                <article>
+                    <h3>Top blockers</h3>
+                    {% if executive.top_3_blockers|default([]) is empty %}
+                        <p class="muted">Claude did not return top blockers.</p>
+                    {% else %}
+                        <ul class="plain-list">
+                            {% for blocker in executive.top_3_blockers %}
+                                <li>{{ blocker }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </article>
+                <article>
+                    <h3>Quick wins</h3>
+                    {% if executive.top_3_quick_wins|default([]) is empty %}
+                        <p class="muted">Claude did not return quick wins.</p>
+                    {% else %}
+                        <ul class="plain-list">
+                            {% for quickWin in executive.top_3_quick_wins %}
+                                <li>{{ quickWin }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </article>
+            </div>
+        </section>
+
+        <section class="panel full-panel">
+            <h2>Keyword analysis</h2>
+            <dl class="fact-grid">
+                <div>
+                    <dt>Primary topic</dt>
+                    <dd>{{ keyword.primary_topic|default('n/a') }}</dd>
+                </div>
+                <div>
+                    <dt>Search intent</dt>
+                    <dd>{{ audience.search_intent|default(ai.search_intent|default('n/a'))|replace({'_': ' '})|title }}</dd>
+                </div>
+                <div>
+                    <dt>Journey stage</dt>
+                    <dd>{{ audience.buyer_journey_stage|default('n/a')|replace({'_': ' '})|title }}</dd>
+                </div>
+                <div>
+                    <dt>URL keyword fit</dt>
+                    <dd>{{ keyword.url_keyword_assessment|default('n/a') }}</dd>
+                </div>
+            </dl>
+
+            {% if keyword.detected_target_keywords|default([]) is not empty %}
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Keyword</th>
+                                <th>Intent</th>
+                                <th>Placement</th>
+                                <th>Density</th>
+                                <th>Evidence</th>
+                                <th>Recommendation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for term in keyword.detected_target_keywords %}
+                                <tr>
+                                    <td><strong>{{ term.keyword|default('n/a') }}</strong></td>
+                                    <td>{{ term.intent|default('uncertain')|title }}</td>
+                                    <td>{{ term.placement|default([]) is iterable ? term.placement|join(', ') : term.placement|default('n/a') }}</td>
+                                    <td>{{ term.density_assessment|default('n/a')|replace({'_': ' '}) }}</td>
+                                    <td>{{ term.evidence|default('n/a') }}</td>
+                                    <td>{{ term.recommendation|default('n/a') }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+
+            <div class="split-grid">
+                <article>
+                    <h3>Semantic gaps</h3>
+                    <ul class="plain-list">
+                        {% for missingKeyword in keyword.missing_semantic_keywords|default([]) %}
+                            <li>{{ missingKeyword }}</li>
+                        {% else %}
+                            <li class="muted">No semantic gaps returned.</li>
+                        {% endfor %}
+                    </ul>
+                </article>
+                <article>
+                    <h3>Long-tail opportunities</h3>
+                    <ul class="plain-list">
+                        {% for opportunity in keyword.long_tail_opportunities|default([]) %}
+                            <li>{{ opportunity }}</li>
+                        {% else %}
+                            <li class="muted">No long-tail opportunities returned.</li>
+                        {% endfor %}
+                    </ul>
+                </article>
+            </div>
+
+            {% if keyword.topic_clusters|default([]) is not empty %}
+                <div class="insight-grid">
+                    {% for cluster in keyword.topic_clusters %}
+                        <article class="insight-card">
+                            <h3>{{ cluster.pillar_topic|default('Topic cluster') }}</h3>
+                            <p><strong>Supporting topics:</strong> {{ cluster.supporting_topics|default([])|join(', ') }}</p>
+                            <p class="muted">{{ cluster.gap|default('No gap explanation returned.') }}</p>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </section>
+
+        <section class="analytics-grid">
+            {% set indexability = technical.indexability|default({}) %}
+            {% set crawlability = technical.crawlability|default({}) %}
+            {% set speed = technical.page_speed_signals|default({}) %}
+            {% set mobile = technical.mobile_seo|default({}) %}
+            <article class="panel">
+                <h2>Technical SEO</h2>
+                <dl class="suggestions">
+                    <dt>Indexability</dt>
+                    <dd>{{ indexability.status|default('uncertain')|replace({'_': ' '})|title }} - {{ indexability.canonical_analysis|default('No canonical analysis returned.') }}</dd>
+                    <dt>Crawlability</dt>
+                    <dd>{{ crawlability.crawl_depth_assessment|default('No crawl-depth assessment returned.') }}</dd>
+                    <dt>Core Web Vitals risk</dt>
+                    <dd>LCP {{ speed.estimated_lcp_risk|default('uncertain') }}, CLS {{ speed.estimated_cls_risk|default('uncertain') }}</dd>
+                    <dt>Mobile</dt>
+                    <dd>{{ mobile.responsive_signals|default('Viewport and responsive signals not interpreted.') }}</dd>
+                </dl>
+            </article>
+
+            {% set titleTag = onpage.title_tag|default({}) %}
+            {% set metaTag = onpage.meta_description|default({}) %}
+            {% set heading = onpage.heading_structure|default({}) %}
+            {% set content = onpage.content_analysis|default({}) %}
+            <article class="panel">
+                <h2>On-page SEO</h2>
+                <dl class="suggestions">
+                    <dt>Title pattern</dt>
+                    <dd>{{ titleTag.suggested_pattern|default(ai.suggested_title|default('No title pattern returned.')) }}</dd>
+                    <dt>Meta pattern</dt>
+                    <dd>{{ metaTag.suggested_pattern|default(ai.suggested_meta_description|default('No meta pattern returned.')) }}</dd>
+                    <dt>Heading structure</dt>
+                    <dd>{{ heading.sitewide_assessment|default('No heading assessment returned.') }}</dd>
+                    <dt>Content depth</dt>
+                    <dd>{{ content.word_count_assessment|default('n/a')|replace({'_': ' '}) }}{% if content.min_recommended_words|default(null) %} - target at least {{ content.min_recommended_words }} words where intent requires depth{% endif %}</dd>
+                </dl>
+            </article>
+        </section>
+
+        <section class="analytics-grid">
+            {% set eeat = contentStrategy.e_e_a_t_signals|default({}) %}
+            <article class="panel">
+                <h2>Content strategy and E-E-A-T</h2>
+                <dl class="suggestions">
+                    <dt>E-E-A-T score</dt>
+                    <dd>{{ eeat.eeat_score|default('insufficient_data')|replace({'_': ' '})|title }}</dd>
+                    <dt>Improvements</dt>
+                    <dd>
+                        <ul class="plain-list">
+                            {% for improvement in eeat.improvements|default([])|slice(0, 5) %}
+                                <li>{{ improvement }}</li>
+                            {% else %}
+                                <li class="muted">No E-E-A-T improvements returned.</li>
+                            {% endfor %}
+                        </ul>
+                    </dd>
+                    <dt>Missing sections</dt>
+                    <dd>
+                        <ul class="plain-list">
+                            {% for section in content.missing_content_sections|default([])|slice(0, 5) %}
+                                <li>{{ section }}</li>
+                            {% else %}
+                                <li class="muted">No missing sections returned.</li>
+                            {% endfor %}
+                        </ul>
+                    </dd>
+                </dl>
+            </article>
+
+            {% set entityCoverage = geo.entity_coverage|default({}) %}
+            <article class="panel">
+                <h2>GEO and answer engines</h2>
+                <dl class="suggestions">
+                    <dt>Readiness</dt>
+                    <dd>{{ geo.answer_engine_readiness|default('n/a')|replace({'_': ' '})|title }} - {{ geo.citation_rationale|default('No citation rationale returned.') }}</dd>
+                    <dt>Conversational query fit</dt>
+                    <dd>{{ geo.conversational_query_alignment|default('n/a') }}</dd>
+                    <dt>Entities detected</dt>
+                    <dd>{{ entityCoverage.entities_detected|default(ai.entities|default([]))|join(', ')|default('n/a') }}</dd>
+                    <dt>Missing entities</dt>
+                    <dd>{{ entityCoverage.missing_entities|default([])|join(', ')|default('n/a') }}</dd>
+                </dl>
+            </article>
+        </section>
+
+        <section class="analytics-grid">
+            <article class="panel">
+                <h2>FAQ and short answers</h2>
+                {% set structuredAnswers = geo.structured_answer_blocks|default(ai.short_answer_blocks|default([])) %}
+                {% if structuredAnswers is empty and ai.faq_suggestions is empty and contentStrategy.faq_suggestions|default([]) is empty %}
+                    <p class="muted">Claude did not return FAQ or short answer blocks.</p>
+                {% else %}
+                    <ul class="plain-list">
+                        {% for block in structuredAnswers|slice(0, 4) %}
+                            <li><strong>{{ block.question }}</strong><br>{{ block.answer }}</li>
+                        {% endfor %}
+                        {% for faq in ai.faq_suggestions|merge(contentStrategy.faq_suggestions|default([]))|slice(0, 4) %}
+                            <li><strong>{{ faq.question }}</strong><br>{{ faq.answer }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </article>
+
+            <article class="panel">
+                <h2>SERP opportunities</h2>
+                {% if serp.optimization_needed|default([]) is empty and contentStrategy.featured_snippet_opportunities|default([]) is empty %}
+                    <p class="muted">Claude did not return SERP opportunities.</p>
+                {% else %}
+                    <ul class="plain-list">
+                        {% for item in serp.optimization_needed|default([])|slice(0, 4) %}
+                            <li><strong>{{ item.feature|default('SERP feature')|replace({'_': ' '})|title }}</strong><br>{{ item.current_gap|default('n/a') }}<br><span class="muted">{{ item.action|default('n/a') }}</span></li>
+                        {% endfor %}
+                        {% for item in contentStrategy.featured_snippet_opportunities|default([])|slice(0, 4) %}
+                            <li><strong>{{ item.query|default('Featured snippet') }}</strong><br>{{ item.current_gap|default('n/a') }}<br><span class="muted">{{ item.action|default('n/a') }}</span></li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </article>
+        </section>
+
         <section class="panel full-panel">
             <h2>Prioritized recommendations</h2>
             {% if ai.recommendations is empty %}
@@ -248,17 +527,18 @@
                     <table>
                         <thead>
                             <tr>
+                                <th>ID</th>
                                 <th>Priority</th>
                                 <th>Category</th>
-                                <th>Problem</th>
-                                <th>Evidence</th>
+                                <th>Problem and evidence</th>
                                 <th>Recommended fix</th>
-                                <th>Effort</th>
+                                <th>Impact / effort</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for recommendation in ai.recommendations %}
                                 <tr>
+                                    <td>{{ recommendation.id|default(loop.index) }}</td>
                                     <td><span class="pill priority-{{ recommendation.priority|default('medium')|lower }}">{{ recommendation.priority|default('medium')|title }}</span></td>
                                     <td>{{ recommendation.category|default('seo')|replace({'_': ' '})|title }}</td>
                                     <td>
@@ -266,15 +546,35 @@
                                         {% if recommendation.problem %}
                                             <br>{{ recommendation.problem }}
                                         {% endif %}
-                                    </td>
-                                    <td>{{ recommendation.evidence ?? 'n/a' }}</td>
-                                    <td>
-                                        {{ recommendation.action ?? 'n/a' }}
-                                        {% if recommendation.expected_impact %}
-                                            <br><span class="muted">Impact: {{ recommendation.expected_impact }}</span>
+                                        {% if recommendation.evidence %}
+                                            <br><span class="muted">Evidence: {{ recommendation.evidence }}</span>
+                                        {% endif %}
+                                        {% if recommendation.why_it_matters %}
+                                            <br><span class="muted">Why it matters: {{ recommendation.why_it_matters }}</span>
                                         {% endif %}
                                     </td>
-                                    <td>{{ recommendation.effort ?? 'n/a' }}</td>
+                                    <td>
+                                        {{ recommendation.action ?? 'n/a' }}
+                                        {% if recommendation.before_example or recommendation.after_example %}
+                                            <div class="example-grid">
+                                                <div>
+                                                    <span>Before</span>
+                                                    <code>{{ recommendation.before_example ?? 'n/a' }}</code>
+                                                </div>
+                                                <div>
+                                                    <span>After</span>
+                                                    <code>{{ recommendation.after_example ?? 'n/a' }}</code>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {{ recommendation.expected_impact ?? 'n/a' }}
+                                        <br><span class="muted">Effort: {{ recommendation.effort ?? 'n/a' }}</span>
+                                        {% if recommendation.time_estimate %}
+                                            <br><span class="muted">Time: {{ recommendation.time_estimate }}</span>
+                                        {% endif %}
+                                    </td>
                                 </tr>
                             {% endfor %}
                         </tbody>
@@ -285,28 +585,28 @@
 
         <section class="analytics-grid">
             <article class="panel">
-                <h2>Title and meta suggestions</h2>
+                <h2>Priority matrix</h2>
                 <dl class="suggestions">
-                    <dt>Suggested title</dt>
-                    <dd>{{ ai.suggested_title ?? 'No title suggestion returned.' }}</dd>
-                    <dt>Suggested meta description</dt>
-                    <dd>{{ ai.suggested_meta_description ?? 'No meta description suggestion returned.' }}</dd>
+                    <dt>Do now</dt>
+                    <dd>{{ priorityMatrix.critical_do_now|default([])|join(', ')|default('n/a') }}</dd>
+                    <dt>This week</dt>
+                    <dd>{{ priorityMatrix.high_this_week|default([])|join(', ')|default('n/a') }}</dd>
+                    <dt>This month</dt>
+                    <dd>{{ priorityMatrix.medium_this_month|default([])|join(', ')|default('n/a') }}</dd>
+                    <dt>Backlog</dt>
+                    <dd>{{ priorityMatrix.low_backlog|default([])|join(', ')|default('n/a') }}</dd>
                 </dl>
             </article>
             <article class="panel">
-                <h2>GEO opportunities</h2>
-                {% if ai.short_answer_blocks is empty and ai.faq_suggestions is empty %}
-                    <p class="muted">Claude did not return FAQ or short answer blocks.</p>
-                {% else %}
-                    <ul class="plain-list">
-                        {% for block in ai.short_answer_blocks|slice(0, 3) %}
-                            <li><strong>{{ block.question }}</strong><br>{{ block.answer }}</li>
-                        {% endfor %}
-                        {% for faq in ai.faq_suggestions|slice(0, 3) %}
-                            <li><strong>{{ faq.question }}</strong><br>{{ faq.answer }}</li>
-                        {% endfor %}
-                    </ul>
-                {% endif %}
+                <h2>30 / 60 / 90 plan</h2>
+                <dl class="suggestions">
+                    <dt>30 days</dt>
+                    <dd>{{ actionPlan.day_30|default([])|join(' ')|default('n/a') }}</dd>
+                    <dt>60 days</dt>
+                    <dd>{{ actionPlan.day_60|default([])|join(' ')|default('n/a') }}</dd>
+                    <dt>90 days</dt>
+                    <dd>{{ actionPlan.day_90|default([])|join(' ')|default('n/a') }}</dd>
+                </dl>
             </article>
         </section>
     {% endif %}
