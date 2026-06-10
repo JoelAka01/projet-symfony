@@ -5,18 +5,22 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\Audit;
+use App\Entity\AuditIssue;
 use App\Entity\Domain;
 use App\Entity\Project;
 use App\Entity\User;
+use App\Enum\AuditStatus;
 use App\Enum\ProjectStatus;
 use App\Exception\InvalidWebsiteUrlException;
 use App\Form\ProjectType;
+use App\Message\RunClaudeAnalysisMessage;
 use App\Message\RunWebsiteAuditMessage;
 use App\Repository\ProjectRepository;
 use App\Security\Voter\ProjectVoter;
 use App\Service\Audit\AuditInsightsBuilder;
 use App\Service\Audit\WebsiteAuditRunner;
 use App\Service\Project\ProjectManager;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -28,6 +32,8 @@ use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
 final class ProjectController extends AbstractController
 {
+    private const ISSUE_SEVERITIES = ['critical', 'high', 'medium', 'low', 'info'];
+
     #[Route('/projects', name: 'app_project_index', methods: ['GET'])]
     public function index(
         ProjectRepository $projectRepository,
@@ -196,26 +202,108 @@ final class ProjectController extends AbstractController
 
         $this->denyAccessUnlessGranted(ProjectVoter::VIEW, $project);
 
-        $issuesBySeverity = [
-            'critical' => [],
-            'high' => [],
-            'medium' => [],
-            'low' => [],
-            'info' => [],
-        ];
-
-        foreach ($audit->getIssues() as $issue) {
-            $severity = strtolower((string) $issue->getSeverity());
-            $issuesBySeverity[$severity] ??= [];
-            $issuesBySeverity[$severity][] = $issue;
-        }
-
         return $this->render('audit/show.html.twig', [
             'audit' => $audit,
             'project' => $project,
-            'issuesBySeverity' => $issuesBySeverity,
+            'issueGroupsBySeverity' => $this->groupIssuesBySeverityAndType($audit),
             'insights' => $insightsBuilder->build($audit),
         ]);
     }
 
+    #[Route('/audits/{id}/ai/retry', name: 'app_audit_ai_retry', methods: ['POST'])]
+    public function retryAuditAi(
+        Audit $audit,
+        Request $request,
+        EntityManagerInterface $entityManager,
+        MessageBusInterface $messageBus,
+    ): RedirectResponse {
+        $project = $audit->getProject();
+        if (null === $project) {
+            throw $this->createNotFoundException('Audit project not found.');
+        }
+
+        $this->denyAccessUnlessGranted(ProjectVoter::LAUNCH_AUDIT, $project);
+
+        if (!$this->isCsrfTokenValid('retry_ai_'.$audit->getId(), (string) $request->request->get('_token', ''))) {
+            throw $this->createAccessDeniedException('Invalid Claude retry CSRF token.');
+        }
+
+        if (AuditStatus::COMPLETED !== $audit->getStatus()) {
+            $this->addFlash('error', 'Claude analysis can only be retried after the crawl has completed.');
+
+            return $this->redirectToRoute('app_audit_show', ['id' => $audit->getId()]);
+        }
+
+        if ($audit->getPages()->isEmpty()) {
+            $this->addFlash('error', 'Claude analysis cannot run because this audit has no crawled pages.');
+
+            return $this->redirectToRoute('app_audit_show', ['id' => $audit->getId()]);
+        }
+
+        $metadata = $audit->getMetadata() ?? [];
+        $existingAi = is_array($metadata['ai_analysis'] ?? null) ? $metadata['ai_analysis'] : [];
+        $metadata['ai_analysis'] = [
+            'status' => 'queued',
+            'provider' => is_scalar($existingAi['provider'] ?? null) ? (string) $existingAi['provider'] : 'anthropic',
+            'model' => is_scalar($existingAi['model'] ?? null) ? (string) $existingAi['model'] : null,
+            'recommendations' => [],
+            'queued_at' => (new \DateTimeImmutable())->format(\DateTimeInterface::ATOM),
+        ];
+        $audit->setMetadata($metadata);
+        $entityManager->flush();
+
+        $messageBus->dispatch(new RunClaudeAnalysisMessage($audit->getId()));
+        $this->addFlash('info', 'Claude analysis retry queued. This page refreshes while the worker runs.');
+
+        return $this->redirectToRoute('app_audit_show', ['id' => $audit->getId()]);
+    }
+
+    /**
+     * @return array<string, list<array{type: string, label: string, issues: list<AuditIssue>}>>
+     */
+    private function groupIssuesBySeverityAndType(Audit $audit): array
+    {
+        /** @var array<string, array<string, array{type: string, label: string, issues: list<AuditIssue>}>> $indexedGroups */
+        $indexedGroups = [];
+        foreach (self::ISSUE_SEVERITIES as $severity) {
+            $indexedGroups[$severity] = [];
+        }
+
+        foreach ($audit->getIssues() as $issue) {
+            $severity = strtolower((string) $issue->getSeverity());
+            if (!in_array($severity, self::ISSUE_SEVERITIES, true)) {
+                $severity = 'medium';
+            }
+
+            $type = $issue->getIssueType();
+            if (!isset($indexedGroups[$severity][$type])) {
+                $indexedGroups[$severity][$type] = [
+                    'type' => $type,
+                    'label' => $this->humanizeIssueType($type),
+                    'issues' => [],
+                ];
+            }
+
+            $indexedGroups[$severity][$type]['issues'][] = $issue;
+        }
+
+        $groupsBySeverity = [];
+        foreach ($indexedGroups as $severity => $groups) {
+            $groupList = array_values($groups);
+            usort($groupList, static function (array $left, array $right): int {
+                $countComparison = count($right['issues']) <=> count($left['issues']);
+
+                return 0 !== $countComparison ? $countComparison : strcmp($left['label'], $right['label']);
+            });
+
+            $groupsBySeverity[$severity] = $groupList;
+        }
+
+        return $groupsBySeverity;
+    }
+
+    private function humanizeIssueType(string $issueType): string
+    {
+        return ucwords(str_replace(['_', '-'], ' ', $issueType));
+    }
 }
