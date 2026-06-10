@@ -8,20 +8,21 @@ use App\Entity\Audit;
 use App\Entity\Domain;
 use App\Entity\Project;
 use App\Entity\User;
-use App\Enum\AuditStatus;
 use App\Enum\ProjectStatus;
 use App\Exception\InvalidWebsiteUrlException;
 use App\Form\ProjectType;
+use App\Message\RunWebsiteAuditMessage;
 use App\Repository\ProjectRepository;
 use App\Security\Voter\ProjectVoter;
-use App\Service\Crawler\WebsiteCrawlerService;
+use App\Service\Audit\AuditInsightsBuilder;
+use App\Service\Audit\WebsiteAuditRunner;
 use App\Service\Project\ProjectManager;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
@@ -51,6 +52,8 @@ final class ProjectController extends AbstractController
     public function new(
         Request $request,
         ProjectManager $projectManager,
+        WebsiteAuditRunner $auditRunner,
+        MessageBusInterface $messageBus,
     ): Response {
         $user = $this->getUser();
         if (!$user instanceof User) {
@@ -64,9 +67,19 @@ final class ProjectController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             try {
                 $projectManager->createForUser($project, $user, (string) $form->get('websiteUrl')->getData());
-                $this->addFlash('success', 'Project created. You can launch a real crawl from the project page.');
 
-                return $this->redirectToRoute('app_project_show', ['id' => $project->getId()]);
+                $domain = $projectManager->getPrimaryDomain($project);
+                if (!$domain instanceof Domain) {
+                    $this->addFlash('error', 'Project created, but no crawlable domain was attached.');
+
+                    return $this->redirectToRoute('app_project_show', ['id' => $project->getId()]);
+                }
+
+                $audit = $auditRunner->createQueued($project, $domain);
+                $messageBus->dispatch(new RunWebsiteAuditMessage($audit->getId()));
+                $this->addFlash('info', 'Project created. The crawler and Claude SEO analysis are running in the background.');
+
+                return $this->redirectToRoute('app_audit_show', ['id' => $audit->getId()]);
             } catch (InvalidWebsiteUrlException $exception) {
                 $form->get('websiteUrl')->addError(new FormError($exception->getMessage()));
             }
@@ -150,8 +163,8 @@ final class ProjectController extends AbstractController
     public function launchAudit(
         Project $project,
         Request $request,
-        EntityManagerInterface $entityManager,
-        WebsiteCrawlerService $crawler,
+        WebsiteAuditRunner $auditRunner,
+        MessageBusInterface $messageBus,
     ): RedirectResponse {
         $this->denyAccessUnlessGranted('LAUNCH_AUDIT', $project);
 
@@ -166,37 +179,15 @@ final class ProjectController extends AbstractController
             return $this->redirectToRoute('app_project_show', ['id' => $project->getId()]);
         }
 
-        $audit = new Audit();
-        $audit
-            ->setProject($project)
-            ->setDomain($domain)
-            ->setStatus(AuditStatus::RUNNING)
-            ->setCrawlStartedAt(new \DateTimeImmutable())
-            ->setMaxPages($crawler->getConfiguredMaxPages())
-            ->setMaxDepth($crawler->getConfiguredMaxDepth());
-
-        $entityManager->persist($audit);
-        $entityManager->flush();
-
-        try {
-            // async crawl message here instead of calling the service directly.
-            $crawler->crawl($audit);
-            $this->addFlash('success', 'Website crawl completed.');
-        } catch (\Throwable $exception) {
-            $audit
-                ->setStatus(AuditStatus::FAILED)
-                ->setErrorMessage($exception->getMessage())
-                ->setCrawlFinishedAt(new \DateTimeImmutable());
-            $entityManager->flush();
-
-            $this->addFlash('error', 'The crawl failed: ' . $exception->getMessage());
-        }
+        $audit = $auditRunner->createQueued($project, $domain);
+        $messageBus->dispatch(new RunWebsiteAuditMessage($audit->getId()));
+        $this->addFlash('info', 'Website crawl and Claude SEO analysis queued. This page refreshes while the worker runs.');
 
         return $this->redirectToRoute('app_audit_show', ['id' => $audit->getId()]);
     }
 
     #[Route('/audits/{id}', name: 'app_audit_show', methods: ['GET'])]
-    public function showAudit(Audit $audit): Response
+    public function showAudit(Audit $audit, AuditInsightsBuilder $insightsBuilder): Response
     {
         $project = $audit->getProject();
         if (null === $project) {
@@ -223,6 +214,8 @@ final class ProjectController extends AbstractController
             'audit' => $audit,
             'project' => $project,
             'issuesBySeverity' => $issuesBySeverity,
+            'insights' => $insightsBuilder->build($audit),
         ]);
     }
+
 }
