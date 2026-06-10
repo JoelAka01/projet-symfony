@@ -1,12 +1,15 @@
 FROM php:8.3-cli-alpine
 
 RUN apk add --no-cache \
+        ca-certificates \
+        curl-dev \
         git \
         icu-dev \
         libzip-dev \
         postgresql-dev \
         unzip \
     && docker-php-ext-install \
+        curl \
         intl \
         opcache \
         pdo \
