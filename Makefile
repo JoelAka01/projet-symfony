@@ -60,6 +60,9 @@ ci-local: lint-local phpstan-local test-local
 logs:
 	docker compose logs -f --tail=100 php
 
+worker-logs:
+	docker compose logs -f --tail=100 worker
+
 up start:
 	docker compose up -d
 
@@ -92,4 +95,5 @@ help:
 	@echo "  mutation-local- Run mutation tests locally"
 	@echo "  ci-local      - Run lint + phpstan + tests locally (simule la CI)"
 	@echo "  logs          - Follow the logs of the PHP container"
+	@echo "  worker-logs   - Follow the logs of the Messenger worker"
 	@echo "  help          - Show this help message"

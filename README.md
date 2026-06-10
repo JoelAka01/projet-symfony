@@ -32,6 +32,7 @@ make phpstan
 make lint          # Check code style (PHP CS Fixer)
 make lint-fix      # Auto-fix code style
 make mutation      # Run mutation tests (Infection)
+make worker-logs
 # or manually:
 docker compose exec php php bin/console doctrine:migrations:migrate
 docker compose exec php php bin/console doctrine:fixtures:load
@@ -39,6 +40,7 @@ docker compose exec php php bin/phpunit
 docker compose exec php vendor/bin/phpstan analyse
 docker compose exec php vendor/bin/php-cs-fixer check --diff
 docker compose exec php vendor/bin/infection --threads=max --show-mutations
+docker compose logs -f worker
 ```
 
 ## Install Without Docker
@@ -104,6 +106,7 @@ make phpstan        # Run static analysis (Docker)
 make lint           # Check code style — PHP CS Fixer (Docker)
 make lint-fix       # Auto-fix code style (Docker)
 make mutation       # Run mutation tests — Infection (Docker)
+make worker-logs    # Follow Messenger worker logs
 ```
 
 Makefile shortcuts (Local without Docker):
