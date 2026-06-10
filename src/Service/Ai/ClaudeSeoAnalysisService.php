@@ -15,6 +15,9 @@ final class ClaudeSeoAnalysisService
     private const DEFAULT_MODEL = 'claude-haiku-4-5-20251001';
     private const DEFAULT_BASE_URL = 'https://api.anthropic.com';
     private const ANTHROPIC_VERSION = '2023-06-01';
+    private const DEFAULT_MAX_TOKENS = 16000;
+    private const DEFAULT_TIMEOUT_SECONDS = 180;
+    private const DEFAULT_MAX_DURATION_SECONDS = 240;
 
     public function __construct(
         private readonly HttpClientInterface $httpClient,
@@ -30,7 +33,14 @@ final class ClaudeSeoAnalysisService
         $apiKey = $this->envString('CLAUDE_API_KEY');
         $model = $this->envString('CLAUDE_MODEL') ?? self::DEFAULT_MODEL;
         $baseUrl = rtrim($this->envString('CLAUDE_API_BASE_URL') ?? self::DEFAULT_BASE_URL, '/');
-        $maxTokens = $this->envInt('CLAUDE_MAX_TOKENS', 8000, 1500, 20000);
+        $maxTokens = $this->envInt('CLAUDE_MAX_TOKENS', self::DEFAULT_MAX_TOKENS, 1500, 64000);
+        $timeoutSeconds = $this->envInt('CLAUDE_TIMEOUT_SECONDS', self::DEFAULT_TIMEOUT_SECONDS, 30, 600);
+        $maxDurationSeconds = $this->envInt(
+            'CLAUDE_MAX_DURATION_SECONDS',
+            max(self::DEFAULT_MAX_DURATION_SECONDS, $timeoutSeconds + 60),
+            $timeoutSeconds,
+            900,
+        );
 
         if (null === $apiKey) {
             $this->storeAiMetadata($audit, [
@@ -38,6 +48,8 @@ final class ClaudeSeoAnalysisService
                 'provider' => 'anthropic',
                 'model' => $model,
                 'max_tokens' => $maxTokens,
+                'timeout_seconds' => $timeoutSeconds,
+                'max_duration_seconds' => $maxDurationSeconds,
                 'error' => 'CLAUDE_API_KEY is not configured. Real AI analysis cannot run.',
                 'recommendations' => [],
                 'analyzed_at' => (new \DateTimeImmutable())->format(\DateTimeInterface::ATOM),
@@ -51,6 +63,8 @@ final class ClaudeSeoAnalysisService
             'provider' => 'anthropic',
             'model' => $model,
             'max_tokens' => $maxTokens,
+            'timeout_seconds' => $timeoutSeconds,
+            'max_duration_seconds' => $maxDurationSeconds,
             'recommendations' => [],
             'started_at' => (new \DateTimeImmutable())->format(\DateTimeInterface::ATOM),
         ]);
@@ -81,6 +95,8 @@ final class ClaudeSeoAnalysisService
                         ],
                     ],
                 ],
+                'timeout' => $timeoutSeconds,
+                'max_duration' => $maxDurationSeconds,
             ]);
 
             $statusCode = $response->getStatusCode();
@@ -106,6 +122,8 @@ final class ClaudeSeoAnalysisService
                 'provider' => 'anthropic',
                 'model' => $model,
                 'max_tokens' => $maxTokens,
+                'timeout_seconds' => $timeoutSeconds,
+                'max_duration_seconds' => $maxDurationSeconds,
                 'analyzed_at' => (new \DateTimeImmutable())->format(\DateTimeInterface::ATOM),
                 'raw_response' => $this->limit($responseText, 15000),
             ]);
@@ -120,6 +138,8 @@ final class ClaudeSeoAnalysisService
                 'provider' => 'anthropic',
                 'model' => $model,
                 'max_tokens' => $maxTokens,
+                'timeout_seconds' => $timeoutSeconds,
+                'max_duration_seconds' => $maxDurationSeconds,
                 'error' => $this->limit($exception->getMessage(), 2000),
                 'recommendations' => [],
                 'analyzed_at' => (new \DateTimeImmutable())->format(\DateTimeInterface::ATOM),
