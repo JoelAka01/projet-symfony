@@ -7,6 +7,7 @@ framework:
             failed: 'doctrine://default?queue_name=failed&auto_setup=1'
 
         routing:
+            App\Message\RunClaudeAnalysisMessage: async
             App\Message\RunWebsiteAuditMessage: async
 
 when@test:
