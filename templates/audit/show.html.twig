@@ -1,10 +1,14 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Audit {{ audit.id }} | SEO Crawl{% endblock %}
+{% block title %}Audit {{ audit.id }} | SEO Analysis{% endblock %}
 
 {% block body %}
+    {% set ai = insights.ai %}
+    {% set aiCompleted = ai.status == 'completed' %}
+    {% set isProcessing = audit.status.value in ['QUEUED', 'RUNNING'] %}
+
     <section class="hero compact">
-        <p class="eyebrow">SEO crawl</p>
+        <p class="eyebrow">SEO analysis dashboard</p>
         <h1>{{ project.name }}</h1>
         <p>
             {{ audit.domain.rootDomain }}
@@ -16,42 +20,337 @@
         </div>
     </section>
 
-    <ul class="checklist" aria-label="Audit KPIs">
-        <li>
-            <strong>SEO score</strong>
-            <span>{{ audit.seoScore is not null ? audit.seoScore ~ '/100' : 'Pending' }}</span>
+    <ul class="metric-grid" aria-label="Audit KPIs">
+        <li class="metric-card primary">
+            <span>Global SEO score</span>
+            <strong>{{ audit.seoScore is not null ? audit.seoScore : 'Pending' }}</strong>
+            <small>{{ insights.score_label }}</small>
         </li>
-        <li>
-            <strong>Status</strong>
-            <span>{{ audit.status.value|lower|capitalize }}</span>
+        <li class="metric-card">
+            <span>Claude global score</span>
+            <strong>{{ aiCompleted and ai.global_score is not null ? ai.global_score : 'Pending' }}</strong>
+            <small>{{ aiCompleted ? 'AI interpretation' : 'Requires Claude response' }}</small>
         </li>
-        <li>
-            <strong>Pages crawled</strong>
-            <span>{{ audit.pagesCrawled ?? 0 }} / {{ audit.maxPages ?? 'default' }}</span>
+        <li class="metric-card">
+            <span>Content score</span>
+            <strong>{{ aiCompleted and ai.content_score is not null ? ai.content_score : 'Pending' }}</strong>
+            <small>{{ aiCompleted ? 'Claude critique' : 'Not generated' }}</small>
         </li>
-        <li>
-            <strong>Pages failed</strong>
-            <span>{{ audit.pagesFailed ?? 0 }}</span>
+        <li class="metric-card">
+            <span>GEO score</span>
+            <strong>{{ aiCompleted and ai.geo_score is not null ? ai.geo_score : 'Pending' }}</strong>
+            <small>{{ aiCompleted ? 'AI visibility' : 'Not generated' }}</small>
         </li>
-        <li>
-            <strong>Max depth</strong>
-            <span>{{ audit.maxDepth ?? 'default' }}</span>
+        <li class="metric-card">
+            <span>Pages crawled</span>
+            <strong>{{ audit.pagesCrawled ?? 0 }}</strong>
+            <small>Limit {{ audit.maxPages ?? 'default' }}</small>
         </li>
-        <li>
-            <strong>Finished</strong>
-            <span>{{ audit.crawlFinishedAt ? audit.crawlFinishedAt|date('Y-m-d H:i') : 'Not finished' }}</span>
+        <li class="metric-card danger">
+            <span>Critical and high</span>
+            <strong>{{ insights.critical_count + insights.high_count }}</strong>
+            <small>{{ insights.open_issue_count }} total issues</small>
+        </li>
+        <li class="metric-card">
+            <span>Pages failed</span>
+            <strong>{{ audit.pagesFailed ?? 0 }}</strong>
+            <small>{{ insights.page_stats.success_rate }}% successful fetches</small>
+        </li>
+        <li class="metric-card">
+            <span>AI analysis</span>
+            <strong>{{ ai.status|replace({'_': ' '})|title }}</strong>
+            <small>{{ ai.model ?? 'Claude model pending' }}</small>
         </li>
     </ul>
 
     {% if audit.errorMessage %}
-        <section>
+        <section class="notice danger">
             <h2>Crawl error</h2>
-            <p class="muted">{{ audit.errorMessage }}</p>
+            <p>{{ audit.errorMessage }}</p>
         </section>
     {% endif %}
 
-    <section>
-        <h2>Issues by severity</h2>
+    {% if isProcessing %}
+        <section class="notice">
+            <h2>Analysis running</h2>
+            <p>The crawl and Claude SEO critique are being processed by the Messenger worker. This page refreshes automatically.</p>
+        </section>
+        <script>
+            window.setTimeout(() => window.location.reload(), 5000);
+        </script>
+    {% endif %}
+
+    <section class="analytics-grid">
+        <article class="panel score-panel">
+            <h2>Global score</h2>
+            <div class="score-ring" style="--score: {{ audit.seoScore ?? 0 }}">
+                <span>{{ audit.seoScore ?? 0 }}</span>
+            </div>
+            <p class="muted">Crawler score calculated from real detected SEO issues.</p>
+        </article>
+
+        <article class="panel">
+            <h2>Crawler quality profile</h2>
+            <div class="bar-list">
+                {% for item in insights.quality_profile %}
+                    <div class="chart-row">
+                        <span>{{ item.label }}</span>
+                        <div class="bar-track"><i style="width: {{ item.value }}%"></i></div>
+                        <strong>{{ item.value }}%</strong>
+                    </div>
+                {% endfor %}
+            </div>
+        </article>
+
+        <article class="panel">
+            <h2>Issues by severity</h2>
+            <div class="bar-list">
+                {% for row in insights.severity_chart %}
+                    <div class="chart-row severity-{{ row.label }}">
+                        <span>{{ row.label|capitalize }}</span>
+                        <div class="bar-track"><i style="width: {{ row.percent }}%"></i></div>
+                        <strong>{{ row.count }}</strong>
+                    </div>
+                {% endfor %}
+            </div>
+        </article>
+
+        <article class="panel">
+            <h2>Issues by category</h2>
+            <div class="bar-list">
+                {% for row in insights.category_chart %}
+                    <div class="chart-row">
+                        <span>{{ row.label|replace({'_': ' '})|title }}</span>
+                        <div class="bar-track"><i style="width: {{ row.percent }}%"></i></div>
+                        <strong>{{ row.count }}</strong>
+                    </div>
+                {% endfor %}
+            </div>
+        </article>
+
+        <article class="panel">
+            <h2>Link distribution</h2>
+            <div class="bar-list">
+                {% for row in insights.link_distribution %}
+                    <div class="chart-row">
+                        <span>{{ row.label }}</span>
+                        <div class="bar-track"><i style="width: {{ row.percent }}%"></i></div>
+                        <strong>{{ row.count }}</strong>
+                    </div>
+                {% endfor %}
+            </div>
+        </article>
+
+        <article class="panel">
+            <h2>Content and indexability</h2>
+            <dl class="fact-grid">
+                <div>
+                    <dt>Avg. words</dt>
+                    <dd>{{ insights.page_stats.average_word_count ?? 'n/a' }}</dd>
+                </div>
+                <div>
+                    <dt>Avg. response</dt>
+                    <dd>{{ insights.page_stats.average_load_time_ms is not null ? insights.page_stats.average_load_time_ms ~ ' ms' : 'n/a' }}</dd>
+                </div>
+                <div>
+                    <dt>Indexable pages</dt>
+                    <dd>{{ insights.page_stats.indexable_count }} / {{ insights.page_stats.page_count }}</dd>
+                </div>
+                <div>
+                    <dt>Structured data</dt>
+                    <dd>{{ insights.page_stats.structured_data_count }} / {{ insights.page_stats.page_count }}</dd>
+                </div>
+                <div>
+                    <dt>Pages with title</dt>
+                    <dd>{{ insights.page_stats.title_count }} / {{ insights.page_stats.page_count }}</dd>
+                </div>
+                <div>
+                    <dt>Missing image alt</dt>
+                    <dd>{{ insights.page_stats.total_missing_alt }}</dd>
+                </div>
+            </dl>
+        </article>
+    </section>
+
+    <section class="panel full-panel">
+        <h2>Claude SEO critique</h2>
+        {% if aiCompleted %}
+            <div class="ai-summary">
+                <p>{{ ai.summary }}</p>
+                <dl class="fact-grid compact">
+                    <div>
+                        <dt>Technical score</dt>
+                        <dd>{{ ai.technical_score ?? 'n/a' }}</dd>
+                    </div>
+                    <div>
+                        <dt>Confidence</dt>
+                        <dd>{{ ai.confidence is not null ? (ai.confidence * 100)|round ~ '%' : 'n/a' }}</dd>
+                    </div>
+                    <div>
+                        <dt>Search intent</dt>
+                        <dd>{{ ai.search_intent ?? 'n/a' }}</dd>
+                    </div>
+                    <div>
+                        <dt>Citation potential</dt>
+                        <dd>{{ ai.citation_potential ?? 'n/a' }}</dd>
+                    </div>
+                </dl>
+            </div>
+
+            <div class="split-grid">
+                <article>
+                    <h3>Strengths</h3>
+                    {% if ai.strengths is empty %}
+                        <p class="muted">Claude did not return strengths.</p>
+                    {% else %}
+                        <ul class="plain-list">
+                            {% for strength in ai.strengths %}
+                                <li>{{ strength }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </article>
+                <article>
+                    <h3>Weaknesses</h3>
+                    {% if ai.weaknesses is empty %}
+                        <p class="muted">Claude did not return weaknesses.</p>
+                    {% else %}
+                        <ul class="plain-list">
+                            {% for weakness in ai.weaknesses %}
+                                <li>{{ weakness }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </article>
+            </div>
+        {% elseif ai.status == 'not_configured' %}
+            <div class="notice">
+                <h3>Claude analysis is not configured</h3>
+                <p>{{ ai.error ?? 'Set CLAUDE_API_KEY in the environment to run real AI analysis.' }}</p>
+            </div>
+        {% elseif ai.status == 'failed' %}
+            <div class="notice danger">
+                <h3>Claude analysis failed</h3>
+                <p>{{ ai.error ?? 'The external AI provider returned an error.' }}</p>
+            </div>
+        {% else %}
+            <p class="muted">Claude analysis has not completed for this audit.</p>
+        {% endif %}
+    </section>
+
+    {% if aiCompleted %}
+        <section class="panel full-panel">
+            <h2>Prioritized recommendations</h2>
+            {% if ai.recommendations is empty %}
+                <p class="muted">Claude did not return recommendations.</p>
+            {% else %}
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Priority</th>
+                                <th>Category</th>
+                                <th>Problem</th>
+                                <th>Evidence</th>
+                                <th>Recommended fix</th>
+                                <th>Effort</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for recommendation in ai.recommendations %}
+                                <tr>
+                                    <td><span class="pill priority-{{ recommendation.priority|default('medium')|lower }}">{{ recommendation.priority|default('medium')|title }}</span></td>
+                                    <td>{{ recommendation.category|default('seo')|replace({'_': ' '})|title }}</td>
+                                    <td>
+                                        <strong>{{ recommendation.title|default('SEO recommendation') }}</strong>
+                                        {% if recommendation.problem %}
+                                            <br>{{ recommendation.problem }}
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ recommendation.evidence ?? 'n/a' }}</td>
+                                    <td>
+                                        {{ recommendation.action ?? 'n/a' }}
+                                        {% if recommendation.expected_impact %}
+                                            <br><span class="muted">Impact: {{ recommendation.expected_impact }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ recommendation.effort ?? 'n/a' }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        </section>
+
+        <section class="analytics-grid">
+            <article class="panel">
+                <h2>Title and meta suggestions</h2>
+                <dl class="suggestions">
+                    <dt>Suggested title</dt>
+                    <dd>{{ ai.suggested_title ?? 'No title suggestion returned.' }}</dd>
+                    <dt>Suggested meta description</dt>
+                    <dd>{{ ai.suggested_meta_description ?? 'No meta description suggestion returned.' }}</dd>
+                </dl>
+            </article>
+            <article class="panel">
+                <h2>GEO opportunities</h2>
+                {% if ai.short_answer_blocks is empty and ai.faq_suggestions is empty %}
+                    <p class="muted">Claude did not return FAQ or short answer blocks.</p>
+                {% else %}
+                    <ul class="plain-list">
+                        {% for block in ai.short_answer_blocks|slice(0, 3) %}
+                            <li><strong>{{ block.question }}</strong><br>{{ block.answer }}</li>
+                        {% endfor %}
+                        {% for faq in ai.faq_suggestions|slice(0, 3) %}
+                            <li><strong>{{ faq.question }}</strong><br>{{ faq.answer }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </article>
+        </section>
+    {% endif %}
+
+    <section class="panel full-panel">
+        <h2>Top crawled pages</h2>
+        {% if insights.top_pages is empty %}
+            <p class="muted">No pages were stored for this crawl.</p>
+        {% else %}
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Page</th>
+                            <th>Status</th>
+                            <th>Issues</th>
+                            <th>Title</th>
+                            <th>H1</th>
+                            <th>Words</th>
+                            <th>Response</th>
+                            <th>Indexable</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for page in insights.top_pages %}
+                            <tr>
+                                <td><a href="{{ page.url }}" rel="noreferrer" target="_blank">{{ page.url }}</a></td>
+                                <td>{{ page.status_code ?? 'n/a' }}</td>
+                                <td>{{ page.issue_count }}</td>
+                                <td>{{ page.title ?? 'Missing' }}</td>
+                                <td>{{ page.h1 ?? 'Missing' }}</td>
+                                <td>{{ page.word_count ?? 'n/a' }}</td>
+                                <td>{{ page.load_time_ms is not null ? page.load_time_ms ~ ' ms' : 'n/a' }}</td>
+                                <td>{{ page.indexable ? 'Yes' : 'No' }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </section>
+
+    <section class="panel full-panel">
+        <h2>Issues</h2>
         {% for severity, issues in issuesBySeverity %}
             <section class="issue-group">
                 <h3>{{ severity|capitalize }} ({{ issues|length }})</h3>
