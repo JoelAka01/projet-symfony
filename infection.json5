@@ -1,0 +1,22 @@
+{
+    "source": {
+        "directories": ["src"],
+        "excludes": [
+            "DataFixtures",
+            "Kernel.php"
+        ]
+    },
+    "logs": {
+        "text": "var/infection/infection.log",
+        "html": "var/infection/infection.html",
+        "summary": "var/infection/summary.log"
+    },
+    "mutators": {
+        "@default": true
+    },
+    "testFramework": "phpunit",
+    "testFrameworkOptions": "--testsuite='Project Test Suite'",
+    "minMsi": 50,
+    "minCoveredMsi": 70,
+    "threads": "max"
+}
