@@ -24,19 +24,29 @@ final class ClaudeSeoAnalysisResponseParser
             throw new \UnexpectedValueException('Claude response JSON must be an object.');
         }
 
-        $summary = $this->stringValue($decoded['summary'] ?? null);
+        $executiveSummary = $this->arrayValue($decoded['executive_summary'] ?? []);
+        $scores = $this->arrayValue($decoded['scores'] ?? []);
+        $summary = $this->stringValue($decoded['summary'] ?? null)
+            ?? $this->stringValue($executiveSummary['one_liner'] ?? null)
+            ?? $this->stringValue($executiveSummary['situation'] ?? null);
         if (null === $summary) {
             throw new \UnexpectedValueException('Claude response must include a summary string.');
         }
 
         $decoded['summary'] = $summary;
-        $decoded['global_score'] = $this->scoreValue($decoded['global_score'] ?? null);
-        $decoded['technical_score'] = $this->scoreValue($decoded['technical_score'] ?? null);
-        $decoded['content_score'] = $this->scoreValue($decoded['content_score'] ?? null);
-        $decoded['geo_score'] = $this->scoreValue($decoded['geo_score'] ?? null);
+        $decoded['global_score'] = $this->scoreValue($decoded['global_score'] ?? $scores['global_score'] ?? null);
+        $decoded['technical_score'] = $this->scoreValue($decoded['technical_score'] ?? $scores['technical_score'] ?? null);
+        $decoded['content_score'] = $this->scoreValue($decoded['content_score'] ?? $scores['content_score'] ?? null);
+        $decoded['onpage_score'] = $this->scoreValue($decoded['onpage_score'] ?? $scores['onpage_score'] ?? null);
+        $decoded['geo_score'] = $this->scoreValue($decoded['geo_score'] ?? $scores['geo_score'] ?? null);
+        $decoded['ux_score'] = $this->scoreValue($decoded['ux_score'] ?? $scores['ux_score'] ?? null);
         $decoded['confidence'] = $this->confidenceValue($decoded['confidence'] ?? null);
-        $decoded['strengths'] = $this->stringList($decoded['strengths'] ?? []);
-        $decoded['weaknesses'] = $this->stringList($decoded['weaknesses'] ?? []);
+        $decoded['score_rationale'] = $this->stringValue($decoded['score_rationale'] ?? $scores['score_rationale'] ?? null);
+        $decoded['executive_summary'] = $executiveSummary;
+        $decoded['audience_and_intent'] = $this->arrayValue($decoded['audience_and_intent'] ?? []);
+        $contentStrategy = $this->arrayValue($decoded['content_strategy'] ?? []);
+        $decoded['strengths'] = $this->stringList($decoded['strengths'] ?? $contentStrategy['strengths'] ?? []);
+        $decoded['weaknesses'] = $this->stringList($decoded['weaknesses'] ?? $contentStrategy['weaknesses'] ?? []);
         $decoded['content_opportunities'] = $this->stringList($decoded['content_opportunities'] ?? []);
         $decoded['technical_risks'] = $this->stringList($decoded['technical_risks'] ?? []);
         $decoded['entities'] = $this->stringList($decoded['entities'] ?? []);
@@ -46,8 +56,16 @@ final class ClaudeSeoAnalysisResponseParser
         $decoded['suggested_title'] = $this->stringValue($decoded['suggested_title'] ?? null);
         $decoded['suggested_meta_description'] = $this->stringValue($decoded['suggested_meta_description'] ?? null);
         $decoded['citation_potential'] = $this->stringValue($decoded['citation_potential'] ?? null);
-        $decoded['search_intent'] = $this->stringValue($decoded['search_intent'] ?? null);
-        $decoded['target_audience'] = $this->stringValue($decoded['target_audience'] ?? null);
+        $decoded['search_intent'] = $this->stringValue($decoded['search_intent'] ?? $decoded['audience_and_intent']['search_intent'] ?? null);
+        $decoded['target_audience'] = $this->stringValue($decoded['target_audience'] ?? $decoded['audience_and_intent']['primary_audience'] ?? null);
+        $decoded['keyword_analysis'] = $this->arrayValue($decoded['keyword_analysis'] ?? []);
+        $decoded['technical_seo'] = $this->arrayValue($decoded['technical_seo'] ?? []);
+        $decoded['on_page_seo'] = $this->arrayValue($decoded['on_page_seo'] ?? []);
+        $decoded['content_strategy'] = $contentStrategy;
+        $decoded['geo_analysis'] = $this->arrayValue($decoded['geo_analysis'] ?? []);
+        $decoded['serp_features'] = $this->arrayValue($decoded['serp_features'] ?? []);
+        $decoded['priority_matrix'] = $this->arrayValue($decoded['priority_matrix'] ?? []);
+        $decoded['action_plan_30_60_90'] = $this->arrayValue($decoded['action_plan_30_60_90'] ?? $decoded['30_60_90_plan'] ?? []);
 
         return $decoded;
     }
@@ -96,6 +114,12 @@ final class ClaudeSeoAnalysisResponseParser
         return max(0.0, min(1.0, round((float) $value, 2)));
     }
 
+    /** @return array<string, mixed> */
+    private function arrayValue(mixed $value): array
+    {
+        return is_array($value) ? $value : [];
+    }
+
     /** @return list<string> */
     private function stringList(mixed $value): array
     {
@@ -134,6 +158,7 @@ final class ClaudeSeoAnalysisResponseParser
             }
 
             $recommendations[] = [
+                'id' => $this->stringValue($item['id'] ?? null),
                 'priority' => $this->stringValue($item['priority'] ?? null) ?? 'medium',
                 'category' => $this->stringValue($item['category'] ?? null) ?? 'seo',
                 'title' => $title ?? 'SEO recommendation',
@@ -141,8 +166,11 @@ final class ClaudeSeoAnalysisResponseParser
                 'evidence' => $this->stringValue($item['evidence'] ?? null),
                 'why_it_matters' => $this->stringValue($item['why_it_matters'] ?? null),
                 'action' => $action,
+                'before_example' => $this->stringValue($item['before_example'] ?? null),
+                'after_example' => $this->stringValue($item['after_example'] ?? null),
                 'expected_impact' => $this->stringValue($item['expected_impact'] ?? $item['impact'] ?? null),
                 'effort' => $this->stringValue($item['effort'] ?? null),
+                'time_estimate' => $this->stringValue($item['time_estimate'] ?? null),
             ];
         }
 
