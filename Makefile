@@ -10,7 +10,6 @@ cache:
 	docker compose exec php php bin/console cache:clear
 
 migrate:
-	@docker compose ps php --quiet 2>nul | findstr . >nul || (echo Error: Docker services not running. Run 'make up' first. && exit /b 1)
 	docker compose exec php php bin/console doctrine:migrations:migrate
 
 migrate-local:
@@ -24,15 +23,13 @@ fixtures-local:
 	php bin/console doctrine:fixtures:load
 
 test:
-	@docker compose ps php --quiet 2>nul | findstr . >nul || (echo Error: Docker services not running. Run 'make up' first. && exit /b 1)
-	docker compose exec php php bin/phpunit
+	docker compose exec -e APP_ENV=test -e APP_DEBUG=1 -e DATABASE_URL="postgresql://app:app@database:5432/app_test?serverVersion=16&charset=utf8" php php bin/phpunit
 
 test-local:
 	php bin/phpunit
 
 phpstan:
-	@docker compose ps php --quiet 2>nul | findstr . >nul || (echo Error: Docker services not running. Run 'make up' first. && exit /b 1)
-	docker compose exec php vendor/bin/phpstan analyse
+	docker compose exec php vendor/bin/phpstan analyse --memory-limit=512M
 
 phpstan-local:
 	vendor/bin/phpstan analyse
@@ -64,7 +61,10 @@ worker-logs:
 	docker compose logs -f --tail=100 worker
 
 up start:
-	docker compose up -d
+	docker compose up -d --build
+
+assets:
+	docker compose exec php php bin/console asset-map:compile
 
 down stop:
 	docker compose down
@@ -76,6 +76,7 @@ help:
 	@echo "  install       - Build and start Docker services"
 	@echo "  sh            - Open a shell inside the PHP container"
 	@echo "  up            - Start the Docker containers"
+	@echo "  assets        - Compile Symfony AssetMapper files"
 	@echo "  down          - Stop and remove the Docker containers"
 	@echo "  restart       - Restart the Docker containers"
 	@echo "  cache         - Clear the Symfony cache"

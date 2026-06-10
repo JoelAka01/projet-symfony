@@ -33,6 +33,7 @@ make lint          # Check code style (PHP CS Fixer)
 make lint-fix      # Auto-fix code style
 make mutation      # Run mutation tests (Infection)
 make worker-logs
+make assets
 # or manually:
 docker compose exec php php bin/console doctrine:migrations:migrate
 docker compose exec php php bin/console doctrine:fixtures:load
@@ -40,6 +41,7 @@ docker compose exec php php bin/phpunit
 docker compose exec php vendor/bin/phpstan analyse
 docker compose exec php vendor/bin/php-cs-fixer check --diff
 docker compose exec php vendor/bin/infection --threads=max --show-mutations
+docker compose exec php php bin/console asset-map:compile
 docker compose logs -f worker
 ```
 
