@@ -18,7 +18,6 @@ jobs:
   #
   # Vérifie que le code respecte le style @Symfony + @PER-CS2.0.
   # Mode "check" uniquement : il signale, ne corrige pas.
-  # Rapide (~30 s), pas besoin de base de données.
   # ─────────────────────────────────────────────
   lint:
     name: PHP CS Fixer
