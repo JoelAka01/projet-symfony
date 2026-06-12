@@ -30,7 +30,7 @@ final class RegistrationController extends AbstractController
         LoggerInterface $logger,
     ): Response {
         if (null !== $this->getUser()) {
-            return $this->redirectToRoute('app_dashboard');
+            return $this->redirectToRoute('app_project_index');
         }
 
         $user = new User();
