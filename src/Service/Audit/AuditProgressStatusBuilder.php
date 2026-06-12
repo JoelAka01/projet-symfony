@@ -20,11 +20,14 @@ final class AuditProgressStatusBuilder
         $ai = is_array($metadata['ai_analysis'] ?? null) ? $metadata['ai_analysis'] : [];
         $aiStatus = is_scalar($ai['status'] ?? null) ? strtolower((string) $ai['status']) : 'pending';
         $phase = $this->phase($audit->getStatus(), $aiStatus);
-        $startedAt = $this->startedAt($audit, $ai, $phase);
-        $elapsedSeconds = max(0, $now->getTimestamp() - $startedAt->getTimestamp());
+        $stepStartedAt = $this->startedAt($audit, $ai, $phase);
+        $elapsedSeconds = max(0, $now->getTimestamp() - $stepStartedAt->getTimestamp());
         $maxDuration = $this->positiveInt($ai['max_duration_seconds'] ?? null)
             ?? self::DEFAULT_AI_MAX_DURATION_SECONDS;
         $maximumAiWait = $maxDuration * self::MAX_AI_ATTEMPTS;
+
+        $crawlStartedAt = $audit->getCrawlStartedAt() ?? $audit->getCreatedAt();
+        $aiStartedAt = $this->resolveAiStartedAt($ai);
 
         return [
             'audit_status' => strtolower($audit->getStatus()->value),
@@ -36,8 +39,13 @@ final class AuditProgressStatusBuilder
             'message' => $this->message($phase, $audit),
             'estimate' => $this->estimate($phase, $maximumAiWait),
             'elapsed_seconds' => $elapsedSeconds,
+            'step_started_at' => $stepStartedAt->format(\DateTimeInterface::ATOM),
+            'crawl_started_at' => $crawlStartedAt->format(\DateTimeInterface::ATOM),
+            'ai_started_at' => $aiStartedAt?->format(\DateTimeInterface::ATOM),
             'pages_crawled' => $audit->getPagesCrawled() ?? 0,
+            'pages_failed' => $audit->getPagesFailed() ?? 0,
             'max_pages' => $audit->getMaxPages(),
+            'seo_score' => $audit->getSeoScore(),
         ];
     }
 
@@ -69,17 +77,28 @@ final class AuditProgressStatusBuilder
     private function startedAt(Audit $audit, array $ai, string $phase): \DateTimeImmutable
     {
         if (in_array($phase, ['ai_queued', 'analyzing'], true)) {
-            foreach (['started_at', 'queued_at'] as $key) {
-                if (is_string($ai[$key] ?? null)) {
-                    try {
-                        return new \DateTimeImmutable($ai[$key]);
-                    } catch (\Exception) {
-                    }
-                }
+            $aiStart = $this->resolveAiStartedAt($ai);
+            if (null !== $aiStart) {
+                return $aiStart;
             }
         }
 
         return $audit->getCrawlStartedAt() ?? $audit->getCreatedAt();
+    }
+
+    /** @param array<string, mixed> $ai */
+    private function resolveAiStartedAt(array $ai): ?\DateTimeImmutable
+    {
+        foreach (['started_at', 'queued_at'] as $key) {
+            if (is_string($ai[$key] ?? null)) {
+                try {
+                    return new \DateTimeImmutable($ai[$key]);
+                } catch (\Exception) {
+                }
+            }
+        }
+
+        return null;
     }
 
     private function isTerminal(AuditStatus $auditStatus, string $aiStatus): bool
@@ -97,10 +116,10 @@ final class AuditProgressStatusBuilder
         return match ($phase) {
             'crawl_queued' => 'Audit queued',
             'crawling' => 'Crawling the website',
-            'ai_queued' => 'Claude analysis queued',
-            'analyzing' => 'Claude is analyzing the crawl',
+            'ai_queued' => 'SeoGeo analysis queued',
+            'analyzing' => 'SeoGeo analyzing the crawl',
             'completed' => 'Analysis complete',
-            'not_configured' => 'Claude is not configured',
+            'not_configured' => 'SeoGeo AI is not configured',
             default => 'Analysis stopped',
         };
     }
@@ -113,13 +132,13 @@ final class AuditProgressStatusBuilder
                 'The crawler is collecting real SEO facts from up to %s pages.',
                 null === $audit->getMaxPages() ? 'the configured number of' : (string) $audit->getMaxPages(),
             ),
-            'ai_queued' => 'The crawl is complete and Claude is waiting for the background worker.',
+            'ai_queued' => 'The crawl is complete and SeoGeo is waiting for the background worker.',
             'analyzing' => sprintf(
-                'Claude is producing the SEO, content, and AI recommendation audit from %d crawled pages.',
+                'SeoGeo is producing the SEO, content, and AI recommendation audit from %d crawled pages.',
                 $audit->getPagesCrawled() ?? 0,
             ),
             'completed' => 'The complete audit is ready.',
-            'not_configured' => 'The crawl completed, but the Claude API key is unavailable.',
+            'not_configured' => 'The crawl completed, but the SeoGeo AI is unavailable.',
             default => 'The audit could not be completed. The report will show the recorded error.',
         };
     }

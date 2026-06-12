@@ -75,7 +75,7 @@
     </section>
 
     <ul class="metric-grid" aria-label="Audit KPIs">
-        <li class="metric-card primary">
+        <li class="metric-card primary" data-kpi-seo-score>
             <span>Global SEO score</span>
             <strong>{{ audit.seoScore is not null ? audit.seoScore : 'Pending' }}</strong>
             <small>{{ insights.score_label }}</small>
@@ -95,22 +95,22 @@
             <strong>{{ aiCompleted and ai.geo_score is not null ? ai.geo_score : aiScoreState }}</strong>
             <small>{{ aiCompleted ? 'AI visibility' : (aiFailed ? 'Analysis failed' : (aiNotConfigured ? 'Not configured' : 'Waiting for Claude')) }}</small>
         </li>
-        <li class="metric-card">
+        <li class="metric-card" data-kpi-pages-crawled>
             <span>Pages crawled</span>
             <strong>{{ audit.pagesCrawled ?? 0 }}</strong>
             <small>Limit {{ audit.maxPages ?? 'default' }}</small>
         </li>
-        <li class="metric-card danger">
+        <li class="metric-card danger" data-kpi-issues>
             <span>Critical and high</span>
             <strong>{{ insights.critical_count + insights.high_count }}</strong>
             <small>{{ insights.open_issue_count }} total issues</small>
         </li>
-        <li class="metric-card">
+        <li class="metric-card" data-kpi-pages-failed>
             <span>Pages failed</span>
             <strong>{{ audit.pagesFailed ?? 0 }}</strong>
             <small>{{ insights.page_stats.success_rate }}% successful fetches</small>
         </li>
-        <li class="metric-card">
+        <li class="metric-card" data-kpi-ai-status>
             <span>AI analysis</span>
             <strong>{{ ai.status|replace({'_': ' '})|title }}</strong>
             <small>{{ ai.model ?? 'Claude model pending' }}</small>
@@ -125,19 +125,31 @@
     {% endif %}
 
     {% if isProcessing %}
+        {% set _aiMeta = audit.metadata.ai_analysis ?? {} %}
+        {% set _stepTs = null %}
+        {% if audit.status.value == 'COMPLETED' and (_aiMeta.started_at is defined or _aiMeta.queued_at is defined) %}
+            {% set _stepTs = _aiMeta.started_at ?? _aiMeta.queued_at %}
+        {% endif %}
+        {% if _stepTs is null %}
+            {% set _stepTs = (audit.crawlStartedAt ?? audit.createdAt)|date('c') %}
+        {% endif %}
         <section
             class="notice analysis-progress"
             data-audit-progress
+            data-audit-id="{{ audit.id }}"
+            data-event-source-url="{{ mercure('http://seo-geo-ai.local/audits/' ~ audit.id) }}"
             data-status-url="{{ path('app_audit_status', { id: audit.id }) }}"
+            data-step-started-at="{{ _stepTs }}"
             aria-live="polite"
         >
+
             <div class="analysis-progress__header">
                 <span class="spinner" aria-hidden="true"></span>
                 <div>
-                    <h2 data-progress-title>{{ aiRunning and audit.status.value == 'COMPLETED' ? 'Claude is analyzing the crawl' : 'Crawling the website' }}</h2>
+                    <h2 data-progress-title>{{ aiRunning and audit.status.value == 'COMPLETED' ? 'SeoGeo is analyzing the crawl' : 'Crawling the website' }}</h2>
                     <p data-progress-message>
                         {{ aiRunning and audit.status.value == 'COMPLETED'
-                            ? 'Claude is producing the SEO, content, and AI recommendation audit.'
+                            ? 'SeoGeo is producing the SEO, content, and AI recommendation audit.'
                             : 'The crawler is collecting real SEO facts before Claude starts.' }}
                     </p>
                 </div>
