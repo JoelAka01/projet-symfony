@@ -59,5 +59,9 @@ final class AdminDashboardTest extends WebTestCase
         $client->request('GET', '/admin/projects/new');
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', 'Create project');
+
+        $client->request('GET', '/admin/payments');
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('h1', 'Simulated payments');
     }
 }
