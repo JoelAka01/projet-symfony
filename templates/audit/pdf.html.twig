@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SEO audit report</title>
+    <style>
+        @page { margin: 28px 32px; }
+        body { color: #172033; font-family: "DejaVu Sans", sans-serif; font-size: 10px; line-height: 1.45; }
+        h1 { color: #16315f; font-size: 23px; margin: 0 0 4px; }
+        h2 { border-bottom: 2px solid #dce6f5; color: #16315f; font-size: 15px; margin: 22px 0 9px; padding-bottom: 4px; }
+        h3 { color: #243b63; font-size: 12px; margin: 12px 0 5px; }
+        p { margin: 4px 0 8px; }
+        ul { margin: 4px 0 9px 17px; padding: 0; }
+        li { margin-bottom: 3px; }
+        table { border-collapse: collapse; margin: 8px 0 14px; width: 100%; }
+        th, td { border: 1px solid #d9e1ec; padding: 5px; text-align: left; vertical-align: top; }
+        th { background: #edf3fb; color: #16315f; font-size: 9px; }
+        .muted { color: #5c6b82; }
+        .notice { background: #fff8e7; border-left: 4px solid #e4a11b; padding: 8px 10px; }
+        .kpis { margin: 14px 0; width: 100%; }
+        .kpis td { background: #f6f9fd; border: 4px solid #fff; padding: 9px; text-align: center; width: 20%; }
+        .kpis strong { color: #16315f; display: block; font-size: 17px; }
+        .section { page-break-inside: avoid; }
+        .recommendation { border: 1px solid #d9e1ec; margin-bottom: 8px; padding: 8px; page-break-inside: avoid; }
+        .priority { font-size: 9px; font-weight: bold; text-transform: uppercase; }
+        .page-break { page-break-before: always; }
+        .footer-note { border-top: 1px solid #d9e1ec; color: #68758a; margin-top: 20px; padding-top: 7px; }
+    </style>
+</head>
+<body>
+{% set ai = insights.ai %}
+{% set aiCompleted = ai.status == 'completed' %}
+{% set geo = ai.geo_analysis|default({}) %}
+{% set visibility = geo.ai_brand_visibility|default({}) %}
+
+<h1>{{ project ? project.name : 'Website' }} SEO and LLM audit</h1>
+<p class="muted">
+    Domain: {{ audit.domain ? audit.domain.rootDomain : 'n/a' }}
+    | Audit: {{ audit.id }}
+    | Generated: {{ generatedAt|date('Y-m-d H:i T') }}
+</p>
+
+<table class="kpis">
+    <tr>
+        <td><strong>{{ audit.seoScore ?? 'n/a' }}</strong>Crawler SEO</td>
+        <td><strong>{{ aiCompleted ? ai.global_score|default('n/a') : 'n/a' }}</strong>Claude score</td>
+        <td><strong>{{ aiCompleted ? ai.content_score|default('n/a') : 'n/a' }}</strong>Content</td>
+        <td><strong>{{ aiCompleted ? ai.geo_score|default('n/a') : 'n/a' }}</strong>LLM SEO</td>
+        <td><strong>{{ audit.pagesCrawled ?? 0 }}</strong>Pages crawled</td>
+    </tr>
+</table>
+
+<div class="section">
+    <h2>Executive summary</h2>
+    {% if aiCompleted %}
+        <p>{{ ai.summary }}</p>
+        {% if ai.score_rationale|default('') %}
+            <p class="muted">{{ ai.score_rationale }}</p>
+        {% endif %}
+        <table>
+            <tr>
+                <th>Technical</th>
+                <th>On-page</th>
+                <th>Content</th>
+                <th>GEO</th>
+                <th>Confidence</th>
+            </tr>
+            <tr>
+                <td>{{ ai.technical_score|default('n/a') }}</td>
+                <td>{{ ai.onpage_score|default('n/a') }}</td>
+                <td>{{ ai.content_score|default('n/a') }}</td>
+                <td>{{ ai.geo_score|default('n/a') }}</td>
+                <td>{{ ai.confidence is defined ? (ai.confidence * 100)|round ~ '%' : 'n/a' }}</td>
+            </tr>
+        </table>
+    {% else %}
+        <div class="notice">Claude analysis status: {{ ai.status|default('not started')|replace({'_': ' '})|title }}. The PDF still contains the real crawler findings.</div>
+    {% endif %}
+</div>
+
+{% if aiCompleted %}
+    <div class="section">
+        <h2>Strengths and weaknesses</h2>
+        <table>
+            <tr><th>Strengths</th><th>Weaknesses</th></tr>
+            <tr>
+                <td><ul>{% for item in ai.strengths|default([]) %}<li>{{ item }}</li>{% else %}<li>None returned.</li>{% endfor %}</ul></td>
+                <td><ul>{% for item in ai.weaknesses|default([]) %}<li>{{ item }}</li>{% else %}<li>None returned.</li>{% endfor %}</ul></td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>LLM recommendation readiness</h2>
+        <div class="notice">{{ geo.methodology_notice|default('ChatGPT, Gemini, and Perplexity were not queried. Claude estimates recommendation readiness from crawled evidence.') }}</div>
+        <table>
+            <thead>
+                <tr><th>Model</th><th>Estimated visibility</th><th>Claude assessment</th><th>Evidence</th></tr>
+            </thead>
+            <tbody>
+                {% for modelKey, modelLabel in {'chatgpt': 'ChatGPT', 'gemini': 'Gemini', 'perplexity': 'Perplexity'} %}
+                    {% set assessment = visibility[modelKey]|default({}) %}
+                    <tr>
+                        <td><strong>{{ modelLabel }}</strong></td>
+                        <td>{{ assessment.status|default('n/a')|replace({'_': ' '})|title }}</td>
+                        <td>{{ assessment.how_mentioned|default('No estimate returned.') }}</td>
+                        <td>{{ assessment.evidence|default([])|join(' ')|default('n/a') }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h3>Corrections to improve AI recommendations</h3>
+        <table>
+            <thead><tr><th>Target</th><th>Current gap</th><th>Correction</th></tr></thead>
+            <tbody>
+                {% for item in geo.ai_seo_optimizations|default([]) %}
+                    <tr>
+                        <td>{{ item.target_ai|default('All') }}</td>
+                        <td>{{ item.current_gap|default('n/a') }}</td>
+                        <td>{{ item.correction_action|default('n/a') }}</td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="3">No LLM-specific corrections were returned.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="page-break"></div>
+    <h2>Prioritized recommendations</h2>
+    {% for recommendation in ai.recommendations|default([]) %}
+        <div class="recommendation">
+            <span class="priority">{{ recommendation.id|default(loop.index) }} | {{ recommendation.priority|default('medium') }} | {{ recommendation.category|default('seo') }}</span>
+            <h3>{{ recommendation.title|default('SEO recommendation') }}</h3>
+            <p><strong>Problem:</strong> {{ recommendation.problem|default('n/a') }}</p>
+            <p><strong>Evidence:</strong> {{ recommendation.evidence|default('n/a') }}</p>
+            <p><strong>Correction:</strong> {{ recommendation.action|default('n/a') }}</p>
+            <p><strong>Impact:</strong> {{ recommendation.expected_impact|default('n/a') }} | <strong>Effort:</strong> {{ recommendation.effort|default('n/a') }}</p>
+            {% if recommendation.before_example|default('') or recommendation.after_example|default('') %}
+                <p><strong>Before:</strong> {{ recommendation.before_example|default('n/a') }}<br><strong>After:</strong> {{ recommendation.after_example|default('n/a') }}</p>
+            {% endif %}
+        </div>
+    {% else %}
+        <p>No Claude recommendations were stored.</p>
+    {% endfor %}
+{% endif %}
+
+<h2>Real crawler findings</h2>
+<table>
+    <tr>
+        <th>Pages</th>
+        <th>Failed</th>
+        <th>Critical</th>
+        <th>High</th>
+        <th>Average response</th>
+        <th>Average words</th>
+    </tr>
+    <tr>
+        <td>{{ audit.pagesCrawled ?? 0 }}</td>
+        <td>{{ audit.pagesFailed ?? 0 }}</td>
+        <td>{{ insights.critical_count }}</td>
+        <td>{{ insights.high_count }}</td>
+        <td>{{ insights.page_stats.average_load_time_ms is not null ? insights.page_stats.average_load_time_ms ~ ' ms' : 'n/a' }}</td>
+        <td>{{ insights.page_stats.average_word_count ?? 'n/a' }}</td>
+    </tr>
+</table>
+
+<h3>Top crawled pages</h3>
+<table>
+    <thead><tr><th>URL</th><th>Status</th><th>Issues</th><th>Title</th><th>Words</th><th>Indexable</th></tr></thead>
+    <tbody>
+        {% for page in insights.top_pages %}
+            <tr>
+                <td>{{ page.url }}</td>
+                <td>{{ page.status_code ?? 'n/a' }}</td>
+                <td>{{ page.issue_count }}</td>
+                <td>{{ page.title ?? 'Missing' }}</td>
+                <td>{{ page.word_count ?? 'n/a' }}</td>
+                <td>{{ page.indexable ? 'Yes' : 'No' }}</td>
+            </tr>
+        {% else %}
+            <tr><td colspan="6">No crawled pages were stored.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h3>Detected issues</h3>
+<table>
+    <thead><tr><th>Severity</th><th>Type</th><th>Page</th><th>Finding</th><th>Correction</th></tr></thead>
+    <tbody>
+        {% for issue in audit.issues %}
+            <tr>
+                <td>{{ issue.severity|default('medium')|title }}</td>
+                <td>{{ issue.issueType|replace({'_': ' '})|title }}</td>
+                <td>{{ issue.auditPage ? issue.auditPage.url : 'Audit' }}</td>
+                <td>{{ issue.message }}</td>
+                <td>{{ issue.recommendation }}</td>
+            </tr>
+        {% else %}
+            <tr><td colspan="5">No issues were detected.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<p class="footer-note">
+    Crawler facts come from real HTTP fetches. Claude provides interpretation and optimization advice. Cross-model readiness is not a live query of ChatGPT, Gemini, or Perplexity.
+</p>
+</body>
+</html>
