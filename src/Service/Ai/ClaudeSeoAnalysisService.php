@@ -177,7 +177,9 @@ Analysis depth expected:
 - Every recommendation must reference exact crawler evidence.
 - For title/meta/H1 fixes, provide before_example and after_example when the current value exists.
 - For missing sections, state the exact section to add and the user intent it supports.
+- For GEO (SEO for AI), assess the project/brand name ("name" in the payload) and domain: describe how major AI engines (ChatGPT & Gemini) would mention/perceive it, highlight visibility status and sentiment, and outline concrete content corrections to get recommended.
 - For GEO, suggest AI-answerable blocks, FAQs, entity improvements, and citation improvements grounded in the observed content.
+
 
 Return only valid JSON with this schema:
 {
@@ -374,6 +376,25 @@ Return only valid JSON with this schema:
     "ai_citation_potential": "low|medium|high",
     "citation_rationale": "string",
     "conversational_query_alignment": "string",
+    "ai_brand_visibility": {
+      "chatgpt": {
+        "status": "highly_visible|visible|low_visibility|not_found",
+        "how_mentioned": "Explanation of how ChatGPT refers to, lists, or recommends this business/brand based on its domain/niche and crawler data. Explain sentiment and context of recommendations.",
+        "sentiment": "positive|neutral|negative|unknown"
+      },
+      "gemini": {
+        "status": "highly_visible|visible|low_visibility|not_found",
+        "how_mentioned": "Explanation of how Gemini refers to, lists, or recommends this business/brand based on its domain/niche and crawler data. Explain sentiment and context of recommendations.",
+        "sentiment": "positive|neutral|negative|unknown"
+      }
+    },
+    "ai_seo_optimizations": [
+      {
+        "target_ai": "ChatGPT|Gemini|all",
+        "current_gap": "What content or structure gap prevents the model from recommending us.",
+        "correction_action": "Specific correction/action to optimize our content to get recommended/cited by this AI model"
+      }
+    ],
     "structured_answer_blocks": [
       {
         "question": "string",

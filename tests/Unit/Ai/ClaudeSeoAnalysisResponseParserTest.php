@@ -37,7 +37,29 @@ final class ClaudeSeoAnalysisResponseParserTest extends TestCase
       "effort": "low"
     }
   ],
-  "faq_suggestions": [{"question": "What is SEO?", "answer": "SEO improves search visibility."}]
+  "faq_suggestions": [{"question": "What is SEO?", "answer": "SEO improves search visibility."}],
+  "geo_analysis": {
+    "geo_score": 69,
+    "ai_brand_visibility": {
+      "chatgpt": {
+        "status": "visible",
+        "how_mentioned": "ChatGPT mentions it as a secondary brand.",
+        "sentiment": "neutral"
+      },
+      "gemini": {
+        "status": "low_visibility",
+        "how_mentioned": "Gemini rarely references it.",
+        "sentiment": "neutral"
+      }
+    },
+    "ai_seo_optimizations": [
+      {
+        "target_ai": "ChatGPT",
+        "current_gap": "Lack of comparison tables.",
+        "correction_action": "Add comparison table."
+      }
+    ]
+  }
 }
 ```
 JSON);
@@ -48,6 +70,9 @@ JSON);
         self::assertCount(1, $result['recommendations']);
         self::assertSame('Add FAQ coverage', $result['recommendations'][0]['title']);
         self::assertSame('What is SEO?', $result['faq_suggestions'][0]['question']);
+        self::assertSame('visible', $result['geo_analysis']['ai_brand_visibility']['chatgpt']['status']);
+        self::assertSame('low_visibility', $result['geo_analysis']['ai_brand_visibility']['gemini']['status']);
+        self::assertSame('ChatGPT', $result['geo_analysis']['ai_seo_optimizations'][0]['target_ai']);
     }
 
     public function testItRejectsResponsesWithoutJson(): void
