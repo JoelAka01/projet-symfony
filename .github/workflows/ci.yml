@@ -51,8 +51,30 @@ jobs:
         with:
           dependency-versions: locked
 
+      - name: Valider le fichier composer.json
+        run: composer validate --strict
+
+      - name: Linter les fichiers YAML
+        run: php bin/console lint:yaml config
+
+      - name: Linter les templates Twig
+        run: php bin/console lint:twig templates
+
+      - name: Linter le conteneur Symfony
+        run: php bin/console lint:container
+
+      - name: Lancer l'analyse PHPStan
+        run: vendor/bin/phpstan analyse --no-progress
+
+      - name: Créer la base de données de test
+        run: php bin/console doctrine:database:create --if-not-exists --no-interaction
+
       - name: Créer le schéma de base de données
         run: php bin/console doctrine:migrations:migrate --no-interaction
 
+      - name: Charger les fixtures
+        run: php bin/console doctrine:fixtures:load --no-interaction
+
       - name: Lancer les tests
         run: php bin/phpunit
+
