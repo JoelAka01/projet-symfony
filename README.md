@@ -27,6 +27,7 @@ Run Symfony commands in Docker (ensure containers are running with `make up` fir
 ```bash
 make migrate
 make fixtures
+make test-init     # Initialize test database (first time only)
 make test
 make phpstan
 make lint          # Check code style (PHP CS Fixer)
@@ -103,6 +104,7 @@ make install        # Build and start Docker services
 make up             # Start Docker containers
 make migrate        # Run migrations (Docker)
 make fixtures       # Load fixtures (Docker)
+make test-init      # Initialize test database (Docker)
 make test           # Run tests (Docker)
 make phpstan        # Run static analysis (Docker)
 make lint           # Check code style — PHP CS Fixer (Docker)
@@ -116,6 +118,7 @@ Makefile shortcuts (Local without Docker):
 ```bash
 make migrate-local  # Run migrations locally
 make fixtures-local # Load fixtures locally
+make test-init-local# Initialize test database locally
 make test-local     # Run tests locally
 make phpstan-local  # Run static analysis locally
 make lint-local     # Check code style locally

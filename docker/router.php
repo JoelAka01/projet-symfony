@@ -11,4 +11,4 @@ if (is_string($path)) {
     }
 }
 
-require __DIR__.'/../public/index.php';
+return require __DIR__.'/../public/index.php';

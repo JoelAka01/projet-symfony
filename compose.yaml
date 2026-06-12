@@ -11,7 +11,7 @@ services:
       - composer_cache:/tmp/composer
     environment:
       APP_ENV: dev
-      APP_DEBUG: 0
+      APP_DEBUG: 1
       APP_SECRET: change-me-in-env-local
       APP_CACHE_DIR: /tmp/symfony-cache
       APP_LOG_DIR: /tmp/symfony-log
@@ -57,7 +57,7 @@ services:
       - composer_cache:/tmp/composer
     environment:
       APP_ENV: dev
-      APP_DEBUG: 0
+      APP_DEBUG: 1
       APP_SECRET: change-me-in-env-local
       APP_CACHE_DIR: /tmp/symfony-cache
       APP_LOG_DIR: /tmp/symfony-log
