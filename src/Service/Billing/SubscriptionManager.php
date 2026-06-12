@@ -19,11 +19,14 @@ final class SubscriptionManager
         private readonly EntityManagerInterface $entityManager,
         private readonly SubscriptionRepository $subscriptionRepository,
         private readonly PlanCatalog $planCatalog,
+        private readonly BillingEmailService $billingEmailService,
     ) {}
 
     public function purchase(User $user, SubscriptionPlan $plan, string $cardNumber): Payment
     {
+        $oldPlan = null;
         foreach ($this->subscriptionRepository->findActiveSubscriptionsForUser($user) as $currentSubscription) {
+            $oldPlan = $currentSubscription->getPlan();
             $currentSubscription->setStatus(SubscriptionStatus::CANCELED);
         }
 
@@ -57,6 +60,14 @@ final class SubscriptionManager
         $this->entityManager->persist($payment);
         $this->entityManager->flush();
 
+        // Send activation/change emails
+        if ($oldPlan !== null && $oldPlan !== $plan) {
+            $this->billingEmailService->sendSubscriptionChangedEmail($user, $subscription, $oldPlan);
+        } else {
+            $this->billingEmailService->sendSubscriptionActivatedEmail($user, $subscription);
+        }
+        $this->billingEmailService->sendPaymentReceiptEmail($user, $payment);
+
         return $payment;
     }
 
@@ -69,13 +80,19 @@ final class SubscriptionManager
             return;
         }
 
+        $user = $subscription->getUser();
+        if (!$user instanceof User) {
+            $this->entityManager->flush();
+
+            return;
+        }
+
         if (PaymentStatus::PAID === $payment->getStatus()) {
-            $user = $subscription->getUser();
-            if ($user instanceof User) {
-                foreach ($this->subscriptionRepository->findActiveSubscriptionsForUser($user) as $activeSubscription) {
-                    if ($activeSubscription !== $subscription) {
-                        $activeSubscription->setStatus(SubscriptionStatus::CANCELED);
-                    }
+            $oldPlan = null;
+            foreach ($this->subscriptionRepository->findActiveSubscriptionsForUser($user) as $activeSubscription) {
+                if ($activeSubscription !== $subscription) {
+                    $oldPlan = $activeSubscription->getPlan();
+                    $activeSubscription->setStatus(SubscriptionStatus::CANCELED);
                 }
             }
             $subscription->setStatus(SubscriptionStatus::ACTIVE);
@@ -85,10 +102,22 @@ final class SubscriptionManager
                     ->setEndsAt(new \DateTimeImmutable('+1 month'));
             }
             $payment->setPaidAt($payment->getPaidAt() ?? new \DateTimeImmutable());
+
+            $this->entityManager->flush();
+
+            // Send activation/change emails
+            if ($oldPlan !== null && $oldPlan !== $subscription->getPlan()) {
+                $this->billingEmailService->sendSubscriptionChangedEmail($user, $subscription, $oldPlan);
+            } else {
+                $this->billingEmailService->sendSubscriptionActivatedEmail($user, $subscription);
+            }
+            $this->billingEmailService->sendPaymentReceiptEmail($user, $payment);
         } else {
             $subscription->setStatus(SubscriptionStatus::CANCELED);
-        }
+            $this->entityManager->flush();
 
-        $this->entityManager->flush();
+            // Send cancellation email
+            $this->billingEmailService->sendSubscriptionCanceledEmail($user, $subscription);
+        }
     }
 }
