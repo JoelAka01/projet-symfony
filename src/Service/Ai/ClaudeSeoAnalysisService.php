@@ -6,6 +6,7 @@ namespace App\Service\Ai;
 
 use App\Entity\Audit;
 use App\Service\Audit\AuditInsightsBuilder;
+use App\Service\Audit\AuditProgressNotifier;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -27,6 +28,7 @@ final class ClaudeSeoAnalysisService
         private readonly ClaudeSeoAnalysisResponseParser $responseParser,
         private readonly ClaudeSeoAnalysisSchema $responseSchema,
         private readonly LoggerInterface $logger,
+        private readonly AuditProgressNotifier $notifier,
     ) {}
 
     public function analyze(Audit $audit): void
@@ -234,6 +236,7 @@ final class ClaudeSeoAnalysisService
         $audit->setMetadata($auditMetadata);
 
         $this->entityManager->flush();
+        $this->notifier->notify($audit);
     }
 
     private function structuredSystemPrompt(): string
