@@ -224,7 +224,7 @@ final class ProjectController extends AbstractController
 
         $this->denyAccessUnlessGranted(ProjectVoter::LAUNCH_AUDIT, $project);
 
-        if (!$this->isCsrfTokenValid('retry_ai_'.$audit->getId(), (string) $request->request->get('_token', ''))) {
+        if (!$this->isCsrfTokenValid('retry_ai_' . $audit->getId(), (string) $request->request->get('_token', ''))) {
             throw $this->createAccessDeniedException('Invalid Claude retry CSRF token.');
         }
 

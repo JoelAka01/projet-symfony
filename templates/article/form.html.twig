@@ -1,0 +1,43 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ pageTitle }} | {{ project.name }}{% endblock %}
+
+{% block body %}
+    <section class="auth-shell">
+        <div class="auth-panel article-editor">
+            <p class="eyebrow">Content studio</p>
+            <h1>{{ pageTitle }}</h1>
+            <p class="muted">Review every title, keyword, claim, link, and image before sending changes to a live CMS.</p>
+
+            {{ form_start(form, { attr: { class: 'form-stack' } }) }}
+                {{ form_errors(form) }}
+                {{ form_row(form.title) }}
+                <div class="form-grid">
+                    {{ form_row(form.seoTitle) }}
+                    {{ form_row(form.slug) }}
+                </div>
+                {{ form_row(form.seoDescription) }}
+                {{ form_row(form.excerpt) }}
+                <div class="form-grid">
+                    {{ form_row(form.primaryKeyword) }}
+                    {{ form_row(form.targetKeywords) }}
+                </div>
+                {{ form_row(form.contentHtml) }}
+                <div class="form-grid">
+                    {{ form_row(form.featuredImageUrl) }}
+                    {{ form_row(form.featuredImageAlt) }}
+                </div>
+                {% if article.images is not empty %}
+                    {{ form_row(form.removeFeaturedImage) }}
+                {% else %}
+                    <div hidden>{{ form_widget(form.removeFeaturedImage) }}</div>
+                {% endif %}
+
+                <div class="form-actions">
+                    <button class="button primary" type="submit">Save article</button>
+                    <a class="button secondary" href="{{ isEdit ? path('app_article_show', { project: project.id, article: article.id }) : path('app_article_index', { project: project.id }) }}">Cancel</a>
+                </div>
+            {{ form_end(form) }}
+        </div>
+    </section>
+{% endblock %}

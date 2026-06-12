@@ -1,0 +1,54 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Articles | {{ project.name }}{% endblock %}
+
+{% block body %}
+    <section class="hero compact">
+        <p class="eyebrow">Content studio</p>
+        <h1>{{ project.name }}</h1>
+        <p>Write, improve, illustrate, and publish keyword-focused articles to a connected CMS.</p>
+        <div class="hero-actions">
+            <a class="button secondary" href="{{ path('app_project_show', { id: project.id }) }}">Back to project</a>
+            {% if is_granted('PROJECT_MANAGE', project) %}
+                <a class="button primary" href="{{ path('app_article_new', { project: project.id }) }}">New article</a>
+            {% endif %}
+        </div>
+    </section>
+
+    <section class="panel full-panel">
+        <h2>Article drafts</h2>
+        {% if articles is empty %}
+            <div class="empty-state">
+                <h3>No article drafts</h3>
+                <p class="muted">Create one manually or create a draft from a completed audit’s real AI recommendations.</p>
+            </div>
+        {% else %}
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Primary keyword</th>
+                            <th>Status</th>
+                            <th>Words</th>
+                            <th>Updated</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for article in articles %}
+                            <tr>
+                                <td><strong>{{ article.title }}</strong></td>
+                                <td>{{ article.primaryKeyword ? article.primaryKeyword.term : 'Not set' }}</td>
+                                <td>{{ article.status.value|lower|replace({'_': ' '})|title }}</td>
+                                <td>{{ article.wordCount ?? 0 }}</td>
+                                <td>{{ article.updatedAt|date('Y-m-d H:i') }}</td>
+                                <td><a href="{{ path('app_article_show', { project: project.id, article: article.id }) }}">Open</a></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </section>
+{% endblock %}

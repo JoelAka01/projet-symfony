@@ -1,0 +1,159 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ article.title }} | Content studio{% endblock %}
+
+{% block body %}
+    <section class="hero compact">
+        <p class="eyebrow">CMS-ready article</p>
+        <h1>{{ article.title }}</h1>
+        <p>
+            {{ article.status.value|lower|replace({'_': ' '})|title }}
+            · {{ article.wordCount ?? 0 }} words
+            {% if article.primaryKeyword %}· Primary keyword: {{ article.primaryKeyword.term }}{% endif %}
+        </p>
+        <div class="hero-actions">
+            <a class="button secondary" href="{{ path('app_article_index', { project: project.id }) }}">Back to articles</a>
+            {% if is_granted('PROJECT_MANAGE', project) %}
+                <a class="button secondary" href="{{ path('app_article_edit', { project: project.id, article: article.id }) }}">Edit article</a>
+                <a class="button secondary" href="{{ path('app_cms_connection_index', { project: project.id }) }}">CMS connections</a>
+            {% endif %}
+        </div>
+    </section>
+
+    <section class="analytics-grid">
+        <article class="panel">
+            <h2>SEO fields</h2>
+            <dl class="suggestions">
+                <div>
+                    <dt>SEO title</dt>
+                    <dd>{{ article.seoTitle ?? 'Not set' }}</dd>
+                </div>
+                <div>
+                    <dt>Meta description / summary</dt>
+                    <dd>{{ article.seoDescription ?? 'Not set' }}</dd>
+                </div>
+                <div>
+                    <dt>Slug</dt>
+                    <dd>{{ article.slug ?? 'Not set' }}</dd>
+                </div>
+                <div>
+                    <dt>Target keywords</dt>
+                    <dd>
+                        {% if article.targetKeywords is empty %}
+                            Not set
+                        {% else %}
+                            {{ article.targetKeywords|map(keyword => keyword.term)|join(', ') }}
+                        {% endif %}
+                    </dd>
+                </div>
+            </dl>
+        </article>
+
+        <article class="panel">
+            <h2>Images</h2>
+            {% if article.images is empty %}
+                <p class="muted">No real image URL is attached yet.</p>
+            {% else %}
+                {% for image in article.images %}
+                    <figure class="article-image-preview">
+                        <img src="{{ image.storageUrl }}" alt="{{ image.altText }}" loading="lazy">
+                        <figcaption>{{ image.altText ?: 'No alt text' }}</figcaption>
+                    </figure>
+                {% endfor %}
+            {% endif %}
+
+            {% set imageSuggestions = article.generationMetadata.image_suggestions|default([]) %}
+            {% if imageSuggestions is not empty %}
+                <h3>AI image briefs</h3>
+                <ul class="plain-list">
+                    {% for suggestion in imageSuggestions %}
+                        <li>
+                            <strong>{{ suggestion.placement|default('Suggested placement') }}</strong>:
+                            {{ suggestion.prompt|default('') }}
+                            {% if suggestion.alt_text|default('') %}<br>Alt: {{ suggestion.alt_text }}{% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </article>
+    </section>
+
+    {% if is_granted('PROJECT_MANAGE', project) %}
+        <section class="split-grid">
+            <article class="panel">
+                <h2>Write or improve with Claude</h2>
+                <p class="muted">Uses the selected keywords and the latest completed real crawl analysis. It never substitutes fake content when the API is unavailable.</p>
+                {{ form_start(generateForm, { attr: { class: 'form-stack', 'data-analysis-form': '' } }) }}
+                    {{ form_widget(generateForm) }}
+                    <button class="button primary" type="submit" data-analysis-submit>Generate complete article</button>
+                    <div class="analysis-loading" data-analysis-loading hidden role="status">
+                        <span class="spinner" aria-hidden="true"></span>
+                        <span>Claude is writing and structuring the article.</span>
+                    </div>
+                {{ form_end(generateForm) }}
+            </article>
+
+            <article class="panel">
+                <h2>Apply to connected CMS</h2>
+                {% if project.cmsConnections is empty %}
+                    <p class="muted">Connect and test WordPress or Shopify before publishing.</p>
+                    <a class="button secondary" href="{{ path('app_cms_connection_new', { project: project.id }) }}">Connect CMS</a>
+                {% else %}
+                    {{ form_start(publishForm, { attr: { class: 'form-stack', 'data-cms-publish-form': '' } }) }}
+                        {{ form_widget(publishForm) }}
+                        <button class="button primary" type="submit">Send changes to CMS</button>
+                    {{ form_end(publishForm) }}
+                {% endif %}
+            </article>
+        </section>
+    {% endif %}
+
+    <section class="panel full-panel">
+        <h2>Article preview</h2>
+        {% if article.contentHtml %}
+            <article class="article-preview">{{ article.contentHtml|raw }}</article>
+        {% else %}
+            <p class="muted">No article body has been written yet.</p>
+        {% endif %}
+    </section>
+
+    <section class="panel full-panel">
+        <h2>Publication history</h2>
+        {% if article.publications is empty %}
+            <p class="muted">This article has not been sent to a CMS.</p>
+        {% else %}
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Provider</th>
+                            <th>Status</th>
+                            <th>Remote ID</th>
+                            <th>Published</th>
+                            <th>Result</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for publication in article.publications %}
+                            <tr>
+                                <td>{{ publication.cmsConnection.provider.value|lower|capitalize }}</td>
+                                <td>{{ publication.status.value|lower|title }}</td>
+                                <td>{{ publication.externalPostId ?? 'Pending' }}</td>
+                                <td>{{ publication.publishedAt ? publication.publishedAt|date('Y-m-d H:i') : 'Draft' }}</td>
+                                <td>
+                                    {% if publication.externalUrl %}
+                                        <a href="{{ publication.externalUrl }}" target="_blank" rel="noopener noreferrer">Open remote article</a>
+                                    {% elseif publication.errorMessage %}
+                                        <span class="field-error">{{ publication.errorMessage }}</span>
+                                    {% else %}
+                                        No public URL returned
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </section>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ pageTitle }} | {{ project.name }}{% endblock %}
+
+{% block body %}
+    <section class="auth-shell">
+        <div class="auth-panel wide">
+            <p class="eyebrow">Website connection</p>
+            <h1>{{ pageTitle }}</h1>
+            <p class="muted">Enter the connection details here. End users never need to edit application files. Secrets are encrypted before storage and are never displayed again.</p>
+
+            {{ form_start(form, { attr: { class: 'form-stack', 'data-cms-connection-form': '' } }) }}
+                {{ form_errors(form) }}
+                {{ form_row(form.provider) }}
+                {{ form_row(form.baseUrl) }}
+
+                <div class="cms-provider-guide" data-cms-provider-guide="wordpress">
+                    <strong>Before connecting WordPress</strong>
+                    <ol>
+                        <li>Open WordPress Admin, then Users and your user profile.</li>
+                        <li>Create an Application Password for this application.</li>
+                        <li>Paste that generated password below. Your normal login password is not used.</li>
+                    </ol>
+                </div>
+
+                <div class="cms-provider-guide" data-cms-provider-guide="shopify">
+                    <strong>Before connecting Shopify</strong>
+                    <ol>
+                        <li>Create a custom app in Shopify Admin.</li>
+                        <li>Grant <code>read_content</code> and <code>write_content</code>.</li>
+                        <li>Install the app and paste its Admin API access token below. Blogs are detected automatically.</li>
+                    </ol>
+                </div>
+
+                {{ form_row(form.username) }}
+                {{ form_row(form.applicationPassword) }}
+                {{ form_row(form.accessToken) }}
+                {{ form_row(form.shopifyBlogId) }}
+                {{ form_row(form.authorName) }}
+
+                <div class="form-actions">
+                    <button class="button primary" type="submit">{{ connection.encryptedAccessToken ? 'Save changes and test' : 'Connect and test CMS' }}</button>
+                    <a class="button secondary" href="{{ path('app_cms_connection_index', { project: project.id }) }}">Cancel</a>
+                </div>
+            {{ form_end(form) }}
+        </div>
+    </section>
+{% endblock %}
