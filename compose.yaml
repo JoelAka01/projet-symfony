@@ -21,6 +21,9 @@ services:
       MESSENGER_TRANSPORT_DSN: doctrine://default?auto_setup=1
       MAILER_DSN: smtp://mailpit:1025
       MAILER_FROM_EMAIL: ${MAILER_FROM_EMAIL:-no-reply@seo-geo-ai.local}
+      MERCURE_URL: ${MERCURE_URL:-http://mercure/.well-known/mercure}
+      MERCURE_PUBLIC_URL: ${MERCURE_PUBLIC_URL:-http://localhost:3000/.well-known/mercure}
+      MERCURE_JWT_SECRET: ${MERCURE_JWT_SECRET:-!ChangeThisMercureHubJWTSecretKey!}
       MAILER_FROM_NAME: ${MAILER_FROM_NAME:-SEO GEO AI}
       CRAWLER_MAX_PAGES: ${CRAWLER_MAX_PAGES:-30}
       CRAWLER_MAX_DEPTH: ${CRAWLER_MAX_DEPTH:-2}
@@ -66,6 +69,9 @@ services:
       MESSENGER_TRANSPORT_DSN: doctrine://default?auto_setup=1
       MAILER_DSN: smtp://mailpit:1025
       MAILER_FROM_EMAIL: ${MAILER_FROM_EMAIL:-no-reply@seo-geo-ai.local}
+      MERCURE_URL: ${MERCURE_URL:-http://mercure/.well-known/mercure}
+      MERCURE_PUBLIC_URL: ${MERCURE_PUBLIC_URL:-http://localhost:3000/.well-known/mercure}
+      MERCURE_JWT_SECRET: ${MERCURE_JWT_SECRET:-!ChangeThisMercureHubJWTSecretKey!}
       MAILER_FROM_NAME: ${MAILER_FROM_NAME:-SEO GEO AI}
       CRAWLER_MAX_PAGES: ${CRAWLER_MAX_PAGES:-30}
       CRAWLER_MAX_DEPTH: ${CRAWLER_MAX_DEPTH:-2}
@@ -110,6 +116,21 @@ services:
     ports:
       - "1025:1025"
       - "8025:8025"
+
+  mercure:
+    image: dunglas/mercure
+    restart: unless-stopped
+    environment:
+      # Modern Caddy-based Mercure Hub JWT configuration (v0.14+)
+      SERVER_NAME: ":80"
+      MERCURE_PUBLISHER_JWT_KEY: ${MERCURE_JWT_SECRET:-!ChangeThisMercureHubJWTSecretKey!}
+      MERCURE_SUBSCRIBER_JWT_KEY: ${MERCURE_JWT_SECRET:-!ChangeThisMercureHubJWTSecretKey!}
+      MERCURE_EXTRA_DIRECTIVES: |
+        cors_origins *
+        publish_origins *
+        anonymous
+    ports:
+      - "3000:80"
 
 volumes:
   database_data:

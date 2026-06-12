@@ -1,0 +1,7 @@
+
+services:
+###> symfony/mercure-bundle ###
+  mercure:
+    # Port mapping is defined in compose.yaml (3000:80).
+    # Removing the override here so the fixed mapping is always used.
+###< symfony/mercure-bundle ###
