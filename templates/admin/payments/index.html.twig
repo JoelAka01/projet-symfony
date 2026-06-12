@@ -1,0 +1,64 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Payments | Admin{% endblock %}
+
+{% block body %}
+    {% include 'admin/_nav.html.twig' %}
+
+    <section class="hero compact admin-hero">
+        <p class="eyebrow">Administration</p>
+        <h1>Simulated payments</h1>
+        <p>Review test card payments and update the linked subscription status.</p>
+    </section>
+
+    <form class="admin-filter" method="get">
+        <label>
+            <span>Status</span>
+            <select name="status">
+                <option value="">All statuses</option>
+                {% for status in statuses %}
+                    <option value="{{ status.value }}" {{ selectedStatus == status.value ? 'selected' : '' }}>{{ status.value|lower|title }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <button class="button secondary" type="submit">Filter</button>
+        {% if selectedStatus %}<a class="button secondary" href="{{ path('app_admin_payment_index') }}">Clear</a>{% endif %}
+    </form>
+
+    <div class="notice">
+        <p><strong>Paid total:</strong> €{{ (paidTotalCents / 100)|number_format(2) }}. These transactions are simulations and do not represent real revenue.</p>
+    </div>
+
+    {% if payments is empty %}
+        <div class="empty-state"><h2>No payments found</h2></div>
+    {% else %}
+        <div class="table-wrap">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Plan</th>
+                        <th>Amount</th>
+                        <th>Card</th>
+                        <th>Status</th>
+                        <th>Paid</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payment in payments %}
+                        <tr>
+                            <td>{{ payment.user ? payment.user.email : 'Deleted user' }}</td>
+                            <td>{{ payment.plan.label }}</td>
+                            <td>€{{ (payment.amountCents / 100)|number_format(2) }}</td>
+                            <td>•••• {{ payment.cardLastFour }}</td>
+                            <td><span class="pill">{{ payment.status.value|lower|title }}</span></td>
+                            <td>{{ payment.paidAt ? payment.paidAt|date('Y-m-d H:i') : 'Not paid' }}</td>
+                            <td><a class="btn-action" href="{{ path('app_admin_payment_edit', {id: payment.id}) }}">Manage</a></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+{% endblock %}

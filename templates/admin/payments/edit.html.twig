@@ -1,0 +1,28 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Manage payment | Admin{% endblock %}
+
+{% block body %}
+    {% include 'admin/_nav.html.twig' %}
+
+    <div class="back-navigation">
+        <a class="back-link" href="{{ path('app_admin_payment_index') }}">&larr; Back to payments</a>
+    </div>
+
+    <section class="hero compact admin-hero">
+        <p class="eyebrow">Payment administration</p>
+        <h1>Manage {{ payment.plan.label }} payment</h1>
+        <p>{{ payment.user ? payment.user.email : 'Deleted user' }} · €{{ (payment.amountCents / 100)|number_format(2) }} · card ending {{ payment.cardLastFour }}</p>
+    </section>
+
+    <section class="panel full-panel">
+        {{ form_start(form, {attr: {class: 'form-stack'}}) }}
+            {{ form_row(form.status) }}
+            {{ form_row(form.adminNote) }}
+            <div class="form-actions">
+                <button class="button primary" type="submit">Save payment</button>
+                <a class="button secondary" href="{{ path('app_admin_payment_index') }}">Cancel</a>
+            </div>
+        {{ form_end(form) }}
+    </section>
+{% endblock %}
