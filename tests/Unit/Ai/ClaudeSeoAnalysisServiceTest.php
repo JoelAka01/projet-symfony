@@ -9,7 +9,10 @@ use App\Service\Ai\ClaudeSeoAnalysisResponseParser;
 use App\Service\Ai\ClaudeSeoAnalysisSchema;
 use App\Service\Ai\ClaudeSeoAnalysisService;
 use App\Service\Audit\AuditInsightsBuilder;
+use App\Service\Audit\AuditProgressNotifier;
+use App\Service\Audit\AuditProgressStatusBuilder;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Mercure\HubInterface;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\Component\HttpClient\MockHttpClient;
@@ -86,6 +89,12 @@ final class ClaudeSeoAnalysisServiceTest extends TestCase
 
         $audit = new Audit();
 
+        $notifier = new AuditProgressNotifier(
+            $this->createMock(HubInterface::class),
+            new AuditProgressStatusBuilder(),
+            new NullLogger()
+        );
+
         $service = new ClaudeSeoAnalysisService(
             $httpClient,
             $entityManager,
@@ -93,6 +102,7 @@ final class ClaudeSeoAnalysisServiceTest extends TestCase
             new ClaudeSeoAnalysisResponseParser(),
             new ClaudeSeoAnalysisSchema(),
             new NullLogger(),
+            $notifier,
         );
 
         $service->analyze($audit);
@@ -161,6 +171,12 @@ final class ClaudeSeoAnalysisServiceTest extends TestCase
         $entityManager->expects(self::exactly(2))->method('flush');
 
         $audit = new Audit();
+        $notifier = new AuditProgressNotifier(
+            $this->createMock(HubInterface::class),
+            new AuditProgressStatusBuilder(),
+            new NullLogger()
+        );
+
         $service = new ClaudeSeoAnalysisService(
             $httpClient,
             $entityManager,
@@ -168,6 +184,7 @@ final class ClaudeSeoAnalysisServiceTest extends TestCase
             new ClaudeSeoAnalysisResponseParser(),
             new ClaudeSeoAnalysisSchema(),
             new NullLogger(),
+            $notifier,
         );
 
         $service->analyze($audit);
@@ -225,6 +242,12 @@ final class ClaudeSeoAnalysisServiceTest extends TestCase
         $entityManager->expects(self::exactly(2))->method('flush');
 
         $audit = new Audit();
+        $notifier = new AuditProgressNotifier(
+            $this->createMock(HubInterface::class),
+            new AuditProgressStatusBuilder(),
+            new NullLogger()
+        );
+
         $service = new ClaudeSeoAnalysisService(
             $httpClient,
             $entityManager,
@@ -232,6 +255,7 @@ final class ClaudeSeoAnalysisServiceTest extends TestCase
             new ClaudeSeoAnalysisResponseParser(),
             new ClaudeSeoAnalysisSchema(),
             new NullLogger(),
+            $notifier,
         );
 
         $service->analyze($audit);
