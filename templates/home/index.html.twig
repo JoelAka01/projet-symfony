@@ -79,8 +79,27 @@
 <section class="lp-pricing-preview" id="pricing">
     <p class="lp-section-label">Pricing</p>
     <h2 class="lp-section-title">Start with 3 free analyses</h2>
-    <p class="lp-pricing-preview__text">Choose a monthly plan when you need more website analyses and AI credits.</p>
-    <a class="button primary" href="{{ path('app_pricing') }}">View plans</a>
+    <p class="lp-pricing-preview__text" style="margin-bottom: 32px;">Choose a monthly plan when you need more website analyses and AI credits.</p>
+
+    <div class="pricing-grid" aria-label="Subscription plans">
+        {% for item in plans %}
+            <article class="pricing-card {{ item.featured ? 'is-featured' : '' }}">
+                {% if item.featured %}<span class="pricing-badge">Most popular</span>{% endif %}
+                <h2 style="font-size: 1.5rem; margin-bottom: 8px;">{{ item.name }}</h2>
+                <p class="pricing-price" style="margin-bottom: 16px;">
+                    <strong>€{{ (item.priceCents / 100)|number_format(0) }}</strong><span>/month</span>
+                </p>
+                <ul style="margin-bottom: 24px; padding-left: 20px; text-align: left;">
+                    <li>{{ item.weeklyAnalyses }} website analyses per week</li>
+                    <li>{{ (item.monthlyCredits / 1000000)|number_format(1) }}M AI credits per month</li>
+                    <li>Real crawl and AI recommendations</li>
+                </ul>
+                <a class="button primary" href="{{ path('app_register') }}" style="width: 100%; text-align: center;">Start free</a>
+            </article>
+        {% endfor %}
+    </div>
+
+    <p class="pricing-note">Payments are simulated for this school project. No real charge is made.</p>
 </section>
 
 {# ── CTA BOTTOM ───────────────────────────────────────────────────────────── #}

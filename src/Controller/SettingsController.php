@@ -7,6 +7,8 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Form\UserAccountFormType;
 use App\Form\UserProfileFormType;
+use App\Repository\SubscriptionRepository;
+use App\Enum\SubscriptionStatus;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -26,11 +28,14 @@ final class SettingsController extends AbstractController
         EntityManagerInterface $entityManager,
         UserPasswordHasherInterface $passwordHasher,
         ValidatorInterface $validator,
+        SubscriptionRepository $subscriptionRepository,
     ): Response {
         $user = $this->getUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
+
+        $activeSubscription = $subscriptionRepository->findActiveForUser($user);
 
         // Separate forms to avoid validation overlap and submission conflicts
         $profileForm = $this->createForm(UserProfileFormType::class, $user);
@@ -92,6 +97,7 @@ final class SettingsController extends AbstractController
         return $this->render('settings/index.html.twig', [
             'profileForm' => $profileForm,
             'accountForm' => $accountForm,
+            'activeSubscription' => $activeSubscription,
         ]);
     }
 
@@ -119,5 +125,36 @@ final class SettingsController extends AbstractController
         $this->addFlash('success', 'Your account has been deleted permanently.');
 
         return $this->redirectToRoute('app_home');
+    }
+
+    #[Route('/settings/cancel-subscription', name: 'app_subscription_cancel', methods: ['POST'])]
+    public function cancelSubscription(
+        Request $request,
+        SubscriptionRepository $subscriptionRepository,
+        EntityManagerInterface $entityManager,
+    ): Response {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException();
+        }
+
+        if (!$this->isCsrfTokenValid('cancel_subscription', (string) $request->request->get('_token', ''))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token for subscription cancellation.');
+        }
+
+        $activeSubscriptions = $subscriptionRepository->findActiveSubscriptionsForUser($user);
+        if (empty($activeSubscriptions)) {
+            $this->addFlash('error', 'You do not have an active subscription to cancel.');
+            return $this->redirectToRoute('app_settings');
+        }
+
+        foreach ($activeSubscriptions as $subscription) {
+            $subscription->setStatus(SubscriptionStatus::CANCELED);
+        }
+        $entityManager->flush();
+
+        $this->addFlash('success', 'Your subscription has been canceled successfully.');
+
+        return $this->redirectToRoute('app_settings');
     }
 }
