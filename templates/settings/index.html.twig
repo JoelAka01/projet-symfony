@@ -65,6 +65,33 @@
         </div>
     </div>
 
+    {% if activeSubscription %}
+        {# Subscription panel #}
+        <div class="panel full-panel" style="margin-top: 24px; border-color: #e2e8f0;">
+            <h2>Subscription Plan</h2>
+            <p class="muted" style="margin-bottom: 20px;">Manage your active membership plan and billing options.</p>
+
+            <div style="background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+                <div>
+                    <h3 style="margin: 0 0 4px 0; color: #0f766e; font-size: 1.2rem;">{{ activeSubscription.plan.label() }} Plan</h3>
+                    <p style="margin: 0; color: #475569; font-size: 0.95rem;">
+                        <strong>€{{ (activeSubscription.monthlyPriceCents / 100)|number_format(2) }}/month</strong> &middot; 
+                        Renewals on {{ activeSubscription.endsAt|date('F j, Y') }}
+                    </p>
+                    <small style="color: #64748b; display: block; margin-top: 4px;">
+                        Includes {{ activeSubscription.weeklyAnalysisLimit }} website analyses per week and {{ (activeSubscription.monthlyCreditLimit / 1000000)|number_format(1) }}M AI credits per month.
+                    </small>
+                </div>
+                <div>
+                    <form method="post" action="{{ path('app_subscription_cancel') }}" onsubmit="return confirm('Are you sure you want to cancel your subscription plan? Your account will revert to the Free plan immediately.');">
+                        <input type="hidden" name="_token" value="{{ csrf_token('cancel_subscription') }}">
+                        <button class="button" type="submit" style="color: #b91c1c; border-color: #fca5a5; background: #fff5f5;">Cancel Subscription</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
     {# Account Deletion panel (Danger Zone) #}
     <div class="panel full-panel" style="border-color: #fecaca; background: #fff5f5;">
         <h2 style="color: #991b1b;">Danger Zone</h2>
