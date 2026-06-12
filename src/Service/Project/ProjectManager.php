@@ -46,12 +46,9 @@ final class ProjectManager
         $this->entityManager->flush();
     }
 
-    public function archive(Project $project): void
+    public function delete(Project $project): void
     {
-        $project
-            ->setStatus(ProjectStatus::ARCHIVED)
-            ->touch();
-
+        $this->entityManager->remove($project);
         $this->entityManager->flush();
     }
 
