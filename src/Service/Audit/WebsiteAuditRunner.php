@@ -10,6 +10,7 @@ use App\Entity\Project;
 use App\Entity\User;
 use App\Enum\AuditStatus;
 use App\Service\Ai\ClaudeSeoAnalysisService;
+use App\Service\Billing\AnalysisQuotaManager;
 use App\Service\Crawler\WebsiteCrawlerService;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -19,9 +20,10 @@ final class WebsiteAuditRunner
         private readonly EntityManagerInterface $entityManager,
         private readonly WebsiteCrawlerService $crawler,
         private readonly ClaudeSeoAnalysisService $claudeSeoAnalysis,
+        private readonly AnalysisQuotaManager $quotaManager,
     ) {}
 
-    public function createQueued(Project $project, Domain $domain, User $requestedBy): Audit
+    public function createQueued(Project $project, Domain $domain, User $requestedBy, ?string $clientIp = null): Audit
     {
         $audit = new Audit();
         $audit
@@ -41,6 +43,7 @@ final class WebsiteAuditRunner
             ]);
 
         $this->entityManager->persist($audit);
+        $this->quotaManager->reserve($audit, $requestedBy, $clientIp);
         $this->entityManager->flush();
 
         return $audit;
@@ -53,8 +56,12 @@ final class WebsiteAuditRunner
 
             if (AuditStatus::COMPLETED === $audit->getStatus()) {
                 $this->claudeSeoAnalysis->analyze($audit);
+            } else {
+                $this->quotaManager->release($audit);
+                $this->entityManager->flush();
             }
         } catch (\Throwable $exception) {
+            $this->quotaManager->release($audit);
             $audit
                 ->setStatus(AuditStatus::FAILED)
                 ->setErrorMessage($exception->getMessage())

@@ -14,6 +14,7 @@ use App\Form\AdminProjectType;
 use App\Form\AdminUserType;
 use App\Repository\AiUsageRepository;
 use App\Repository\AuditRepository;
+use App\Repository\PaymentRepository;
 use App\Repository\ProjectRepository;
 use App\Repository\UserRepository;
 use App\Service\Project\ProjectManager;
@@ -44,6 +45,7 @@ final class AdminController extends AbstractController
         ProjectRepository $projectRepository,
         AuditRepository $auditRepository,
         AiUsageRepository $aiUsageRepository,
+        PaymentRepository $paymentRepository,
     ): Response {
         $usageByUser = $aiUsageRepository->getSummariesByUser();
         $userRows = $this->buildUserRows($userRepository->findForAdmin(), $usageByUser);
@@ -60,6 +62,8 @@ final class AdminController extends AbstractController
                 'activeProjects' => $projectRepository->count(['status' => ProjectStatus::ACTIVE]),
                 'audits' => $auditRepository->count([]),
                 'failedAudits' => $auditRepository->count(['status' => AuditStatus::FAILED]),
+                'paidPayments' => $paymentRepository->countPaid(),
+                'simulatedRevenueCents' => $paymentRepository->sumPaidAmountCents(),
             ],
             'usage' => $aiUsageRepository->getGlobalSummary(),
             'topUsers' => array_slice($userRows, 0, 5),

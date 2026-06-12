@@ -7,6 +7,8 @@ namespace App\Service\Ai;
 use App\Entity\Audit;
 use App\Service\Audit\AuditInsightsBuilder;
 use App\Service\Audit\AuditProgressNotifier;
+use App\Service\Billing\AnalysisQuotaManager;
+use App\Service\Billing\PlanCatalog;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -30,6 +32,7 @@ final class ClaudeSeoAnalysisService
         private readonly LoggerInterface $logger,
         private readonly AuditProgressNotifier $notifier,
         private readonly ?AiUsageRecorder $usageRecorder = null,
+        private readonly ?AnalysisQuotaManager $quotaManager = null,
     ) {}
 
     public function analyze(Audit $audit): void
@@ -47,6 +50,7 @@ final class ClaudeSeoAnalysisService
         );
 
         if (null === $apiKey) {
+            $this->quotaManager?->release($audit);
             $this->storeAiMetadata($audit, [
                 'status' => 'not_configured',
                 'provider' => 'anthropic',
@@ -174,8 +178,9 @@ final class ClaudeSeoAnalysisService
             }
 
             $usageUser = $audit->getRequestedBy() ?? $audit->getProject()?->getOwner();
+            $recordedUsage = null;
             if (null !== $usageUser && [] !== $responseUsage) {
-                $this->usageRecorder?->record(
+                $recordedUsage = $this->usageRecorder?->record(
                     $usageUser,
                     $audit->getProject(),
                     'anthropic',
@@ -185,6 +190,10 @@ final class ClaudeSeoAnalysisService
                     $audit->getId(),
                 );
             }
+            $this->quotaManager?->consume(
+                $audit,
+                $recordedUsage?->getCredits() ?? PlanCatalog::ESTIMATED_CREDITS_PER_ANALYSIS,
+            );
 
             $this->storeAiMetadata($audit, $parsed + [
                 'status' => 'completed',
@@ -200,6 +209,7 @@ final class ClaudeSeoAnalysisService
                 'raw_response' => $this->limit($responseText, 50000),
             ]);
         } catch (\Throwable $exception) {
+            $this->quotaManager?->release($audit);
             $this->logger->error('Claude SEO analysis failed.', [
                 'audit_id' => $audit->getId(),
                 'exception' => $exception,

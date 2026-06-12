@@ -10,7 +10,7 @@
         <div class="hero-top-bar">
             <div>
                 <h1>Platform overview</h1>
-                <p>Manage accounts and projects, and monitor credits reported by the real AI provider.</p>
+                <p>Manage accounts, projects, simulated payments, and credits reported by the real AI provider.</p>
             </div>
             <div class="hero-actions">
                 <a class="button primary" href="{{ path('app_admin_user_new') }}">Create user</a>
@@ -39,6 +39,11 @@
             <span>Website audits</span>
             <strong>{{ metrics.audits|number_format }}</strong>
             <small>{{ metrics.failedAudits|number_format }} failed</small>
+        </li>
+        <li class="metric-card">
+            <span>Simulated payments</span>
+            <strong>{{ metrics.paidPayments|number_format }}</strong>
+            <small>€{{ (metrics.simulatedRevenueCents / 100)|number_format(2) }} total</small>
         </li>
     </ul>
 

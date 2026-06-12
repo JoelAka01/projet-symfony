@@ -7,23 +7,33 @@ namespace App\DataFixtures;
 use App\Entity\Domain;
 use App\Entity\Organization;
 use App\Entity\OrganizationUser;
+use App\Entity\Payment;
 use App\Entity\Project;
+use App\Entity\Subscription;
 use App\Entity\User;
+use App\Enum\PaymentStatus;
 use App\Enum\ProjectStatus;
+use App\Enum\SubscriptionPlan;
+use App\Enum\SubscriptionStatus;
 use App\Enum\UserRole;
+use App\Service\Billing\PlanCatalog;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 final class AppFixtures extends Fixture
 {
-    public function __construct(private readonly UserPasswordHasherInterface $passwordHasher) {}
+    public function __construct(
+        private readonly UserPasswordHasherInterface $passwordHasher,
+        private readonly PlanCatalog $planCatalog,
+    ) {}
 
     public function load(ObjectManager $manager): void
     {
         $admin = $this->createUser($manager, 'admin@example.com', 'Admin', 'Demo', UserRole::ADMIN);
         $managerUser = $this->createUser($manager, 'manager@example.com', 'Manager', 'Demo', UserRole::EDITOR);
         $user = $this->createUser($manager, 'user@example.com', 'User', 'Demo', UserRole::VIEWER);
+        $this->createDemoSubscription($manager, $managerUser, SubscriptionPlan::PRO);
 
         $agency = $this->createOrganization($manager, 'Demo SEO Agency', 'admin@example.com');
         $this->addOrganizationUser($manager, $agency, $admin, UserRole::OWNER);
@@ -85,6 +95,42 @@ final class AppFixtures extends Fixture
         $manager->persist($organization);
 
         return $organization;
+    }
+
+    private function createDemoSubscription(
+        ObjectManager $manager,
+        User $user,
+        SubscriptionPlan $plan,
+    ): void {
+        $details = $this->planCatalog->get($plan);
+        $now = new \DateTimeImmutable();
+
+        $subscription = new Subscription();
+        $subscription
+            ->setUser($user)
+            ->setPlan($plan)
+            ->setStatus(SubscriptionStatus::ACTIVE)
+            ->setMonthlyPriceCents($details['priceCents'])
+            ->setMonthlyCreditLimit($details['monthlyCredits'])
+            ->setWeeklyAnalysisLimit($details['weeklyAnalyses'])
+            ->setStartsAt($now)
+            ->setEndsAt($now->modify('+1 month'));
+
+        $payment = new Payment();
+        $payment
+            ->setUser($user)
+            ->setSubscription($subscription)
+            ->setPlan($plan)
+            ->setStatus(PaymentStatus::PAID)
+            ->setAmountCents($details['priceCents'])
+            ->setCurrency('EUR')
+            ->setCardLastFour('4242')
+            ->setSimulated(true)
+            ->setPaidAt($now)
+            ->setAdminNote('Demo fixture payment.');
+
+        $manager->persist($subscription);
+        $manager->persist($payment);
     }
 
     private function addOrganizationUser(

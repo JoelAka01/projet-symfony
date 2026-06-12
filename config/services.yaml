@@ -29,5 +29,9 @@ services:
         arguments:
             $clients: !tagged_iterator app.cms_provider_client
 
+    App\Service\Billing\ClientIpHasher:
+        arguments:
+            $appSecret: '%kernel.secret%'
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
