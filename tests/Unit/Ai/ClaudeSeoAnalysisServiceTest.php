@@ -179,6 +179,71 @@ final class ClaudeSeoAnalysisServiceTest extends TestCase
         self::assertSame(2400, $audit->getMetadata()['ai_analysis']['usage']['output_tokens']);
     }
 
+    public function testItFallsBackToPromptJsonWhenAnthropicRejectsTheStructuredGrammar(): void
+    {
+        $this->setEnv('CLAUDE_API_KEY', 'test-key');
+        $requests = [];
+
+        $httpClient = new MockHttpClient(
+            function (string $method, string $url, array $options) use (&$requests): MockResponse {
+                $requestPayload = json_decode((string) $options['body'], true, 512, JSON_THROW_ON_ERROR);
+                $requests[] = $requestPayload;
+
+                if (1 === count($requests)) {
+                    return new MockResponse(json_encode([
+                        'type' => 'error',
+                        'error' => [
+                            'type' => 'invalid_request_error',
+                            'message' => 'The compiled grammar is too large. Simplify your tool schemas.',
+                        ],
+                    ], JSON_THROW_ON_ERROR), ['http_code' => 400]);
+                }
+
+                return new MockResponse(json_encode([
+                    'content' => [[
+                        'type' => 'text',
+                        'text' => json_encode([
+                            'scores' => [
+                                'global' => 78,
+                                'technical' => 80,
+                                'content' => 70,
+                                'onpage' => 74,
+                                'geo' => 65,
+                                'ux' => 71,
+                                'confidence' => 0.8,
+                            ],
+                            'summary' => 'Prompt JSON fallback completed the analysis.',
+                            'recommendations' => [],
+                        ], JSON_THROW_ON_ERROR),
+                    ]],
+                    'stop_reason' => 'end_turn',
+                ], JSON_THROW_ON_ERROR), ['http_code' => 200]);
+            },
+        );
+
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->expects(self::exactly(2))->method('flush');
+
+        $audit = new Audit();
+        $service = new ClaudeSeoAnalysisService(
+            $httpClient,
+            $entityManager,
+            new AuditInsightsBuilder(),
+            new ClaudeSeoAnalysisResponseParser(),
+            new ClaudeSeoAnalysisSchema(),
+            new NullLogger(),
+        );
+
+        $service->analyze($audit);
+
+        self::assertCount(2, $requests);
+        self::assertArrayHasKey('output_config', $requests[0]);
+        self::assertArrayNotHasKey('output_config', $requests[1]);
+        self::assertSame('completed', $audit->getMetadata()['ai_analysis']['status']);
+        self::assertSame('prompt_json', $audit->getMetadata()['ai_analysis']['response_format']);
+        self::assertSame(78, $audit->getMetadata()['ai_analysis']['global_score']);
+    }
+
     private function setEnv(string $name, string $value): void
     {
         if (!array_key_exists($name, $this->previousEnv)) {

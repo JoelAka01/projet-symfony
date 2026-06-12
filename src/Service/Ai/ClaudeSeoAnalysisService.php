@@ -81,44 +81,43 @@ final class ClaudeSeoAnalysisService
             $responseUsage = [];
             $usedMaxTokens = $maxTokens;
             $attempts = 0;
+            $responseFormat = 'structured_json';
 
             foreach ($tokenBudgets as $attempt => $tokenBudget) {
                 ++$attempts;
-                $response = $this->httpClient->request('POST', $baseUrl . '/v1/messages', [
-                    'headers' => [
-                        'x-api-key' => $apiKey,
-                        'anthropic-version' => self::ANTHROPIC_VERSION,
-                        'content-type' => 'application/json',
-                    ],
-                    'json' => [
-                        'model' => $model,
-                        'max_tokens' => $tokenBudget,
-                        'temperature' => 0.2,
-                        'system' => $this->structuredSystemPrompt(),
-                        'messages' => [
-                            [
-                                'role' => 'user',
-                                'content' => [
-                                    [
-                                        'type' => 'text',
-                                        'text' => "Analyze this real website crawl. Use only the supplied crawler facts for objective claims:\n\n" . json_encode($crawlSummary, JSON_THROW_ON_ERROR),
-                                    ],
-                                ],
-                            ],
-                        ],
-                        'output_config' => [
-                            'format' => [
-                                'type' => 'json_schema',
-                                'schema' => $this->responseSchema->build(),
-                            ],
-                        ],
-                    ],
-                    'timeout' => $timeoutSeconds,
-                    'max_duration' => $maxDurationSeconds,
-                ]);
+                $response = $this->requestClaude(
+                    $baseUrl,
+                    $apiKey,
+                    $model,
+                    $tokenBudget,
+                    $timeoutSeconds,
+                    $maxDurationSeconds,
+                    $crawlSummary,
+                    true,
+                );
 
                 $statusCode = $response->getStatusCode();
                 $body = $response->getContent(false);
+                if ($statusCode >= 400 && $this->isStructuredOutputCompatibilityError($body)) {
+                    $this->logger->warning('Claude structured output was rejected; retrying with prompt-enforced JSON.', [
+                        'audit_id' => $audit->getId(),
+                        'status_code' => $statusCode,
+                    ]);
+                    $responseFormat = 'prompt_json';
+                    $response = $this->requestClaude(
+                        $baseUrl,
+                        $apiKey,
+                        $model,
+                        $tokenBudget,
+                        $timeoutSeconds,
+                        $maxDurationSeconds,
+                        $crawlSummary,
+                        false,
+                    );
+                    $statusCode = $response->getStatusCode();
+                    $body = $response->getContent(false);
+                }
+
                 if ($statusCode >= 400) {
                     throw new \RuntimeException(sprintf('Claude API returned HTTP %d: %s', $statusCode, $this->limit($body, 1000)));
                 }
@@ -177,6 +176,7 @@ final class ClaudeSeoAnalysisService
                 'max_duration_seconds' => $maxDurationSeconds,
                 'attempts' => $attempts,
                 'usage' => $responseUsage,
+                'response_format' => $responseFormat,
                 'analyzed_at' => (new \DateTimeImmutable())->format(\DateTimeInterface::ATOM),
                 'raw_response' => $this->limit($responseText, 50000),
             ]);
@@ -198,6 +198,32 @@ final class ClaudeSeoAnalysisService
                 'analyzed_at' => (new \DateTimeImmutable())->format(\DateTimeInterface::ATOM),
             ]);
         }
+    }
+
+    public function reparseStoredResponse(Audit $audit): void
+    {
+        $aiAnalysis = $audit->getMetadata()['ai_analysis'] ?? null;
+        if (!is_array($aiAnalysis) || !is_string($aiAnalysis['raw_response'] ?? null)) {
+            throw new \RuntimeException('No stored Claude response is available for this audit.');
+        }
+
+        $parsed = $this->responseParser->parse($aiAnalysis['raw_response']);
+        $operationalMetadata = array_intersect_key($aiAnalysis, array_flip([
+            'provider',
+            'model',
+            'max_tokens',
+            'timeout_seconds',
+            'max_duration_seconds',
+            'attempts',
+            'usage',
+            'response_format',
+            'analyzed_at',
+            'raw_response',
+        ]));
+        $operationalMetadata['status'] = 'completed';
+        $operationalMetadata['reparsed_at'] = (new \DateTimeImmutable())->format(\DateTimeInterface::ATOM);
+
+        $this->storeAiMetadata($audit, $parsed + $operationalMetadata);
     }
 
     /** @param array<string, mixed> $metadata */
@@ -226,7 +252,86 @@ Rules:
 - Set methodology_notice to explain that these are Claude-generated readiness estimates, not live checks of ChatGPT, Gemini, or Perplexity.
 - Give model-specific content corrections for entity clarity, direct answers, citations, original evidence, structured data, FAQs, and comparison content.
 - Empty strings or arrays are acceptable when crawler evidence is insufficient.
+- Return 6 to 10 recommendations and complete every field in the compact response contract.
 PROMPT;
+    }
+
+    /**
+     * @param array<string, mixed> $crawlSummary
+     */
+    private function requestClaude(
+        string $baseUrl,
+        string $apiKey,
+        string $model,
+        int $maxTokens,
+        int $timeoutSeconds,
+        int $maxDurationSeconds,
+        array $crawlSummary,
+        bool $structuredOutput,
+    ): \Symfony\Contracts\HttpClient\ResponseInterface {
+        $systemPrompt = $this->structuredSystemPrompt();
+        if (!$structuredOutput) {
+            $systemPrompt .= <<<'PROMPT'
+
+Return only one valid JSON object. Use these exact top-level keys:
+scores, summary, score_rationale, audience, strengths, weaknesses, blockers, quick_wins,
+keywords, technical, on_page, content_strategy, geo, recommendations, suggested_title,
+suggested_meta_description, serp_opportunities, day_30, day_60, day_90.
+The scores object must contain global, technical, content, onpage, geo, ux, confidence.
+The geo.models value must be an array of exactly three objects for ChatGPT, Gemini, and Perplexity.
+Each model object must contain model, status, assessment, sentiment, confidence, and evidence.
+The geo object must also include concrete optimizations.
+Do not use Markdown fences or add text outside the JSON object.
+PROMPT;
+        }
+
+        $options = [
+            'headers' => [
+                'x-api-key' => $apiKey,
+                'anthropic-version' => self::ANTHROPIC_VERSION,
+                'content-type' => 'application/json',
+            ],
+            'json' => [
+                'model' => $model,
+                'max_tokens' => $maxTokens,
+                'temperature' => 0.2,
+                'system' => $systemPrompt,
+                'messages' => [
+                    [
+                        'role' => 'user',
+                        'content' => [
+                            [
+                                'type' => 'text',
+                                'text' => "Analyze this real website crawl. Use only the supplied crawler facts for objective claims:\n\n" . json_encode($crawlSummary, JSON_THROW_ON_ERROR),
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            'timeout' => $timeoutSeconds,
+            'max_duration' => $maxDurationSeconds,
+        ];
+
+        if ($structuredOutput) {
+            $options['json']['output_config'] = [
+                'format' => [
+                    'type' => 'json_schema',
+                    'schema' => $this->responseSchema->build(),
+                ],
+            ];
+        }
+
+        return $this->httpClient->request('POST', $baseUrl . '/v1/messages', $options);
+    }
+
+    private function isStructuredOutputCompatibilityError(string $body): bool
+    {
+        $body = strtolower($body);
+
+        return str_contains($body, 'compiled grammar is too large')
+            || str_contains($body, 'simplify your tool schemas')
+            || str_contains($body, 'output_config')
+            || str_contains($body, 'json_schema');
     }
 
     /** @param array<string, mixed> $responseData */

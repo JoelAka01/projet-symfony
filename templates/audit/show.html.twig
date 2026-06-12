@@ -6,6 +6,9 @@
     {% set ai = insights.ai %}
     {% set aiCompleted = ai.status == 'completed' %}
     {% set aiRunning = ai.status in ['queued', 'running'] %}
+    {% set aiFailed = ai.status == 'failed' %}
+    {% set aiNotConfigured = ai.status == 'not_configured' %}
+    {% set aiScoreState = aiFailed ? 'Failed' : (aiNotConfigured ? 'Unavailable' : 'Pending') %}
     {% set isProcessing = audit.status.value in ['QUEUED', 'RUNNING'] or aiRunning %}
     {% set canRetryAi = audit.status.value == 'COMPLETED' and ai.status in ['failed', 'not_configured'] %}
 
@@ -50,20 +53,20 @@
             <strong>{{ audit.seoScore is not null ? audit.seoScore : 'Pending' }}</strong>
             <small>{{ insights.score_label }}</small>
         </li>
-        <li class="metric-card">
+        <li class="metric-card {{ aiFailed ? 'danger' : '' }}">
             <span>Claude global score</span>
-            <strong>{{ aiCompleted and ai.global_score is not null ? ai.global_score : 'Pending' }}</strong>
-            <small>{{ aiCompleted ? 'AI interpretation' : 'Requires Claude response' }}</small>
+            <strong>{{ aiCompleted and ai.global_score is not null ? ai.global_score : aiScoreState }}</strong>
+            <small>{{ aiCompleted ? 'AI interpretation' : (aiFailed ? 'Retry available' : (aiNotConfigured ? 'Claude key required' : 'Waiting for Claude')) }}</small>
         </li>
-        <li class="metric-card">
+        <li class="metric-card {{ aiFailed ? 'danger' : '' }}">
             <span>Content score</span>
-            <strong>{{ aiCompleted and ai.content_score is not null ? ai.content_score : 'Pending' }}</strong>
-            <small>{{ aiCompleted ? 'Claude critique' : 'Not generated' }}</small>
+            <strong>{{ aiCompleted and ai.content_score is not null ? ai.content_score : aiScoreState }}</strong>
+            <small>{{ aiCompleted ? 'Claude critique' : (aiFailed ? 'Analysis failed' : (aiNotConfigured ? 'Not configured' : 'Waiting for Claude')) }}</small>
         </li>
-        <li class="metric-card">
+        <li class="metric-card {{ aiFailed ? 'danger' : '' }}">
             <span>GEO score</span>
-            <strong>{{ aiCompleted and ai.geo_score is not null ? ai.geo_score : 'Pending' }}</strong>
-            <small>{{ aiCompleted ? 'AI visibility' : 'Not generated' }}</small>
+            <strong>{{ aiCompleted and ai.geo_score is not null ? ai.geo_score : aiScoreState }}</strong>
+            <small>{{ aiCompleted ? 'AI visibility' : (aiFailed ? 'Analysis failed' : (aiNotConfigured ? 'Not configured' : 'Waiting for Claude')) }}</small>
         </li>
         <li class="metric-card">
             <span>Pages crawled</span>
@@ -256,6 +259,9 @@
             <div class="notice danger">
                 <h3>Claude analysis failed</h3>
                 <p>{{ ai.error ?? 'The external AI provider returned an error.' }}</p>
+                {% if canRetryAi %}
+                    <p>The crawl completed successfully. Retry Claude analysis to regenerate only the AI scores and recommendations; the website will not be crawled again.</p>
+                {% endif %}
             </div>
         {% else %}
             <p class="muted">Claude analysis has not completed for this audit.</p>
@@ -539,7 +545,7 @@
                                     <dd>{{ modelAssessment.evidence|join(' ') }}</dd>
                                 {% endif %}
                                 <dt>Confidence</dt>
-                                <dd>{{ modelAssessment.confidence is defined ? (modelAssessment.confidence * 100)|round ~ '%' : 'n/a' }}</dd>
+                                <dd>{{ modelAssessment.confidence is defined and modelAssessment.confidence is not null ? (modelAssessment.confidence * 100)|round ~ '%' : 'n/a' }}</dd>
                             </dl>
                         {% else %}
                             <p class="muted" style="margin-top: 12px;">No {{ modelLabel }} readiness estimate is available.</p>
