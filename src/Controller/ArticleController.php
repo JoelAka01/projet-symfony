@@ -47,7 +47,7 @@ final class ArticleController extends AbstractController
         ArticleHtmlSanitizer $htmlSanitizer,
         EntityManagerInterface $entityManager,
     ): Response {
-        $this->denyAccessUnlessGranted(ProjectVoter::MANAGE, $project);
+        $this->denyAccessUnlessGranted(ProjectVoter::MANAGE_CONTENT, $project);
 
         $article = new Article();
         $article->setProject($project);
@@ -114,7 +114,7 @@ final class ArticleController extends AbstractController
         EntityManagerInterface $entityManager,
     ): Response {
         $this->assertArticleProject($project, $article);
-        $this->denyAccessUnlessGranted(ProjectVoter::MANAGE, $project);
+        $this->denyAccessUnlessGranted(ProjectVoter::MANAGE_CONTENT, $project);
 
         $image = $article->getImages()->first();
         $form = $this->createForm(ArticleType::class, $article, [
@@ -155,7 +155,7 @@ final class ArticleController extends AbstractController
             throw $this->createNotFoundException('Audit project not found.');
         }
 
-        $this->denyAccessUnlessGranted(ProjectVoter::MANAGE, $project);
+        $this->denyAccessUnlessGranted(ProjectVoter::MANAGE_CONTENT, $project);
         if (!$this->isCsrfTokenValid('create_article_from_audit_' . $audit->getId(), (string) $request->request->get('_token', ''))) {
             throw $this->createAccessDeniedException('Invalid article draft CSRF token.');
         }
@@ -183,7 +183,7 @@ final class ArticleController extends AbstractController
         ClaudeArticleWriterService $articleWriter,
     ): RedirectResponse {
         $this->assertArticleProject($project, $article);
-        $this->denyAccessUnlessGranted(ProjectVoter::MANAGE, $project);
+        $this->denyAccessUnlessGranted(ProjectVoter::MANAGE_CONTENT, $project);
 
         $form = $this->createForm(ArticleGenerationType::class);
         $form->handleRequest($request);
@@ -220,7 +220,7 @@ final class ArticleController extends AbstractController
         CmsPublishingService $publishingService,
     ): RedirectResponse {
         $this->assertArticleProject($project, $article);
-        $this->denyAccessUnlessGranted(ProjectVoter::MANAGE, $project);
+        $this->denyAccessUnlessGranted(ProjectVoter::MANAGE_CONTENT, $project);
 
         $form = $this->createForm(CmsPublishType::class, null, ['project' => $project]);
         $form->handleRequest($request);

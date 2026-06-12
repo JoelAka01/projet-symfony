@@ -102,7 +102,7 @@ final class AppFixtures extends Fixture
     }
 
     /**
-     * @param list<User> $members
+     * @param list<User> $guests
      */
     private function createProject(
         ObjectManager $manager,
@@ -111,7 +111,7 @@ final class AppFixtures extends Fixture
         string $name,
         string $websiteUrl,
         ProjectStatus $status = ProjectStatus::ACTIVE,
-        array $members = [],
+        array $guests = [],
     ): void {
         $project = new Project();
         $project
@@ -119,12 +119,11 @@ final class AppFixtures extends Fixture
             ->setName($name)
             ->setStatus($status)
             ->setDefaultLanguage('en')
-            ->setTargetCountry('US')
-            ->addMember($owner);
+            ->setTargetCountry('US');
         $organization->addProject($project);
 
-        foreach ($members as $member) {
-            $project->addMember($member);
+        foreach ($guests as $guest) {
+            $project->addGuest($guest);
         }
 
         $domain = new Domain();
