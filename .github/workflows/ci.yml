@@ -55,7 +55,7 @@ jobs:
         run: composer validate --strict
 
       - name: Linter les fichiers YAML
-        run: php bin/console lint:yaml config
+        run: php bin/console lint:yaml config --parse-tags
 
       - name: Linter les templates Twig
         run: php bin/console lint:twig templates
