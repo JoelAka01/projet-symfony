@@ -49,6 +49,7 @@
                         <th>User</th>
                         <th>Role</th>
                         <th>Status</th>
+                        <th>Subscription</th>
                         <th>Projects</th>
                         <th>AI credits</th>
                         <th>AI calls</th>
@@ -69,6 +70,14 @@
                                 <span class="status-dot {{ user.verified ? 'is-success' : 'is-warning' }}">
                                     {{ user.verified ? 'Verified' : 'Pending' }}
                                 </span>
+                            </td>
+                            <td>
+                                {% if row.subscription %}
+                                    <span class="pill status-active">{{ row.subscription.plan.label }}</span>
+                                    <small class="table-subtitle">€{{ (row.subscription.monthlyPriceCents / 100)|number_format(2) }}/mo</small>
+                                {% else %}
+                                    <span class="muted" style="font-size: 0.85rem;">None</span>
+                                {% endif %}
                             </td>
                             <td>{{ user.ownedProjects|length }}</td>
                             <td title="Input {{ row.usage.inputTokens|number_format }}, output {{ row.usage.outputTokens|number_format }}, cached {{ row.usage.cachedInputTokens|number_format }}">

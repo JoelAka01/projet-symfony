@@ -16,6 +16,7 @@ use App\Repository\AiUsageRepository;
 use App\Repository\AuditRepository;
 use App\Repository\PaymentRepository;
 use App\Repository\ProjectRepository;
+use App\Repository\SubscriptionRepository;
 use App\Repository\UserRepository;
 use App\Service\Project\ProjectManager;
 use Doctrine\ORM\EntityManagerInterface;
@@ -76,15 +77,20 @@ final class AdminController extends AbstractController
         Request $request,
         UserRepository $userRepository,
         AiUsageRepository $aiUsageRepository,
+        SubscriptionRepository $subscriptionRepository,
     ): Response {
         $search = trim($request->query->getString('q'));
         $roleValue = strtoupper(trim($request->query->getString('role')));
         $role = '' === $roleValue ? null : UserRole::tryFrom($roleValue);
 
+        $users = $userRepository->findForAdmin($search, $role);
+        $subscriptionsByUser = $subscriptionRepository->findActiveForUsers($users);
+
         return $this->render('admin/users/index.html.twig', [
             'rows' => $this->buildUserRows(
-                $userRepository->findForAdmin($search, $role),
+                $users,
                 $aiUsageRepository->getSummariesByUser(),
+                $subscriptionsByUser,
             ),
             'search' => $search,
             'selectedRole' => null === $role ? '' : $role->value,
@@ -272,15 +278,17 @@ final class AdminController extends AbstractController
     /**
      * @param list<User>                                                                                                  $users
      * @param array<string, array{credits: int, inputTokens: int, outputTokens: int, cachedInputTokens: int, calls: int}> $usageByUser
+     * @param array<string, \App\Entity\Subscription>                                                                     $subscriptionsByUser
      *
-     * @return list<array{user: User, usage: array{credits: int, inputTokens: int, outputTokens: int, cachedInputTokens: int, calls: int}}>
+     * @return list<array{user: User, usage: array{credits: int, inputTokens: int, outputTokens: int, cachedInputTokens: int, calls: int}, subscription: ?\App\Entity\Subscription}>
      */
-    private function buildUserRows(array $users, array $usageByUser): array
+    private function buildUserRows(array $users, array $usageByUser, array $subscriptionsByUser = []): array
     {
         return array_map(
             static fn(User $user): array => [
                 'user' => $user,
                 'usage' => $usageByUser[$user->getId()] ?? self::EMPTY_USAGE,
+                'subscription' => $subscriptionsByUser[$user->getId()] ?? null,
             ],
             $users,
         );
