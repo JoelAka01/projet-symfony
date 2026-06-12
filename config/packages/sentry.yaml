@@ -1,0 +1,13 @@
+sentry:
+    dsn: '%env(default::SENTRY_DSN)%'
+    options:
+        environment: '%kernel.environment%'
+        traces_sample_rate: 1.0
+
+when@dev:
+    sentry:
+        dsn: null
+
+when@test:
+    sentry:
+        dsn: null

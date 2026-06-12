@@ -5,6 +5,10 @@ export COMPOSER_CACHE_DIR="${COMPOSER_CACHE_DIR:-/tmp/composer}"
 
 mkdir -p "${APP_CACHE_DIR:-/tmp/symfony-cache}" "${APP_LOG_DIR:-/tmp/symfony-log}" var/cache var/log
 
+if [ ! -f .env ] && [ -f .env.example ]; then
+    cp .env.example .env
+fi
+
 lock_hash="$(sha256sum composer.lock | awk '{ print $1 }')"
 installed_hash="$(cat vendor/.composer.lock.sha256 2>/dev/null || true)"
 

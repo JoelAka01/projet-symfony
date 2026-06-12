@@ -54,6 +54,18 @@ mutation-local:
 
 ci-local: lint-local phpstan-local test-local
 
+prod-up:
+	docker compose -f compose.prod.yaml --env-file .env.prod up -d --build
+
+prod-down:
+	docker compose -f compose.prod.yaml down
+
+prod-migrate:
+	docker compose -f compose.prod.yaml --env-file .env.prod exec php php bin/console doctrine:migrations:migrate --no-interaction
+
+prod-logs:
+	docker compose -f compose.prod.yaml logs -f --tail=100
+
 logs:
 	docker compose logs -f --tail=100 php
 
@@ -97,4 +109,8 @@ help:
 	@echo "  ci-local      - Run lint + phpstan + tests locally (simule la CI)"
 	@echo "  logs          - Follow the logs of the PHP container"
 	@echo "  worker-logs   - Follow the logs of the Messenger worker"
+	@echo "  prod-up       - Start production environment (requires .env.prod)"
+	@echo "  prod-down     - Stop production environment"
+	@echo "  prod-migrate  - Run migrations on production"
+	@echo "  prod-logs     - Follow production logs"
 	@echo "  help          - Show this help message"

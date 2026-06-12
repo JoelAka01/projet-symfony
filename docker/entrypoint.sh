@@ -6,6 +6,10 @@ export PHP_CLI_SERVER_WORKERS="${PHP_CLI_SERVER_WORKERS:-4}"
 
 mkdir -p "${APP_CACHE_DIR:-/tmp/symfony-cache}" "${APP_LOG_DIR:-/tmp/symfony-log}" public/assets var/cache var/log
 
+if [ ! -f .env ] && [ -f .env.example ]; then
+    cp .env.example .env
+fi
+
 lock_hash="$(sha256sum composer.lock | awk '{ print $1 }')"
 installed_hash="$(cat vendor/.composer.lock.sha256 2>/dev/null || true)"
 

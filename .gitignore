@@ -38,4 +38,5 @@ AGENTS.md
 /var/infection/
 ###< infection/infection ###
 .env
-env.dev
+.env.dev
+.env.prod
