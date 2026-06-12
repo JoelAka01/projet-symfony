@@ -11,20 +11,6 @@
         </p>
     </section>
 
-    <ul class="checklist" aria-label="Account status">
-        <li>
-            <strong>Email verified</strong>
-            <span>{{ app.user.verified ? 'Yes' : 'No' }}</span>
-        </li>
-        <li>
-            <strong>Role</strong>
-            <span>{{ app.user.roles|join(', ') }}</span>
-        </li>
-        <li>
-            <strong>Last login</strong>
-            <span>{{ app.user.lastLoginAt ? app.user.lastLoginAt|date('Y-m-d H:i') : 'First session' }}</span>
-        </li>
-    </ul>
 
     <section>
         <h2>Projects you can access</h2>
