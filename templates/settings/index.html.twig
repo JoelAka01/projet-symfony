@@ -1,0 +1,81 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Account Settings | SEO GEO AI{% endblock %}
+
+{% block body %}
+    <section class="hero compact">
+        <p class="eyebrow">Settings</p>
+        <h1>Account Settings</h1>
+        <p>Manage your public profile details, email credentials, security settings, and account data.</p>
+    </section>
+
+    <div class="split-grid" style="margin-top: 32px;">
+        {# Profile settings panel #}
+        <div class="panel">
+            <h2>Profile Details</h2>
+            <p class="muted" style="margin-bottom: 24px;">Update your personal metadata information visible within the platform.</p>
+
+            {{ form_start(profileForm, { 'attr': { 'class': 'form-stack', 'name': 'user_profile_form' } }) }}
+                <div>
+                    {{ form_label(profileForm.firstName) }}
+                    {{ form_widget(profileForm.firstName) }}
+                    <div class="field-error">{{ form_errors(profileForm.firstName) }}</div>
+                </div>
+
+                <div>
+                    {{ form_label(profileForm.lastName) }}
+                    {{ form_widget(profileForm.lastName) }}
+                    <div class="field-error">{{ form_errors(profileForm.lastName) }}</div>
+                </div>
+
+                <div style="margin-top: 12px;">
+                    <button class="button primary" type="submit" name="user_profile_form">Save profile changes</button>
+                </div>
+            {{ form_end(profileForm) }}
+        </div>
+
+        {# Account Credentials settings panel #}
+        <div class="panel">
+            <h2>Account Security</h2>
+            <p class="muted" style="margin-bottom: 24px;">Manage your primary login credentials and password properties.</p>
+
+            {{ form_start(accountForm, { 'attr': { 'class': 'form-stack', 'name': 'user_account_form' } }) }}
+                <div>
+                    {{ form_label(accountForm.email) }}
+                    {{ form_widget(accountForm.email) }}
+                    <div class="field-error">{{ form_errors(accountForm.email) }}</div>
+                </div>
+
+                <div>
+                    {{ form_label(accountForm.plainPassword.first) }}
+                    {{ form_widget(accountForm.plainPassword.first) }}
+                    <div class="field-error">{{ form_errors(accountForm.plainPassword.first) }}</div>
+                </div>
+
+                <div>
+                    {{ form_label(accountForm.plainPassword.second) }}
+                    {{ form_widget(accountForm.plainPassword.second) }}
+                    <div class="field-error">{{ form_errors(accountForm.plainPassword.second) }}</div>
+                </div>
+
+                <div style="margin-top: 12px;">
+                    <button class="button primary" type="submit" name="user_account_form">Save security changes</button>
+                </div>
+            {{ form_end(accountForm) }}
+        </div>
+    </div>
+
+    {# Account Deletion panel (Danger Zone) #}
+    <div class="panel full-panel" style="border-color: #fecaca; background: #fff5f5;">
+        <h2 style="color: #991b1b;">Danger Zone</h2>
+        <p style="color: #7f1d1d; margin-bottom: 20px;">
+            Permanently delete your account and all associated projects, reports, and crawls. 
+            This action is irreversible and all metadata will be wiped immediately.
+        </p>
+
+        <form method="post" action="{{ path('app_settings_delete') }}" data-confirm="Are you absolutely sure you want to permanently delete your account? All projects, audits, crawl history, and data will be wiped immediately. This action CANNOT be undone.">
+            <input type="hidden" name="_token" value="{{ csrf_token('delete_account') }}">
+            <button class="button" type="submit" style="color: #ffffff; background: #dc2626; border-color: transparent;">Delete account permanently</button>
+        </form>
+    </div>
+{% endblock %}
