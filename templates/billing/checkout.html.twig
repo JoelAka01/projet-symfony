@@ -1,0 +1,34 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Checkout | {{ plan.name }}{% endblock %}
+
+{% block body %}
+    <div class="back-navigation">
+        <a class="back-link" href="{{ path('app_pricing') }}">&larr; Back to pricing</a>
+    </div>
+
+    <section class="checkout-grid">
+        <div class="auth-panel">
+            <p class="eyebrow">Simulated checkout</p>
+            <h1>{{ plan.name }} plan</h1>
+            <p class="muted">Enter a test card. This school-project checkout accepts every valid form submission and never charges the card.</p>
+
+            {{ form_start(form, {attr: {class: 'form-stack'}}) }}
+                {{ form_row(form.cardholder) }}
+                {{ form_row(form.cardNumber) }}
+                <div class="form-grid">
+                    {{ form_row(form.expiry) }}
+                    {{ form_row(form.cvc) }}
+                </div>
+                <button class="button primary" type="submit">Activate for €{{ (plan.priceCents / 100)|number_format(0) }}/month</button>
+            {{ form_end(form) }}
+        </div>
+
+        <aside class="panel checkout-summary">
+            <h2>Plan summary</h2>
+            <strong>{{ plan.weeklyAnalyses }} analyses/week</strong>
+            <span>{{ (plan.monthlyCredits / 1000000)|number_format(1) }}M AI credits/month</span>
+            <span>30-day subscription period</span>
+        </aside>
+    </section>
+{% endblock %}

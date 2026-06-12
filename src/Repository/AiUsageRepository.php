@@ -120,6 +120,23 @@ class AiUsageRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    public function sumCreditsForUserBetween(
+        User $user,
+        \DateTimeImmutable $from,
+        \DateTimeImmutable $to,
+    ): int {
+        return (int) $this->createQueryBuilder('usage')
+            ->select('COALESCE(SUM(usage.credits), 0)')
+            ->andWhere('usage.user = :user')
+            ->andWhere('usage.createdAt >= :from')
+            ->andWhere('usage.createdAt < :to')
+            ->setParameter('user', $user)
+            ->setParameter('from', $from)
+            ->setParameter('to', $to)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
     /**
      * @param array<string, int|string|null> $row
      *

@@ -1,0 +1,43 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Pricing | SeoGeo{% endblock %}
+
+{% block body %}
+    <section class="pricing-hero">
+        <p class="eyebrow">Simple pricing</p>
+        <h1>Choose your analysis plan</h1>
+        <p>Every account starts with 3 free analyses. Paid plans add a weekly allowance backed by monthly AI credits.</p>
+        {% if allowance %}
+            <div class="quota-summary {{ allowance.allowed ? '' : 'is-blocked' }}">
+                <strong>{{ allowance.planName }} plan</strong>
+                <span>{{ allowance.message }}</span>
+            </div>
+        {% endif %}
+    </section>
+
+    <section class="pricing-grid" aria-label="Subscription plans">
+        {% for item in plans %}
+            <article class="pricing-card {{ item.featured ? 'is-featured' : '' }}">
+                {% if item.featured %}<span class="pricing-badge">Most popular</span>{% endif %}
+                <h2>{{ item.name }}</h2>
+                <p class="pricing-price"><strong>€{{ (item.priceCents / 100)|number_format(0) }}</strong><span>/month</span></p>
+                <ul>
+                    <li>{{ item.weeklyAnalyses }} website analyses per week</li>
+                    <li>{{ (item.monthlyCredits / 1000000)|number_format(1) }}M AI credits per month</li>
+                    <li>Real crawl and AI recommendations</li>
+                </ul>
+                {% if app.user %}
+                    {% if activeSubscription and activeSubscription.plan == item.plan %}
+                        <span class="button secondary is-disabled">Current plan</span>
+                    {% else %}
+                        <a class="button primary" href="{{ path('app_billing_checkout', {plan: item.plan.value|lower}) }}">Select {{ item.name }}</a>
+                    {% endif %}
+                {% else %}
+                    <a class="button primary" href="{{ path('app_register') }}">Start free</a>
+                {% endif %}
+            </article>
+        {% endfor %}
+    </section>
+
+    <p class="pricing-note">Payments are simulated for this school project. No real charge is made.</p>
+{% endblock %}
