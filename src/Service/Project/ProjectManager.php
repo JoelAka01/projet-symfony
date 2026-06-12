@@ -36,6 +36,19 @@ final class ProjectManager
         $this->entityManager->flush();
     }
 
+    public function createManaged(Project $project, string $websiteUrl): void
+    {
+        if (null === $project->getOrganization()) {
+            throw new \LogicException('An organization is required for an admin-created project.');
+        }
+
+        $normalizedWebsiteUrl = $this->websiteUrlNormalizer->requireValid($websiteUrl);
+        $this->syncPrimaryDomain($project, $normalizedWebsiteUrl);
+
+        $this->entityManager->persist($project);
+        $this->entityManager->flush();
+    }
+
     public function update(Project $project, string $websiteUrl): void
     {
         $normalizedWebsiteUrl = $this->websiteUrlNormalizer->requireValid($websiteUrl);
