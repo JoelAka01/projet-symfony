@@ -18,12 +18,14 @@ use App\Message\RunWebsiteAuditMessage;
 use App\Repository\ProjectRepository;
 use App\Security\Voter\ProjectVoter;
 use App\Service\Audit\AuditInsightsBuilder;
+use App\Service\Audit\AuditProgressStatusBuilder;
 use App\Service\Audit\WebsiteAuditRunner;
 use App\Service\Project\ProjectManager;
 use App\Service\Report\AuditPdfGenerator;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormError;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -189,7 +191,7 @@ final class ProjectController extends AbstractController
 
         $audit = $auditRunner->createQueued($project, $domain);
         $messageBus->dispatch(new RunWebsiteAuditMessage($audit->getId()));
-        $this->addFlash('info', 'Website crawl and Claude SEO analysis queued. This page refreshes while the worker runs.');
+        $this->addFlash('info', 'Website crawl and Claude SEO analysis queued. Progress updates automatically, and you can leave this page while it runs.');
 
         return $this->redirectToRoute('app_audit_show', ['id' => $audit->getId()]);
     }
@@ -210,6 +212,22 @@ final class ProjectController extends AbstractController
             'issueGroupsBySeverity' => $this->groupIssuesBySeverityAndType($audit),
             'insights' => $insightsBuilder->build($audit),
         ]);
+    }
+
+    #[Route('/audits/{id}/status', name: 'app_audit_status', methods: ['GET'])]
+    public function auditStatus(Audit $audit, AuditProgressStatusBuilder $statusBuilder): JsonResponse
+    {
+        $project = $audit->getProject();
+        if (null === $project) {
+            throw $this->createNotFoundException('Audit project not found.');
+        }
+
+        $this->denyAccessUnlessGranted(ProjectVoter::VIEW, $project);
+
+        $response = $this->json($statusBuilder->build($audit));
+        $response->headers->set('Cache-Control', 'no-store, private');
+
+        return $response;
     }
 
     #[Route('/audits/{id}/pdf', name: 'app_audit_pdf', methods: ['GET'])]
@@ -279,7 +297,7 @@ final class ProjectController extends AbstractController
         $entityManager->flush();
 
         $messageBus->dispatch(new RunClaudeAnalysisMessage($audit->getId()));
-        $this->addFlash('info', 'Claude analysis retry queued. This page refreshes while the worker runs.');
+        $this->addFlash('info', 'Claude analysis retry queued. Progress updates automatically, and you can leave this page while it runs.');
 
         return $this->redirectToRoute('app_audit_show', ['id' => $audit->getId()]);
     }

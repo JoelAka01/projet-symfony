@@ -26,6 +26,8 @@ final class ClaudeSeoAnalysisResponseParser
 
         $decoded = $this->expandCompactAnalysis($decoded);
         $executiveSummary = $this->arrayValue($decoded['executive_summary'] ?? []);
+        $executiveSummary['top_3_blockers'] = $this->summaryList($executiveSummary['top_3_blockers'] ?? []);
+        $executiveSummary['top_3_quick_wins'] = $this->summaryList($executiveSummary['top_3_quick_wins'] ?? []);
         $scores = $this->arrayValue($decoded['scores'] ?? []);
         $summary = $this->stringValue($decoded['summary'] ?? null)
             ?? $this->stringValue($executiveSummary['one_liner'] ?? null)
@@ -370,6 +372,50 @@ final class ClaudeSeoAnalysisResponseParser
         }
 
         return $strings;
+    }
+
+    /** @return list<string> */
+    private function summaryList(mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $summaries = [];
+        foreach ($value as $item) {
+            $text = $this->stringValue($item);
+            if (null !== $text) {
+                $summaries[] = $text;
+
+                continue;
+            }
+
+            if (!is_array($item)) {
+                continue;
+            }
+
+            $title = $this->stringValue($item['title'] ?? $item['name'] ?? $item['label'] ?? null);
+            $action = $this->stringValue(
+                $item['action']
+                    ?? $item['recommendation']
+                    ?? $item['description']
+                    ?? $item['problem']
+                    ?? null,
+            );
+            if (null === $title) {
+                if (null !== $action) {
+                    $summaries[] = $action;
+                }
+
+                continue;
+            }
+
+            $summaries[] = null !== $action && $title !== $action
+                ? sprintf('%s: %s', $title, $action)
+                : $title;
+        }
+
+        return $summaries;
     }
 
     /** @return list<array<string, string|null>> */

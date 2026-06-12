@@ -16,6 +16,127 @@ document.querySelectorAll('[data-analysis-form]').forEach((form) => {
     });
 });
 
+const formatElapsedTime = (seconds) => {
+    const safeSeconds = Math.max(0, Math.floor(Number(seconds) || 0));
+    const minutes = Math.floor(safeSeconds / 60);
+    const remainingSeconds = safeSeconds % 60;
+
+    if (minutes === 0) {
+        return `${remainingSeconds}s`;
+    }
+
+    return `${minutes}m ${String(remainingSeconds).padStart(2, '0')}s`;
+};
+
+document.querySelectorAll('[data-audit-progress]').forEach((panel) => {
+    if (!(panel instanceof HTMLElement)) {
+        return;
+    }
+
+    const statusUrl = panel.dataset.statusUrl;
+    if (!statusUrl) {
+        return;
+    }
+
+    const title = panel.querySelector('[data-progress-title]');
+    const message = panel.querySelector('[data-progress-message]');
+    const elapsed = panel.querySelector('[data-progress-elapsed]');
+    const estimate = panel.querySelector('[data-progress-estimate]');
+    const pages = panel.querySelector('[data-progress-pages]');
+    const connection = panel.querySelector('[data-progress-connection]');
+    const steps = {
+        crawl: panel.querySelector('[data-progress-step="crawl"]'),
+        ai: panel.querySelector('[data-progress-step="ai"]'),
+        ready: panel.querySelector('[data-progress-step="ready"]'),
+    };
+    let elapsedSeconds = 0;
+    let finished = false;
+
+    const updateElapsed = () => {
+        if (elapsed instanceof HTMLElement) {
+            elapsed.textContent = formatElapsedTime(elapsedSeconds);
+        }
+
+        if (!finished) {
+            elapsedSeconds += 1;
+        }
+    };
+
+    const updateSteps = (phase) => {
+        Object.values(steps).forEach((step) => {
+            step?.classList.remove('is-active', 'is-complete');
+        });
+
+        if (phase === 'crawl_queued' || phase === 'crawling') {
+            steps.crawl?.classList.add('is-active');
+            return;
+        }
+
+        steps.crawl?.classList.add('is-complete');
+        if (phase === 'ai_queued' || phase === 'analyzing') {
+            steps.ai?.classList.add('is-active');
+            return;
+        }
+
+        steps.ai?.classList.add('is-complete');
+        steps.ready?.classList.add(phase === 'completed' ? 'is-complete' : 'is-active');
+    };
+
+    const poll = async () => {
+        try {
+            const response = await fetch(statusUrl, {
+                headers: { Accept: 'application/json' },
+                cache: 'no-store',
+            });
+            if (!response.ok) {
+                throw new Error(`Status request failed with HTTP ${response.status}`);
+            }
+
+            const status = await response.json();
+            elapsedSeconds = Number(status.elapsed_seconds) || 0;
+            updateElapsed();
+            updateSteps(status.phase);
+
+            if (title instanceof HTMLElement) {
+                title.textContent = status.title;
+            }
+            if (message instanceof HTMLElement) {
+                message.textContent = status.message;
+            }
+            if (estimate instanceof HTMLElement) {
+                estimate.textContent = status.estimate;
+            }
+            if (pages instanceof HTMLElement) {
+                pages.textContent = `${status.pages_crawled} / ${status.max_pages ?? 'configured limit'}`;
+            }
+            if (connection instanceof HTMLElement) {
+                connection.textContent = 'Status updated automatically. You can leave and return; processing continues in the background.';
+            }
+
+            if (status.terminal) {
+                finished = true;
+                panel.classList.add('is-finished');
+                if (connection instanceof HTMLElement) {
+                    connection.textContent = status.successful
+                        ? 'Analysis complete. Loading the finished report...'
+                        : 'Processing stopped. Loading the recorded details...';
+                }
+                window.setTimeout(() => window.location.reload(), 900);
+                return;
+            }
+        } catch (error) {
+            if (connection instanceof HTMLElement) {
+                connection.textContent = 'Status connection interrupted. Retrying automatically; the background analysis continues.';
+            }
+        }
+
+        window.setTimeout(poll, 3000);
+    };
+
+    window.setInterval(updateElapsed, 1000);
+    poll();
+});
+
 document.querySelectorAll('[data-cms-connection-form]').forEach((form) => {
     const select = form.querySelector('[data-cms-provider-select]');
     if (!(select instanceof HTMLSelectElement)) {
@@ -83,4 +204,3 @@ document.addEventListener('click', () => {
         }
     });
 });
-

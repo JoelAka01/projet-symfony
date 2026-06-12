@@ -315,4 +315,27 @@ JSON);
         self::assertCount(3, $result['geo_analysis']['ai_seo_optimizations']);
         self::assertSame('ChatGPT', $result['geo_analysis']['ai_seo_optimizations'][0]['target_ai']);
     }
+
+    public function testItConvertsStructuredQuickWinsIntoDisplayableText(): void
+    {
+        $parser = new ClaudeSeoAnalysisResponseParser();
+
+        $result = $parser->parse(json_encode([
+            'summary' => 'The crawl is complete.',
+            'executive_summary' => [
+                'top_3_blockers' => ['Missing image alt text.'],
+                'top_3_quick_wins' => [[
+                    'title' => 'Add image alt text',
+                    'action' => 'Add descriptive alt attributes to listing images.',
+                    'effort' => 'low',
+                ]],
+            ],
+            'recommendations' => [],
+        ], JSON_THROW_ON_ERROR));
+
+        self::assertSame(
+            ['Add image alt text: Add descriptive alt attributes to listing images.'],
+            $result['executive_summary']['top_3_quick_wins'],
+        );
+    }
 }

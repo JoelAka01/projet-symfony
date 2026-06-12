@@ -34,6 +34,7 @@ final class WebsiteAuditRunner
                     'status' => 'queued',
                     'provider' => 'anthropic',
                     'recommendations' => [],
+                    'queued_at' => (new \DateTimeImmutable())->format(\DateTimeInterface::ATOM),
                 ],
             ]);
 

@@ -504,6 +504,103 @@ a {
     display: none;
 }
 
+.analysis-progress {
+    display: grid;
+    gap: 18px;
+}
+
+.analysis-progress__header {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+}
+
+.analysis-progress__header h2 {
+    margin-bottom: 4px;
+}
+
+.analysis-progress__track {
+    height: 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #dbeafe;
+}
+
+.analysis-progress__track span {
+    display: block;
+    width: 38%;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #0f766e, #14b8a6);
+    animation: analysis-progress 1.6s ease-in-out infinite;
+}
+
+.analysis-progress__steps {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.analysis-progress__steps li {
+    padding: 9px 10px;
+    border-radius: 6px;
+    color: #64748b;
+    font-size: 0.82rem;
+    font-weight: 800;
+    text-align: center;
+    background: #e2e8f0;
+}
+
+.analysis-progress__steps li.is-active {
+    color: #0f4c45;
+    background: #ccfbf1;
+}
+
+.analysis-progress__steps li.is-complete {
+    color: #ffffff;
+    background: #0f766e;
+}
+
+.analysis-progress__facts {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin: 0;
+}
+
+.analysis-progress__facts div {
+    padding: 12px;
+    border: 1px solid #dbeafe;
+    border-radius: 6px;
+    background: #ffffff;
+}
+
+.analysis-progress__facts dt {
+    margin-bottom: 5px;
+    color: #64748b;
+    font-size: 0.76rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.analysis-progress__facts dd {
+    margin: 0;
+    color: #102a43;
+    font-weight: 700;
+}
+
+.analysis-progress__connection {
+    font-size: 0.88rem;
+}
+
+.analysis-progress.is-finished .spinner,
+.analysis-progress.is-finished .analysis-progress__track {
+    display: none;
+}
+
 .spinner {
     width: 28px;
     aspect-ratio: 1;
@@ -517,6 +614,16 @@ a {
 @keyframes spin {
     to {
         transform: rotate(360deg);
+    }
+}
+
+@keyframes analysis-progress {
+    from {
+        transform: translateX(-105%);
+    }
+
+    to {
+        transform: translateX(265%);
     }
 }
 
@@ -1474,5 +1581,8 @@ tr:last-child td {
         gap: 12px;
     }
 }
-
-
+@media (max-width: 720px) {
+    .analysis-progress__facts {
+        grid-template-columns: 1fr;
+    }
+}
