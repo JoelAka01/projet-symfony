@@ -1232,3 +1232,97 @@ tr:last-child td {
     }
 }
 
+/* Custom UI action buttons */
+.btn-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: 6px;
+    text-decoration: none !important;
+    border: 1px solid #bcccdc;
+    background: #ffffff;
+    color: #102a43;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+}
+.btn-action:hover {
+    background: #f0f4f8;
+    border-color: #9eb5c2;
+    color: #102a43;
+}
+.btn-action.btn-primary {
+    background: #0f766e;
+    color: #ffffff;
+    border-color: transparent;
+}
+.btn-action.btn-primary:hover {
+    background: #0d6860;
+    color: #ffffff;
+}
+.btn-action.btn-danger {
+    color: #b91c1c;
+    border-color: #fca5a5;
+    background: #fff5f5;
+}
+.btn-action.btn-danger:hover {
+    background: #fee2e2;
+    border-color: #ef4444;
+    color: #991b1b;
+}
+
+/* Nav Projects Button Menu */
+.nav-projects-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    color: #0f766e;
+    background: #f0fdf9;
+    border: 1px solid #ccfbf1;
+    text-decoration: none !important;
+    transition: all 0.15s ease-in-out;
+}
+.nav-projects-btn:hover {
+    background: #ecfdf5;
+    border-color: #99f6e4;
+    color: #0d6860;
+    box-shadow: 0 2px 4px rgba(15, 118, 110, 0.05);
+}
+
+/* Back Link & Navigation */
+.back-navigation {
+    margin-bottom: 16px;
+}
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    color: #627d98;
+    text-decoration: none !important;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: color 0.15s ease-in-out;
+}
+.back-link:hover {
+    color: #102a43;
+}
+
+/* Hero Top Bar layout */
+.hero-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.hero-meta-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+

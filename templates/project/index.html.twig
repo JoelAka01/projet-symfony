@@ -43,14 +43,14 @@
                                 <td>{{ project.updatedAt|date('Y-m-d H:i') }}</td>
                                 <td>
                                     <div class="row-actions">
-                                        <a href="{{ path('app_project_show', { id: project.id }) }}">View</a>
+                                        <a class="btn-action" href="{{ path('app_project_show', { id: project.id }) }}">View</a>
                                         {% if is_granted('PROJECT_EDIT', project) %}
-                                            <a href="{{ path('app_project_edit', { id: project.id }) }}">Edit</a>
+                                            <a class="btn-action" href="{{ path('app_project_edit', { id: project.id }) }}">Edit</a>
                                         {% endif %}
                                         {% if is_granted('PROJECT_DELETE', project) and project.status.value != 'ARCHIVED' %}
                                             <form method="post" action="{{ path('app_project_archive', { id: project.id }) }}">
                                                 <input type="hidden" name="_token" value="{{ csrf_token('archive_project_' ~ project.id) }}">
-                                                <button class="link-button" type="submit">Archive</button>
+                                                <button class="btn-action btn-danger" type="submit">Archive</button>
                                             </form>
                                         {% endif %}
                                     </div>
