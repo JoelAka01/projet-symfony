@@ -116,16 +116,16 @@ final class AuditInsightsBuilder
                 'included_pages' => min(count($pages), 120),
                 'total_crawled_pages' => count($pages),
                 'pages' => array_map(
-                    fn (AuditPage $page): array => $this->compactPagePayload($page, $pageIssueCounts[spl_object_id($page)] ?? 0),
+                    fn(AuditPage $page): array => $this->compactPagePayload($page, $pageIssueCounts[spl_object_id($page)] ?? 0),
                     array_slice($pages, 0, 120),
                 ),
             ],
             'sample_pages' => array_map(
-                fn (AuditPage $page): array => $this->pagePayload($page),
+                fn(AuditPage $page): array => $this->pagePayload($page),
                 array_slice($pages, 0, 25),
             ),
             'top_issues' => array_map(
-                fn (AuditIssue $issue): array => $this->issuePayload($issue),
+                fn(AuditIssue $issue): array => $this->issuePayload($issue),
                 array_slice($issues, 0, 50),
             ),
             'analysis_limitations' => [
@@ -237,7 +237,7 @@ final class AuditInsightsBuilder
         });
 
         return array_map(
-            fn (AuditPage $page): array => $this->pagePayload($page) + [
+            fn(AuditPage $page): array => $this->pagePayload($page) + [
                 'issue_count' => $pageIssueCounts[spl_object_id($page)] ?? 0,
             ],
             array_slice($pages, 0, 10),
@@ -557,9 +557,9 @@ final class AuditInsightsBuilder
     private function duplicateMetadata(array $pages): array
     {
         return [
-            'titles' => $this->duplicatePageValues($pages, static fn (AuditPage $page): ?string => $page->getTitle()),
-            'meta_descriptions' => $this->duplicatePageValues($pages, static fn (AuditPage $page): ?string => $page->getMetaDescription()),
-            'h1s' => $this->duplicatePageValues($pages, static fn (AuditPage $page): ?string => $page->getH1()),
+            'titles' => $this->duplicatePageValues($pages, static fn(AuditPage $page): ?string => $page->getTitle()),
+            'meta_descriptions' => $this->duplicatePageValues($pages, static fn(AuditPage $page): ?string => $page->getMetaDescription()),
+            'h1s' => $this->duplicatePageValues($pages, static fn(AuditPage $page): ?string => $page->getH1()),
         ];
     }
 
@@ -597,7 +597,7 @@ final class AuditInsightsBuilder
             ];
         }
 
-        usort($duplicates, static fn (array $left, array $right): int => $right['count'] <=> $left['count']);
+        usort($duplicates, static fn(array $left, array $right): int => $right['count'] <=> $left['count']);
 
         return array_slice($duplicates, 0, 12);
     }

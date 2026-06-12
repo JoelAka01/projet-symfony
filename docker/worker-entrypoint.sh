@@ -6,12 +6,18 @@ export COMPOSER_CACHE_DIR="${COMPOSER_CACHE_DIR:-/tmp/composer}"
 mkdir -p "${APP_CACHE_DIR:-/tmp/symfony-cache}" "${APP_LOG_DIR:-/tmp/symfony-log}" var/cache var/log
 
 lock_hash="$(sha256sum composer.lock | awk '{ print $1 }')"
-installed_hash="$(cat vendor/.composer.lock.sha256 2>/dev/null || true)"
+attempt=0
 
-if [ ! -f vendor/autoload.php ] || [ "$lock_hash" != "$installed_hash" ]; then
-    composer install --no-interaction --prefer-dist --no-progress --optimize-autoloader --no-scripts
-    printf '%s' "$lock_hash" > vendor/.composer.lock.sha256
-fi
+while [ ! -f vendor/autoload.php ] || [ "$lock_hash" != "$(cat vendor/.composer.lock.sha256 2>/dev/null || true)" ]; do
+    attempt=$((attempt + 1))
+
+    if [ "$attempt" -gt 120 ]; then
+        echo "Timed out waiting for the PHP container to install Composer dependencies." >&2
+        exit 1
+    fi
+
+    sleep 1
+done
 
 php bin/console cache:warmup --no-interaction
 

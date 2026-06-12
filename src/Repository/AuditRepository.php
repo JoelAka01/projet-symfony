@@ -6,6 +6,7 @@ namespace App\Repository;
 
 use App\Entity\Audit;
 use App\Entity\Project;
+use App\Enum\AuditStatus;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -25,6 +26,19 @@ class AuditRepository extends ServiceEntityRepository
             ->leftJoin('audit.issues', 'issue')
             ->andWhere('audit.project = :project')
             ->setParameter('project', $project)
+            ->orderBy('audit.createdAt', 'DESC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    public function findLatestCompletedForProject(Project $project): ?Audit
+    {
+        return $this->createQueryBuilder('audit')
+            ->andWhere('audit.project = :project')
+            ->andWhere('audit.status = :status')
+            ->setParameter('project', $project)
+            ->setParameter('status', AuditStatus::COMPLETED)
             ->orderBy('audit.createdAt', 'DESC')
             ->setMaxResults(1)
             ->getQuery()
