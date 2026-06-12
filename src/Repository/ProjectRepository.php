@@ -6,6 +6,7 @@ namespace App\Repository;
 
 use App\Entity\Project;
 use App\Entity\User;
+use App\Enum\ProjectStatus;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -32,5 +33,32 @@ class ProjectRepository extends ServiceEntityRepository
             ->distinct()
             ->getQuery()
             ->getResult();
+    }
+
+    /** @return list<Project> */
+    public function findForAdmin(?string $search = null, ?ProjectStatus $status = null): array
+    {
+        $queryBuilder = $this->createQueryBuilder('project')
+            ->addSelect('owner', 'organization', 'domain')
+            ->leftJoin('project.owner', 'owner')
+            ->leftJoin('project.organization', 'organization')
+            ->leftJoin('project.domains', 'domain')
+            ->orderBy('project.updatedAt', 'DESC')
+            ->distinct();
+
+        $search = trim((string) $search);
+        if ('' !== $search) {
+            $queryBuilder
+                ->andWhere('LOWER(project.name) LIKE :search OR LOWER(owner.email) LIKE :search OR LOWER(domain.rootDomain) LIKE :search')
+                ->setParameter('search', '%' . strtolower($search) . '%');
+        }
+
+        if (null !== $status) {
+            $queryBuilder
+                ->andWhere('project.status = :status')
+                ->setParameter('status', $status);
+        }
+
+        return $queryBuilder->getQuery()->getResult();
     }
 }

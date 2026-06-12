@@ -9,6 +9,7 @@ use App\Entity\ArticleImage;
 use App\Entity\Audit;
 use App\Entity\CmsConnection;
 use App\Entity\Project;
+use App\Entity\User;
 use App\Enum\ArticleStatus;
 use App\Exception\CmsIntegrationException;
 use App\Form\ArticleGenerationType;
@@ -195,10 +196,15 @@ final class ArticleController extends AbstractController
 
         /** @var array<string, mixed> $data */
         $data = $form->getData();
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException();
+        }
 
         try {
             $articleWriter->generate(
                 $article,
+                $user,
                 (string) ($data['brief'] ?? ''),
                 (string) ($data['tone'] ?? 'expert_clear'),
                 (int) ($data['targetWordCount'] ?? 1400),
