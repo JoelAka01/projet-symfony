@@ -94,9 +94,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(mappedBy: 'owner', targetEntity: Project::class)]
     private Collection $ownedProjects;
 
+
+
     /** @var Collection<int, Project> */
-    #[ORM\ManyToMany(targetEntity: Project::class, mappedBy: 'members')]
-    private Collection $memberProjects;
+    #[ORM\ManyToMany(targetEntity: Project::class, mappedBy: 'guests')]
+    private Collection $guestProjects;
 
     /** @var Collection<int, AuditLog> */
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: AuditLog::class)]
@@ -112,7 +114,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->initializeTimestamps();
         $this->organizationUsers = new ArrayCollection();
         $this->ownedProjects = new ArrayCollection();
-        $this->memberProjects = new ArrayCollection();
+        $this->guestProjects = new ArrayCollection();
         $this->auditLogs = new ArrayCollection();
         $this->rateLimitEvents = new ArrayCollection();
     }
@@ -321,11 +323,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->ownedProjects;
     }
 
-    /** @return Collection<int, Project> */
-    public function getMemberProjects(): Collection
-    {
-        return $this->memberProjects;
-    }
+
 
     public function addOrganizationUser(OrganizationUser $organizationUser): static
     {
@@ -371,24 +369,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function addMemberProject(Project $memberProject): static
-    {
-        if (!$this->memberProjects->contains($memberProject)) {
-            $this->memberProjects->add($memberProject);
-            $memberProject->addMember($this);
-        }
 
-        return $this;
-    }
-
-    public function removeMemberProject(Project $memberProject): static
-    {
-        if ($this->memberProjects->removeElement($memberProject)) {
-            $memberProject->removeMember($this);
-        }
-
-        return $this;
-    }
 
     /**
      * @return Collection<int, AuditLog>
@@ -445,6 +426,31 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             if ($rateLimitEvent->getUser() === $this) {
                 $rateLimitEvent->setUser(null);
             }
+        }
+
+        return $this;
+    }
+
+    /** @return Collection<int, Project> */
+    public function getGuestProjects(): Collection
+    {
+        return $this->guestProjects;
+    }
+
+    public function addGuestProject(Project $project): self
+    {
+        if (!$this->guestProjects->contains($project)) {
+            $this->guestProjects->add($project);
+            $project->addGuest($this);
+        }
+
+        return $this;
+    }
+
+    public function removeGuestProject(Project $project): self
+    {
+        if ($this->guestProjects->removeElement($project)) {
+            $project->removeGuest($this);
         }
 
         return $this;

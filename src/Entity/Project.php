@@ -86,10 +86,16 @@ class Project
     #[Groups(['project:read'])]
     private ?int $geoScore = null;
 
+
+
     /** @var Collection<int, User> */
-    #[ORM\ManyToMany(targetEntity: User::class, inversedBy: 'memberProjects')]
-    #[ORM\JoinTable(name: 'project_members')]
-    private Collection $members;
+    #[ORM\ManyToMany(targetEntity: User::class, inversedBy: 'guestProjects')]
+    #[ORM\JoinTable(name: 'project_guests')]
+    private Collection $guests;
+
+    /** @var Collection<int, ProjectInvitation> */
+    #[ORM\OneToMany(mappedBy: 'project', targetEntity: ProjectInvitation::class, orphanRemoval: true)]
+    private Collection $invitations;
 
     /** @var Collection<int, Domain> */
     #[ORM\OneToMany(mappedBy: 'project', targetEntity: Domain::class, orphanRemoval: true)]
@@ -159,7 +165,6 @@ class Project
     {
         $this->initializeUuid();
         $this->initializeTimestamps();
-        $this->members = new ArrayCollection();
         $this->domains = new ArrayCollection();
         $this->cmsConnections = new ArrayCollection();
         $this->audits = new ArrayCollection();
@@ -176,6 +181,8 @@ class Project
         $this->publisherBacklinkExchanges = new ArrayCollection();
         $this->analyticsDailySnapshots = new ArrayCollection();
         $this->auditLogs = new ArrayCollection();
+        $this->guests = new ArrayCollection();
+        $this->invitations = new ArrayCollection();
     }
 
     public function getOrganization(): ?Organization
@@ -274,27 +281,7 @@ class Project
         return $this;
     }
 
-    /** @return Collection<int, User> */
-    public function getMembers(): Collection
-    {
-        return $this->members;
-    }
 
-    public function addMember(User $user): self
-    {
-        if (!$this->members->contains($user)) {
-            $this->members->add($user);
-        }
-
-        return $this;
-    }
-
-    public function removeMember(User $user): self
-    {
-        $this->members->removeElement($user);
-
-        return $this;
-    }
 
     /** @return Collection<int, Domain> */
     public function getDomains(): Collection
@@ -768,6 +755,55 @@ class Project
             // set the owning side to null (unless already changed)
             if ($auditLog->getProject() === $this) {
                 $auditLog->setProject(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /** @return Collection<int, User> */
+    public function getGuests(): Collection
+    {
+        return $this->guests;
+    }
+
+    public function addGuest(User $user): self
+    {
+        if (!$this->guests->contains($user)) {
+            $this->guests->add($user);
+        }
+
+        return $this;
+    }
+
+    public function removeGuest(User $user): self
+    {
+        $this->guests->removeElement($user);
+
+        return $this;
+    }
+
+    /** @return Collection<int, ProjectInvitation> */
+    public function getInvitations(): Collection
+    {
+        return $this->invitations;
+    }
+
+    public function addInvitation(ProjectInvitation $invitation): self
+    {
+        if (!$this->invitations->contains($invitation)) {
+            $this->invitations->add($invitation);
+            $invitation->setProject($this);
+        }
+
+        return $this;
+    }
+
+    public function removeInvitation(ProjectInvitation $invitation): self
+    {
+        if ($this->invitations->removeElement($invitation)) {
+            if ($invitation->getProject() === $this) {
+                $invitation->setProject(null);
             }
         }
 
