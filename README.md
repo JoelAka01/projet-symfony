@@ -21,6 +21,7 @@ Local URLs:
 
 - Application: http://localhost:8080
 - Admin dashboard: http://localhost:8080/admin
+- Pricing and simulated checkout: http://localhost:8080/pricing
 - Mailpit: http://localhost:8025
 
 Run Symfony commands in Docker (ensure containers are running with `make up` first):
