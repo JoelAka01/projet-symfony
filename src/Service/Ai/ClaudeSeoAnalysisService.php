@@ -29,6 +29,7 @@ final class ClaudeSeoAnalysisService
         private readonly ClaudeSeoAnalysisSchema $responseSchema,
         private readonly LoggerInterface $logger,
         private readonly AuditProgressNotifier $notifier,
+        private readonly ?AiUsageRecorder $usageRecorder = null,
     ) {}
 
     public function analyze(Audit $audit): void
@@ -129,6 +130,10 @@ final class ClaudeSeoAnalysisService
                     throw new \UnexpectedValueException('Claude API response was not a JSON object.');
                 }
 
+                $responseUsage = $this->mergeUsage(
+                    $responseUsage,
+                    is_array($responseData['usage'] ?? null) ? $responseData['usage'] : [],
+                );
                 $stopReason = is_scalar($responseData['stop_reason'] ?? null) ? (string) $responseData['stop_reason'] : null;
                 if ('refusal' === $stopReason) {
                     throw new \UnexpectedValueException('Claude refused to generate the requested SEO analysis.');
@@ -164,9 +169,21 @@ final class ClaudeSeoAnalysisService
                     throw $exception;
                 }
 
-                $responseUsage = is_array($responseData['usage'] ?? null) ? $responseData['usage'] : [];
                 $usedMaxTokens = $tokenBudget;
                 break;
+            }
+
+            $usageUser = $audit->getRequestedBy() ?? $audit->getProject()?->getOwner();
+            if (null !== $usageUser && [] !== $responseUsage) {
+                $this->usageRecorder?->record(
+                    $usageUser,
+                    $audit->getProject(),
+                    'anthropic',
+                    $model,
+                    AiUsageRecorder::OPERATION_AUDIT_ANALYSIS,
+                    $responseUsage,
+                    $audit->getId(),
+                );
             }
 
             $this->storeAiMetadata($audit, $parsed + [
@@ -402,5 +419,21 @@ PROMPT;
     private function limit(string $value, int $maxLength): string
     {
         return strlen($value) > $maxLength ? substr($value, 0, $maxLength) : $value;
+    }
+
+    /**
+     * @param array<string, mixed> $total
+     * @param array<string, mixed> $usage
+     *
+     * @return array<string, int>
+     */
+    private function mergeUsage(array $total, array $usage): array
+    {
+        foreach (['input_tokens', 'output_tokens', 'cache_creation_input_tokens', 'cache_read_input_tokens'] as $key) {
+            $value = $usage[$key] ?? 0;
+            $total[$key] = (int) ($total[$key] ?? 0) + (is_numeric($value) ? max(0, (int) $value) : 0);
+        }
+
+        return array_filter($total, static fn(int $value): bool => $value > 0);
     }
 }
