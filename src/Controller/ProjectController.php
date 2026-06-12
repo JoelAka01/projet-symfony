@@ -10,7 +10,6 @@ use App\Entity\Domain;
 use App\Entity\Project;
 use App\Entity\User;
 use App\Enum\AuditStatus;
-use App\Enum\ProjectStatus;
 use App\Exception\InvalidWebsiteUrlException;
 use App\Form\ProjectType;
 use App\Message\RunClaudeAnalysisMessage;
@@ -71,6 +70,7 @@ final class ProjectController extends AbstractController
         }
 
         $project = new Project();
+        $project->setOwner($user);
         $form = $this->createForm(ProjectType::class, $project);
         $form->handleRequest($request);
 
