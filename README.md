@@ -20,6 +20,7 @@ docker compose up -d --build
 Local URLs:
 
 - Application: http://localhost:8080
+- Admin dashboard: http://localhost:8080/admin
 - Mailpit: http://localhost:8025
 
 Run Symfony commands in Docker (ensure containers are running with `make up` first):
@@ -130,9 +131,9 @@ make ci-local       # Run lint + phpstan + tests (simulates CI)
 ## Demo Credentials
 
 ```text
-Admin:   admin@example.com   / password
-Manager: manager@example.com / password
-User:    user@example.com    / password
+Admin:admin@example.com   / password
+Manager (user owning project): manager@example.com / password
+User (guest user): user@example.com    / password
 ```
 
 Made with care by Dilan EESHVARAN, Kassi Joel Emmanuel AKA and Mahamadou GORY KANTE - 4IW1 2025/2026
