@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Functional;
 
+use App\Entity\User;
+use App\Repository\UserRepository;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 final class HomepageTest extends WebTestCase
@@ -14,6 +16,22 @@ final class HomepageTest extends WebTestCase
         $client->request('GET', '/');
 
         self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('h1', 'Rank on search engines. Get cited by AI.');
+        self::assertSelectorTextContains('h1', 'Get found on Google. Get recommended by AI.');
+    }
+
+    public function testHomepageRedirectsWhenAuthenticated(): void
+    {
+        $client = self::createClient();
+        $userRepository = self::getContainer()->get(UserRepository::class);
+
+        $user = $userRepository->findOneBy(['email' => 'user@example.com']);
+        if (!$user instanceof User) {
+            $this->markTestSkipped('Fixture user user@example.com not found.');
+        }
+
+        $client->loginUser($user);
+        $client->request('GET', '/');
+
+        self::assertResponseRedirects('/projects');
     }
 }
