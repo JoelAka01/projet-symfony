@@ -12,14 +12,37 @@
     {% set isProcessing = audit.status.value in ['QUEUED', 'RUNNING'] or aiRunning %}
     {% set canRetryAi = audit.status.value == 'COMPLETED' and ai.status in ['failed', 'not_configured'] %}
 
+    {% if is_guest_view|default(false) %}
+        <div class="flash-stack" style="margin-bottom: 24px;">
+            <div class="flash flash-info" role="status" style="display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #0f766e; background: #f0fdfa; color: #0f766e; padding: 12px 16px; border-radius: 4px;">
+                <span>
+                    <strong>Read-only access:</strong> You are viewing this audit report as a guest. Please log in to download reports or manage the Content studio.
+                </span>
+                <a class="button primary small" href="{{ path('app_project_invitation_accept', { token: invitation.token }) }}" style="margin: 0; padding: 6px 12px; font-size: 0.875rem;">
+                    Log In to Manage
+                </a>
+            </div>
+        </div>
+    {% endif %}
+
     <div class="back-navigation">
-        <a class="back-link" href="{{ path('app_project_show', { id: project.id }) }}">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;">
-                <line x1="19" y1="12" x2="5" y2="12"></line>
-                <polyline points="12 19 5 12 12 5"></polyline>
-            </svg>
-            Back to project
-        </a>
+        {% if is_guest_view|default(false) %}
+            <a class="back-link" href="{{ path('app_project_invitation_view', { token: invitation.token }) }}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+                Back to project overview
+            </a>
+        {% else %}
+            <a class="back-link" href="{{ path('app_project_show', { id: project.id }) }}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+                Back to project
+            </a>
+        {% endif %}
     </div>
 
     <section class="hero compact">
@@ -31,18 +54,22 @@
             · {{ audit.crawlStartedAt ? audit.crawlStartedAt|date('Y-m-d H:i') : audit.createdAt|date('Y-m-d H:i') }}
         </p>
         <div class="hero-actions">
-            <a class="button secondary" href="{{ path('app_audit_pdf', { id: audit.id }) }}">Download PDF report</a>
-            {% if canRetryAi %}
-                <form method="post" action="{{ path('app_audit_ai_retry', { id: audit.id }) }}" data-analysis-form>
-                    <input type="hidden" name="_token" value="{{ csrf_token('retry_ai_' ~ audit.id) }}">
-                    <button class="button primary" type="submit" data-analysis-submit>Retry Claude analysis</button>
-                </form>
-            {% endif %}
-            {% if aiCompleted and is_granted('PROJECT_MANAGE', project) %}
-                <form method="post" action="{{ path('app_article_create_from_audit', { audit: audit.id }) }}">
-                    <input type="hidden" name="_token" value="{{ csrf_token('create_article_from_audit_' ~ audit.id) }}">
-                    <button class="button primary" type="submit">Create CMS-ready article draft</button>
-                </form>
+            {% if is_guest_view|default(false) %}
+                {# Guest cannot view actions unless logged in #}
+            {% else %}
+                <a class="button secondary" href="{{ path('app_audit_pdf', { id: audit.id }) }}">Download PDF report</a>
+                {% if canRetryAi %}
+                    <form method="post" action="{{ path('app_audit_ai_retry', { id: audit.id }) }}" data-analysis-form>
+                        <input type="hidden" name="_token" value="{{ csrf_token('retry_ai_' ~ audit.id) }}">
+                        <button class="button primary" type="submit" data-analysis-submit>Retry Claude analysis</button>
+                    </form>
+                {% endif %}
+                {% if aiCompleted and is_granted('PROJECT_MANAGE', project) %}
+                    <form method="post" action="{{ path('app_article_create_from_audit', { audit: audit.id }) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('create_article_from_audit_' ~ audit.id) }}">
+                        <button class="button primary" type="submit">Create CMS-ready article draft</button>
+                    </form>
+                {% endif %}
             {% endif %}
         </div>
     </section>

@@ -63,4 +63,29 @@ final class AccountEmailService
 
         $this->mailer->send($email);
     }
+
+    public function sendProjectInvitationEmail(\App\Entity\ProjectInvitation $invitation): void
+    {
+        $project = $invitation->getProject();
+        if (null === $project) {
+            return;
+        }
+
+        $invitationUrl = $this->urlGenerator->generate('app_project_invitation_view', [
+            'token' => $invitation->getToken(),
+        ], UrlGeneratorInterface::ABSOLUTE_URL);
+
+        $email = (new TemplatedEmail())
+            ->from(new Address($this->fromEmail, $this->fromName))
+            ->to(new Address($invitation->getEmail()))
+            ->subject(sprintf('Invitation to access project "%s" on SEO GEO AI', $project->getName()))
+            ->htmlTemplate('emails/project_invitation.html.twig')
+            ->context([
+                'project' => $project,
+                'invitationUrl' => $invitationUrl,
+                'invitation' => $invitation,
+            ]);
+
+        $this->mailer->send($email);
+    }
 }

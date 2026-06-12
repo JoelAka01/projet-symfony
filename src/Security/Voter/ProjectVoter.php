@@ -21,6 +21,7 @@ final class ProjectVoter extends Voter
     public const VIEW = 'PROJECT_VIEW';
     public const EDIT = 'PROJECT_EDIT';
     public const MANAGE = 'PROJECT_MANAGE';
+    public const MANAGE_CONTENT = 'PROJECT_MANAGE_CONTENT';
     public const CRAWL = 'PROJECT_CRAWL';
     public const LAUNCH_AUDIT = 'LAUNCH_AUDIT';
     public const DELETE = 'PROJECT_DELETE';
@@ -29,6 +30,7 @@ final class ProjectVoter extends Voter
         self::VIEW,
         self::EDIT,
         self::MANAGE,
+        self::MANAGE_CONTENT,
         self::CRAWL,
         self::LAUNCH_AUDIT,
         self::DELETE,
@@ -55,6 +57,7 @@ final class ProjectVoter extends Voter
         return match ($attribute) {
             self::VIEW => $this->canView($subject, $user),
             self::EDIT, self::MANAGE => $this->canManage($subject, $user, $token),
+            self::MANAGE_CONTENT => $this->canManageContent($subject, $user, $token),
             self::CRAWL, self::LAUNCH_AUDIT => ProjectStatus::ACTIVE === $subject->getStatus()
                 && $this->canManage($subject, $user, $token),
             self::DELETE => $this->canDelete($subject, $user),
@@ -65,15 +68,31 @@ final class ProjectVoter extends Voter
     private function canView(Project $project, User $user): bool
     {
         return $this->isOwner($project, $user)
-            || $this->isProjectMember($project, $user)
+            || $this->isProjectGuest($project, $user)
             || $this->hasOrganizationMembership($project, $user);
     }
 
     private function canManage(Project $project, User $user, TokenInterface $token): bool
     {
         return $this->isOwner($project, $user)
-            || ($this->isProjectMember($project, $user) && $this->hasRole($token, 'ROLE_MANAGER'))
             || $this->hasOrganizationRole($project, $user, UserRole::OWNER, UserRole::ADMIN, UserRole::EDITOR);
+    }
+
+    private function canManageContent(Project $project, User $user, TokenInterface $token): bool
+    {
+        return $this->canManage($project, $user, $token)
+            || $this->isProjectGuest($project, $user);
+    }
+
+    private function isProjectGuest(Project $project, User $user): bool
+    {
+        foreach ($project->getGuests() as $guest) {
+            if ($this->isSameUser($guest, $user)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function canDelete(Project $project, User $user): bool
@@ -89,16 +108,7 @@ final class ProjectVoter extends Voter
         return null !== $owner && $this->isSameUser($owner, $user);
     }
 
-    private function isProjectMember(Project $project, User $user): bool
-    {
-        foreach ($project->getMembers() as $member) {
-            if ($this->isSameUser($member, $user)) {
-                return true;
-            }
-        }
 
-        return false;
-    }
 
     private function hasOrganizationMembership(Project $project, User $user): bool
     {

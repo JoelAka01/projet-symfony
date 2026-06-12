@@ -27,8 +27,7 @@ final class ProjectManager
 
         $project
             ->setOwner($owner)
-            ->setStatus(ProjectStatus::ACTIVE)
-            ->addMember($owner);
+            ->setStatus(ProjectStatus::ACTIVE);
         $organization->addProject($project);
 
         $this->syncPrimaryDomain($project, $normalizedWebsiteUrl);
