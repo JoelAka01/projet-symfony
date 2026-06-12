@@ -14,6 +14,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: CmsPublicationRepository::class)]
 #[ORM\Table(name: 'cms_publications')]
 #[ORM\Index(name: 'idx_cms_publications_status', columns: ['status'])]
+#[ORM\UniqueConstraint(name: 'uniq_cms_publication_article_connection', columns: ['article_id', 'cms_connection_id'])]
 class CmsPublication
 {
     use UuidPrimaryKeyTrait;
