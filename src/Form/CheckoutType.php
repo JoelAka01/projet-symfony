@@ -18,7 +18,7 @@ final class CheckoutType extends AbstractType
             ->add('cardholder', TextType::class, [
                 'label' => 'Name on card',
                 'attr' => [
-                    'placeholder' => 'John Doe',
+                    'placeholder' => 'John Cena',
                     'maxlength' => '120',
                 ],
                 'constraints' => [

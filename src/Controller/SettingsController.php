@@ -132,6 +132,7 @@ final class SettingsController extends AbstractController
         Request $request,
         SubscriptionRepository $subscriptionRepository,
         EntityManagerInterface $entityManager,
+        \App\Service\Billing\BillingEmailService $billingEmailService,
     ): Response {
         $user = $this->getUser();
         if (!$user instanceof User) {
@@ -150,6 +151,7 @@ final class SettingsController extends AbstractController
 
         foreach ($activeSubscriptions as $subscription) {
             $subscription->setStatus(SubscriptionStatus::CANCELED);
+            $billingEmailService->sendSubscriptionCanceledEmail($user, $subscription);
         }
         $entityManager->flush();
 
