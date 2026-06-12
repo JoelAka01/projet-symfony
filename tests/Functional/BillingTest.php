@@ -69,6 +69,20 @@ final class BillingTest extends WebTestCase
         self::assertSame(PaymentStatus::PAID, $payment->getStatus());
         self::assertTrue($payment->isSimulated());
         self::assertSame('4242', $payment->getCardLastFour());
+
+        // Clean up
+        $freshEntityManager = self::getContainer()->get(\Doctrine\ORM\EntityManagerInterface::class);
+        $subRepo = self::getContainer()->get(\App\Repository\SubscriptionRepository::class);
+        $freshSub = $subRepo->findActiveForUser($user);
+        if ($freshSub) {
+            $freshEntityManager->remove($freshSub);
+        }
+        $paymentRepo = self::getContainer()->get(\App\Repository\PaymentRepository::class);
+        $freshPayment = $paymentRepo->findOneBy(['id' => $payment->getId()]);
+        if ($freshPayment) {
+            $freshEntityManager->remove($freshPayment);
+        }
+        $freshEntityManager->flush();
     }
 
     public function testSubscribedUserUpgradeButtonVisibility(): void
@@ -89,7 +103,7 @@ final class BillingTest extends WebTestCase
             ->setMonthlyPriceCents(900)
             ->setMonthlyCreditLimit(1000000)
             ->setWeeklyAnalysisLimit(5);
-        
+
         $entityManager->persist($subscription);
         $entityManager->flush();
 
@@ -153,5 +167,40 @@ final class BillingTest extends WebTestCase
             $freshEntityManager->remove($freshAudit);
         }
         $freshEntityManager->flush();
+    }
+
+    public function testSendPaymentReceiptEmail(): void
+    {
+        $client = self::createClient();
+        $container = self::getContainer();
+        $user = $container->get(UserRepository::class)->findOneBy(['email' => 'user@example.com']);
+        self::assertInstanceOf(User::class, $user);
+
+        $payment = new Payment();
+        $payment->setUser($user);
+        $payment->setAmountCents(900);
+        $payment->setCardLastFour('4242');
+        $payment->setPaidAt(new \DateTimeImmutable());
+
+        $billingEmailService = $container->get(\App\Service\Billing\BillingEmailService::class);
+        $billingEmailService->sendPaymentReceiptEmail($user, $payment);
+
+        $emails = self::getMailerMessages();
+        
+        $userReceipt = null;
+        $adminReceipt = null;
+        
+        foreach ($emails as $email) {
+            self::assertInstanceOf(\Symfony\Component\Mime\Email::class, $email);
+            $subject = $email->getSubject();
+            if (str_contains($subject, '[Admin] Payment received')) {
+                $adminReceipt = $email;
+            } elseif (str_contains($subject, 'Payment Receipt')) {
+                $userReceipt = $email;
+            }
+        }
+
+        self::assertNotNull($userReceipt, 'User receipt email was not sent.');
+        self::assertNotNull($adminReceipt, 'Admin receipt notification was not sent.');
     }
 }

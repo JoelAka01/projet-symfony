@@ -23,7 +23,7 @@ final class AnalysisQuotaTest extends KernelTestCase
         $container = self::getContainer();
         $entityManager = $container->get(EntityManagerInterface::class);
         $quotaManager = $container->get(AnalysisQuotaManager::class);
-        $ipAddress = '198.51.100.' . random_int(1, 240);
+        $ipAddress = '198.51.100.' . random_int(1, 1000000000);
 
         [$firstUser, $firstProject, $firstDomain] = $this->createProjectGraph($entityManager, 'first-' . bin2hex(random_bytes(4)) . '@example.com');
 
