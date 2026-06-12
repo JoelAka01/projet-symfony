@@ -17,6 +17,8 @@ final class HomepageTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', 'Get found on Google. Get recommended by AI.');
+        self::assertSelectorTextContains('nav', 'Pricing');
+        self::assertSelectorTextContains('body', 'Start with 3 free analyses');
     }
 
     public function testHomepageRedirectsWhenAuthenticated(): void
