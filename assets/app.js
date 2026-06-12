@@ -336,3 +336,57 @@ document.addEventListener('click', () => {
         }
     });
 });
+
+// simulated checkout inputs format & limitations
+const cardNumberInput = document.getElementById('checkout_cardNumber');
+const expiryInput     = document.getElementById('checkout_expiry');
+const cvcInput        = document.getElementById('checkout_cvc');
+
+if (cardNumberInput) {
+    cardNumberInput.addEventListener('input', (e) => {
+        let value = e.target.value.replace(/\D/g, ''); // strip non digits
+        if (value.length > 16) {
+            value = value.slice(0, 16); // limit to 16 digits
+        }
+        // format with space every 4 digits
+        const formatted = value.match(/.{1,4}/g)?.join(' ') || '';
+        e.target.value = formatted;
+    });
+}
+
+if (expiryInput) {
+    let lastValue = '';
+    expiryInput.addEventListener('input', (e) => {
+        let value = e.target.value;
+        
+        // if deleting, dont automatically add back the slash
+        if (value.length < lastValue.length) {
+            lastValue = value;
+            return;
+        }
+        
+        let clean = value.replace(/\D/g, '');
+        if (clean.length > 4) {
+            clean = clean.slice(0, 4);
+        }
+        
+        if (clean.length > 2) {
+            clean = clean.slice(0, 2) + '/' + clean.slice(2);
+        } else if (clean.length === 2) {
+            clean = clean + '/';
+        }
+        
+        e.target.value = clean;
+        lastValue = clean;
+    });
+}
+
+if (cvcInput) {
+    cvcInput.addEventListener('input', (e) => {
+        let value = e.target.value.replace(/\D/g, ''); // strip non digits
+        if (value.length > 3) {
+            value = value.slice(0, 3); // limit to 3 digits
+        }
+        e.target.value = value;
+    });
+}
