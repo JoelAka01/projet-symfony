@@ -21,6 +21,18 @@ final class HomepageTest extends WebTestCase
         self::assertSelectorTextContains('body', 'Start with 3 free analyses');
     }
 
+    public function testHomepageDisplaysPricingGrid(): void
+    {
+        $client = self::createClient();
+        $client->request('GET', '/');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('.pricing-grid');
+        self::assertSelectorTextContains('.pricing-grid', 'Starter');
+        self::assertSelectorTextContains('.pricing-grid', 'Pro');
+        self::assertSelectorTextContains('.pricing-grid', 'Expert');
+    }
+
     public function testHomepageRedirectsWhenAuthenticated(): void
     {
         $client = self::createClient();
