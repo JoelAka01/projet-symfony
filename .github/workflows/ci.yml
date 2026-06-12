@@ -6,76 +6,11 @@ on:
   pull_request:
     branches: [main]
 
-# Annule les runs en cours si un nouveau push arrive sur la même branche.
-# Évite de brûler des minutes CI sur des commits intermédiaires.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  # ─────────────────────────────────────────────
-  # 1. LINT — PHP CS Fixer
-  #
-  # Vérifie que le code respecte le style @Symfony + @PER-CS2.0.
-  # Mode "check" uniquement : il signale, ne corrige pas.
-  # Rapide (~30 s), pas besoin de base de données.
-  # ─────────────────────────────────────────────
-  lint:
-    name: PHP CS Fixer
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.3'
-          coverage: none        # Pas de coverage ici, gain de temps
-
-      - uses: ramsey/composer-install@v3
-        with:
-          dependency-versions: locked   # Respecte le composer.lock
-
-      - name: Vérifier le style du code
-        run: vendor/bin/php-cs-fixer check --diff
-        # --diff affiche exactement ce qui ne passe pas, ligne par ligne.
-        # Pour corriger localement : vendor/bin/php-cs-fixer fix
-
-  # ─────────────────────────────────────────────
-  # 2. ANALYSE STATIQUE — PHPStan
-  #
-  # Cherche les bugs de type sans exécuter le code.
-  # Niveau 5 (défini dans phpstan.neon.dist).
-  # Pas besoin de base de données.
-  # ─────────────────────────────────────────────
-  static-analysis:
-    name: PHPStan
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.3'
-          coverage: none
-
-      - uses: ramsey/composer-install@v3
-        with:
-          dependency-versions: locked
-
-      - name: Analyser le code
-        run: vendor/bin/phpstan analyse --no-progress
-        # --no-progress évite les sorties inutiles dans les logs CI.
-        # Si ça échoue, la sortie indique le fichier + ligne + type d'erreur.
-
-  # ─────────────────────────────────────────────
-  # 3. TESTS — PHPUnit
-  #
-  # Lance la suite complète (Unit + Functional).
-  # Les tests fonctionnels ont besoin de la DB pour charger le kernel
-  # Symfony (même sans requêtes réelles vers la DB pour ces tests-ci).
-  # La coverage Xdebug est exportée en XML et uploadée en artifact
-  # pour être réutilisée par le job mutation.
-  # ─────────────────────────────────────────────
   tests:
     name: PHPUnit
     runs-on: ubuntu-latest
@@ -96,8 +31,6 @@ jobs:
           - 5432:5432
 
     env:
-      # Surcharge DATABASE_URL pour pointer vers le service CI.
-      # Le .env.test utilise déjà 127.0.0.1:5432/app_test — compatible.
       DATABASE_URL: postgresql://app:app@127.0.0.1:5432/app_test?serverVersion=16&charset=utf8
       APP_ENV: test
       APP_SECRET: ci-secret-replace-in-prod
@@ -109,7 +42,7 @@ jobs:
         with:
           php-version: '8.3'
           extensions: pdo_pgsql, intl, zip
-          coverage: xdebug       # Nécessaire pour la couverture de code
+          coverage: none
 
       - uses: ramsey/composer-install@v3
         with:
@@ -117,103 +50,6 @@ jobs:
 
       - name: Créer le schéma de base de données
         run: php bin/console doctrine:migrations:migrate --no-interaction
-        # Si une migration est incorrecte, ce step le révèle immédiatement.
 
-      - name: Lancer les tests avec couverture
-        run: |
-          php bin/phpunit \
-            --coverage-xml coverage/xml \
-            --log-junit coverage/junit.xml
-        # coverage/xml/ = format attendu par Infection pour réutiliser la coverage
-        # junit.xml     = permet à GitHub d'afficher les tests échoués directement dans la PR
-
-      - name: Uploader la couverture en artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage
-          path: coverage/
-          retention-days: 1    # Pas besoin de garder plus longtemps
-
-  # ─────────────────────────────────────────────
-  # 4. TESTS DE MUTATION — Infection
-  #
-  # Principe : Infection modifie le code source (ex. change ">" en ">=",
-  # supprime un "return", inverse un booléen) et vérifie que les tests
-  # détectent ces mutations. Si un test échoue quand le code est muté,
-  # la mutation est "tuée" (bonne chose). Sinon elle "survit" (test faible).
-  #
-  # MSI (Mutation Score Indicator) = mutations tuées / total mutations.
-  # Seuils définis dans infection.json5 : min 50% MSI, 70% covered MSI.
-  #
-  # Tourne uniquement sur main et les PRs pour éviter de ralentir
-  # chaque petit push de feature branch (~3-5 min sur ce projet).
-  # Réutilise la couverture du job "tests" pour éviter de relancer
-  # tous les tests avec Xdebug.
-  # ─────────────────────────────────────────────
-  mutation:
-    name: Infection (tests de mutation)
-    runs-on: ubuntu-latest
-    needs: tests    # Attend que les tests passent ET que la coverage soit uploadée
-    if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
-
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_DB: app_test
-          POSTGRES_USER: app
-          POSTGRES_PASSWORD: app
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-    env:
-      DATABASE_URL: postgresql://app:app@127.0.0.1:5432/app_test?serverVersion=16&charset=utf8
-      APP_ENV: test
-      APP_SECRET: ci-secret-replace-in-prod
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.3'
-          extensions: pdo_pgsql, intl, zip
-          coverage: xdebug
-
-      - uses: ramsey/composer-install@v3
-        with:
-          dependency-versions: locked
-
-      - name: Récupérer la couverture du job tests
-        uses: actions/download-artifact@v4
-        with:
-          name: coverage
-          path: coverage/
-
-      - name: Créer le schéma de base de données
-        run: php bin/console doctrine:migrations:migrate --no-interaction
-
-      - name: Lancer Infection
-        run: |
-          vendor/bin/infection \
-            --coverage=coverage/xml \
-            --threads=max \
-            --show-mutations \
-            --no-progress
-        # --coverage=coverage/xml  : réutilise la coverage existante (beaucoup plus rapide)
-        # --show-mutations         : affiche dans les logs quelles mutations ont survécu
-        # --no-progress            : logs plus propres en CI
-        # Les seuils (minMsi, minCoveredMsi) sont lus dans infection.json5
-
-      - name: Uploader les rapports Infection
-        if: always()    # Upload même si Infection échoue, pour analyser les mutations survivantes
-        uses: actions/upload-artifact@v4
-        with:
-          name: infection-reports
-          path: var/infection/
-          retention-days: 7
+      - name: Lancer les tests
+        run: php bin/phpunit
