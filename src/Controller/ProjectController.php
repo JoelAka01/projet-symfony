@@ -20,12 +20,14 @@ use App\Security\Voter\ProjectVoter;
 use App\Service\Audit\AuditInsightsBuilder;
 use App\Service\Audit\WebsiteAuditRunner;
 use App\Service\Project\ProjectManager;
+use App\Service\Report\AuditPdfGenerator;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
@@ -208,6 +210,30 @@ final class ProjectController extends AbstractController
             'issueGroupsBySeverity' => $this->groupIssuesBySeverityAndType($audit),
             'insights' => $insightsBuilder->build($audit),
         ]);
+    }
+
+    #[Route('/audits/{id}/pdf', name: 'app_audit_pdf', methods: ['GET'])]
+    public function downloadAuditPdf(Audit $audit, AuditPdfGenerator $pdfGenerator): Response
+    {
+        $project = $audit->getProject();
+        if (null === $project) {
+            throw $this->createNotFoundException('Audit project not found.');
+        }
+
+        $this->denyAccessUnlessGranted(ProjectVoter::VIEW, $project);
+
+        $domain = $audit->getDomain()?->getRootDomain() ?? 'website';
+        $safeDomain = trim((string) preg_replace('/[^a-z0-9.-]+/i', '-', $domain), '-');
+        $filename = sprintf('seo-audit-%s-%s.pdf', '' === $safeDomain ? 'website' : $safeDomain, $audit->getCreatedAt()->format('Ymd'));
+
+        $response = new Response($pdfGenerator->generate($audit));
+        $response->headers->set('Content-Type', 'application/pdf');
+        $response->headers->set(
+            'Content-Disposition',
+            $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $filename),
+        );
+
+        return $response;
     }
 
     #[Route('/audits/{id}/ai/retry', name: 'app_audit_ai_retry', methods: ['POST'])]

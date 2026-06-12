@@ -28,6 +28,7 @@
             · {{ audit.crawlStartedAt ? audit.crawlStartedAt|date('Y-m-d H:i') : audit.createdAt|date('Y-m-d H:i') }}
         </p>
         <div class="hero-actions">
+            <a class="button secondary" href="{{ path('app_audit_pdf', { id: audit.id }) }}">Download PDF report</a>
             {% if canRetryAi %}
                 <form method="post" action="{{ path('app_audit_ai_retry', { id: audit.id }) }}">
                     <input type="hidden" name="_token" value="{{ csrf_token('retry_ai_' ~ audit.id) }}">
@@ -507,61 +508,47 @@
         </section>
 
         <section class="panel full-panel">
-            <h2>ChatGPT & Gemini Brand Visibility (SEO for AI)</h2>
-            <div class="ai-summary" style="border-left-color: #2563eb; background: #f0fdf4;">
-                <p><strong>SEO for AI Status:</strong> This analysis evaluates how ChatGPT and Gemini perceive or recommend your brand <strong>"{{ project.name }}"</strong> based on your crawled content, and details the content optimization corrections required to be cited or recommended by these AI search engines.</p>
+            <h2>LLM recommendation readiness</h2>
+            <div class="ai-summary">
+                <p><strong>Claude-only assessment:</strong> {{ geo.methodology_notice|default('ChatGPT, Gemini, and Perplexity were not queried. Claude estimates recommendation readiness from the crawled website evidence only.') }}</p>
             </div>
-            
+
             {% set visibility = geo.ai_brand_visibility|default({}) %}
             {% set optimizations = geo.ai_seo_optimizations|default([]) %}
-            
-            <div class="split-grid" style="margin-top: 20px;">
-                <article class="insight-card">
-                    <h3 style="display: flex; align-items: center; gap: 8px; font-size: 1.15rem;">
-                        <span style="font-size: 1.5rem;">🤖</span> ChatGPT Mention Analysis
-                    </h3>
-                    {% if visibility.chatgpt is defined and visibility.chatgpt is not null %}
-                        <dl class="suggestions" style="margin-top: 12px;">
-                            <dt>Mention Status</dt>
-                            <dd>
-                                <span class="pill priority-{{ visibility.chatgpt.status == 'highly_visible' or visibility.chatgpt.status == 'visible' ? 'low' : 'medium' }}">
-                                    {{ visibility.chatgpt.status|default('n/a')|replace({'_': ' '})|title }}
-                                </span>
-                            </dd>
-                            <dt>Sentiment</dt>
-                            <dd><strong>{{ visibility.chatgpt.sentiment|default('n/a')|title }}</strong></dd>
-                            <dt>Context of Mentions</dt>
-                            <dd>{{ visibility.chatgpt.how_mentioned|default('No mention context returned.') }}</dd>
-                        </dl>
-                    {% else %}
-                        <p class="muted" style="margin-top: 12px;">No ChatGPT mention analysis data available.</p>
-                    {% endif %}
-                </article>
+            {% set modelLabels = {'chatgpt': 'ChatGPT', 'gemini': 'Gemini', 'perplexity': 'Perplexity'} %}
 
-                <article class="insight-card">
-                    <h3 style="display: flex; align-items: center; gap: 8px; font-size: 1.15rem;">
-                        <span style="font-size: 1.5rem;">✨</span> Gemini Mention Analysis
-                    </h3>
-                    {% if visibility.gemini is defined and visibility.gemini is not null %}
-                        <dl class="suggestions" style="margin-top: 12px;">
-                            <dt>Mention Status</dt>
-                            <dd>
-                                <span class="pill priority-{{ visibility.gemini.status == 'highly_visible' or visibility.gemini.status == 'visible' ? 'low' : 'medium' }}">
-                                    {{ visibility.gemini.status|default('n/a')|replace({'_': ' '})|title }}
-                                </span>
-                            </dd>
-                            <dt>Sentiment</dt>
-                            <dd><strong>{{ visibility.gemini.sentiment|default('n/a')|title }}</strong></dd>
-                            <dt>Context of Mentions</dt>
-                            <dd>{{ visibility.gemini.how_mentioned|default('No mention context returned.') }}</dd>
-                        </dl>
-                    {% else %}
-                        <p class="muted" style="margin-top: 12px;">No Gemini mention analysis data available.</p>
-                    {% endif %}
-                </article>
+            <div class="insight-grid" style="margin-top: 20px;">
+                {% for modelKey, modelLabel in modelLabels %}
+                    {% set modelAssessment = visibility[modelKey]|default(null) %}
+                    <article class="insight-card">
+                        <h3>{{ modelLabel }} readiness estimate</h3>
+                        {% if modelAssessment %}
+                            <dl class="suggestions" style="margin-top: 12px;">
+                                <dt>Estimated visibility</dt>
+                                <dd>
+                                    <span class="pill priority-{{ modelAssessment.status in ['highly_visible', 'visible'] ? 'low' : 'medium' }}">
+                                        {{ modelAssessment.status|default('n/a')|replace({'_': ' '})|title }}
+                                    </span>
+                                </dd>
+                                <dt>Expected presentation</dt>
+                                <dd><strong>{{ modelAssessment.sentiment|default('unknown')|title }}</strong></dd>
+                                <dt>Claude assessment</dt>
+                                <dd>{{ modelAssessment.how_mentioned|default('No grounded assessment returned.') }}</dd>
+                                {% if modelAssessment.evidence|default([]) is not empty %}
+                                    <dt>Crawler evidence</dt>
+                                    <dd>{{ modelAssessment.evidence|join(' ') }}</dd>
+                                {% endif %}
+                                <dt>Confidence</dt>
+                                <dd>{{ modelAssessment.confidence is defined ? (modelAssessment.confidence * 100)|round ~ '%' : 'n/a' }}</dd>
+                            </dl>
+                        {% else %}
+                            <p class="muted" style="margin-top: 12px;">No {{ modelLabel }} readiness estimate is available.</p>
+                        {% endif %}
+                    </article>
+                {% endfor %}
             </div>
 
-            <h3 style="margin-top: 28px;">Content Corrections to Get Recommended (SEO for AI)</h3>
+            <h3 style="margin-top: 28px;">Content corrections to improve AI recommendations</h3>
             {% if optimizations is empty %}
                 <p class="muted">No AI SEO content corrections returned.</p>
             {% else %}
@@ -569,9 +556,9 @@
                     <table>
                         <thead>
                             <tr>
-                                <th style="width: 20%;">Target AI Model</th>
-                                <th style="width: 40%;">Current Recommendation Gap</th>
-                                <th style="width: 40%;">Content Correction / Optimization Action</th>
+                                <th style="width: 20%;">Target model</th>
+                                <th style="width: 40%;">Current recommendation gap</th>
+                                <th style="width: 40%;">Content correction</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -583,10 +570,7 @@
                                         </span>
                                     </td>
                                     <td>{{ opt.current_gap|default('n/a') }}</td>
-                                    <td>
-                                        <strong>Correction Action:</strong><br>
-                                        {{ opt.correction_action|default(opt.action|default('n/a')) }}
-                                    </td>
+                                    <td>{{ opt.correction_action|default(opt.action|default('n/a')) }}</td>
                                 </tr>
                             {% endfor %}
                         </tbody>
