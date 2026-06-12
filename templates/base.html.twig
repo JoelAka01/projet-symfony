@@ -14,7 +14,21 @@
     <body>
         <header class="site-header">
             <nav class="site-nav" aria-label="Main navigation">
-                <a class="brand" href="{{ path('app_home') }}">SEO GEO AI</a>
+                <a class="brand" href="{{ path('app_home') }}">
+                    <svg class="logo-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="color: #0f766e; transition: transform 0.3s ease;">
+                        <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M12 6L13.5 10.5L18 12L13.5 13.5L12 18L10.5 13.5L6 12L10.5 10.5L12 6Z" fill="url(#logo-grad-spark)"/>
+                        <defs>
+                            <linearGradient id="logo-grad-spark" x1="6" y1="6" x2="18" y2="18" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#0f766e" />
+                                <stop offset="1" stop-color="#14b8a6" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <span class="brand-text" style="font-weight: 800; font-size: 1.25rem; letter-spacing: -0.03em; color: #102a43; margin-left: 8px;">
+                        Seo<span style="color: #0f766e;">Geo</span>Ai
+                    </span>
+                </a>
                 <div class="nav-links">
                     {% if app.user %}
                         <a href="{{ path('app_dashboard') }}">Dashboard</a>

@@ -18,8 +18,7 @@ final class WebsiteAuditRunner
         private readonly EntityManagerInterface $entityManager,
         private readonly WebsiteCrawlerService $crawler,
         private readonly ClaudeSeoAnalysisService $claudeSeoAnalysis,
-    ) {
-    }
+    ) {}
 
     public function createQueued(Project $project, Domain $domain): Audit
     {

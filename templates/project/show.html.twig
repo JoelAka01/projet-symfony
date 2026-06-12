@@ -17,6 +17,10 @@
             {% if is_granted('PROJECT_EDIT', project) %}
                 <a class="button secondary" href="{{ path('app_project_edit', { id: project.id }) }}">Edit project</a>
             {% endif %}
+            <a class="button secondary" href="{{ path('app_article_index', { project: project.id }) }}">Content studio</a>
+            {% if is_granted('PROJECT_MANAGE', project) %}
+                <a class="button secondary" href="{{ path('app_cms_connection_index', { project: project.id }) }}">CMS connections</a>
+            {% endif %}
             {% if is_granted('LAUNCH_AUDIT', project) and primaryDomain %}
                 <form method="post" action="{{ path('app_project_audit_launch', { id: project.id }) }}">
                     <input type="hidden" name="_token" value="{{ csrf_token('launch_audit_' ~ project.id) }}">
@@ -78,5 +82,24 @@
                 </table>
             </div>
         {% endif %}
+    </section>
+
+    <section class="split-grid">
+        <article class="panel">
+            <h2>Content publishing</h2>
+            <p class="muted">Create keyword-focused articles, add image URLs and alt text, then publish or update them on a tested WordPress or Shopify connection.</p>
+            <div class="section-actions">
+                <a class="button secondary" href="{{ path('app_article_index', { project: project.id }) }}">Open content studio</a>
+            </div>
+        </article>
+        <article class="panel">
+            <h2>CMS status</h2>
+            <p class="muted">{{ project.cmsConnections|length }} connection(s) configured.</p>
+            {% if is_granted('PROJECT_MANAGE', project) %}
+                <div class="section-actions">
+                    <a class="button secondary" href="{{ path('app_cms_connection_index', { project: project.id }) }}">Manage connections</a>
+                </div>
+            {% endif %}
+        </article>
     </section>
 {% endblock %}
