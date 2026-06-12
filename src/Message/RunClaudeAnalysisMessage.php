@@ -6,9 +6,7 @@ namespace App\Message;
 
 final class RunClaudeAnalysisMessage
 {
-    public function __construct(private readonly string $auditId)
-    {
-    }
+    public function __construct(private readonly string $auditId) {}
 
     public function getAuditId(): string
     {
