@@ -39,3 +39,5 @@ AGENTS.md
 ###< infection/infection ###
 .env
 env.dev
+
+instructions-cms-testing.md
