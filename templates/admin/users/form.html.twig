@@ -1,0 +1,66 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ pageTitle }} | Admin{% endblock %}
+
+{% block body %}
+    {% include 'admin/_nav.html.twig' %}
+
+    <div class="back-navigation">
+        <a class="back-link" href="{{ path('app_admin_users') }}">&larr; Back to users</a>
+    </div>
+
+    <section class="hero compact admin-hero">
+        <p class="eyebrow">User administration</p>
+        <h1>{{ pageTitle }}</h1>
+        <p>Platform roles map to Symfony access levels and apply immediately after saving.</p>
+    </section>
+
+    <div class="{{ managedUser.id and recentUsage is not empty ? 'split-grid' : '' }}">
+        <section class="panel full-panel">
+            {{ form_start(form, {attr: {class: 'form-stack'}}) }}
+                <div class="form-grid">
+                    {{ form_row(form.firstName) }}
+                    {{ form_row(form.lastName) }}
+                </div>
+                {{ form_row(form.email) }}
+                <div class="form-grid">
+                    {{ form_row(form.role) }}
+                    <div class="checkbox-row">{{ form_row(form.isVerified) }}</div>
+                </div>
+                <div class="form-grid">
+                    {{ form_row(form.plainPassword.first) }}
+                    {{ form_row(form.plainPassword.second) }}
+                </div>
+                <div class="form-actions">
+                    <button class="button primary" type="submit">{{ buttonLabel }}</button>
+                    <a class="button secondary" href="{{ path('app_admin_users') }}">Cancel</a>
+                </div>
+            {{ form_end(form) }}
+        </section>
+
+        {% if managedUser.id and recentUsage is not empty %}
+            <aside class="panel full-panel">
+                <p class="eyebrow">AI consumption</p>
+                <h2>{{ usage.credits|number_format }} credits</h2>
+                <dl class="fact-grid compact">
+                    <div><dt>Input</dt><dd>{{ usage.inputTokens|number_format }}</dd></div>
+                    <div><dt>Output</dt><dd>{{ usage.outputTokens|number_format }}</dd></div>
+                    <div><dt>Cached</dt><dd>{{ usage.cachedInputTokens|number_format }}</dd></div>
+                    <div><dt>Calls</dt><dd>{{ usage.calls|number_format }}</dd></div>
+                </dl>
+                <h3 class="admin-subheading">Recent calls</h3>
+                <ul class="usage-list">
+                    {% for item in recentUsage %}
+                        <li>
+                            <span>
+                                <strong>{{ item.operation|replace({'_': ' '})|title }}</strong>
+                                <small>{{ item.project ? item.project.name : 'Deleted project' }} · {{ item.createdAt|date('Y-m-d H:i') }}</small>
+                            </span>
+                            <b>{{ item.credits|number_format }}</b>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </aside>
+        {% endif %}
+    </div>
+{% endblock %}
