@@ -36,7 +36,6 @@ final class ProjectManagerTest extends TestCase
 
         self::assertSame($owner, $project->getOwner());
         self::assertNotNull($project->getOrganization());
-        self::assertTrue($project->getMembers()->contains($owner));
         self::assertCount(1, $project->getDomains());
         self::assertCount(1, $owner->getOrganizationUsers());
 

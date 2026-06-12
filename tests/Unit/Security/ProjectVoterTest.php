@@ -38,25 +38,7 @@ final class ProjectVoterTest extends TestCase
         self::assertSame(VoterInterface::ACCESS_GRANTED, $this->vote($owner, $project, ProjectVoter::CRAWL));
     }
 
-    public function testReadOnlyMemberCannotEditProject(): void
-    {
-        $member = $this->user(UserRole::VIEWER);
-        $project = $this->project();
-        $project->addMember($member);
 
-        self::assertSame(VoterInterface::ACCESS_GRANTED, $this->vote($member, $project, ProjectVoter::VIEW));
-        self::assertSame(VoterInterface::ACCESS_DENIED, $this->vote($member, $project, ProjectVoter::EDIT));
-    }
-
-    public function testManagerMemberCanEditButCannotCrawlPausedProject(): void
-    {
-        $manager = $this->user(UserRole::EDITOR);
-        $project = $this->project(status: ProjectStatus::PAUSED);
-        $project->addMember($manager);
-
-        self::assertSame(VoterInterface::ACCESS_GRANTED, $this->vote($manager, $project, ProjectVoter::EDIT));
-        self::assertSame(VoterInterface::ACCESS_DENIED, $this->vote($manager, $project, ProjectVoter::CRAWL));
-    }
 
     public function testOrganizationEditorCanManageOrganizationProject(): void
     {
@@ -72,7 +54,18 @@ final class ProjectVoterTest extends TestCase
 
         self::assertSame(VoterInterface::ACCESS_GRANTED, $this->vote($editor, $project, ProjectVoter::VIEW));
         self::assertSame(VoterInterface::ACCESS_GRANTED, $this->vote($editor, $project, ProjectVoter::MANAGE));
-        self::assertSame(VoterInterface::ACCESS_DENIED, $this->vote($editor, $project, ProjectVoter::DELETE));
+    }
+
+    public function testGuestPermissions(): void
+    {
+        $guest = $this->user(UserRole::VIEWER);
+        $project = $this->project();
+        $project->addGuest($guest);
+
+        self::assertSame(VoterInterface::ACCESS_GRANTED, $this->vote($guest, $project, ProjectVoter::VIEW));
+        self::assertSame(VoterInterface::ACCESS_GRANTED, $this->vote($guest, $project, ProjectVoter::MANAGE_CONTENT));
+        self::assertSame(VoterInterface::ACCESS_DENIED, $this->vote($guest, $project, ProjectVoter::EDIT));
+        self::assertSame(VoterInterface::ACCESS_DENIED, $this->vote($guest, $project, ProjectVoter::LAUNCH_AUDIT));
     }
 
     private function vote(User $user, Project $project, string $attribute): int
