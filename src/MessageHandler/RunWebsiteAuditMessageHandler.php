@@ -18,8 +18,7 @@ final class RunWebsiteAuditMessageHandler
         private readonly AuditRepository $auditRepository,
         private readonly WebsiteAuditRunner $auditRunner,
         private readonly LoggerInterface $logger,
-    ) {
-    }
+    ) {}
 
     public function __invoke(RunWebsiteAuditMessage $message): void
     {

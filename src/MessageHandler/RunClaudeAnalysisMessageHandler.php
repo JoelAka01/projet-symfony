@@ -18,8 +18,7 @@ final class RunClaudeAnalysisMessageHandler
         private readonly AuditRepository $auditRepository,
         private readonly ClaudeSeoAnalysisService $claudeSeoAnalysis,
         private readonly LoggerInterface $logger,
-    ) {
-    }
+    ) {}
 
     public function __invoke(RunClaudeAnalysisMessage $message): void
     {
