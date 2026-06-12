@@ -1,0 +1,81 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ project.name }} (Guest View) | Project{% endblock %}
+
+{% block body %}
+    <div class="flash-stack" style="margin-bottom: 24px;">
+        <div class="flash flash-info" role="status" style="display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #0f766e; background: #f0fdfa; color: #0f766e; padding: 12px 16px; border-radius: 4px;">
+            <span>
+                <strong>Read-only access:</strong> You are viewing this project dashboard as a guest. To write articles, run audits or download reports, please log in.
+            </span>
+            <a class="button primary small" href="{{ path('app_project_invitation_accept', { token: invitation.token }) }}" style="margin: 0; padding: 6px 12px; font-size: 0.875rem;">
+                Log In to Manage
+            </a>
+        </div>
+    </div>
+
+    <section class="hero compact">
+        <div class="hero-top-bar">
+            <p class="eyebrow">Project Workspace</p>
+        </div>
+        <h1>{{ project.name }}</h1>
+        <p>
+            Status: {{ project.status.value|lower|capitalize }}
+            {% if project.seoScore is not null %}
+                · Current SEO score: {{ project.seoScore }}/100
+            {% endif %}
+        </p>
+    </section>
+
+    <section>
+        <h2>Website</h2>
+        {% if not primaryDomain %}
+            <p class="muted">No website URL is attached to this project yet.</p>
+        {% else %}
+            <ul class="checklist" aria-label="Project domains">
+                <li>
+                    <strong>{{ primaryDomain.rootDomain }}</strong>
+                    <span>{{ primaryDomain.verifiedAt ? 'Verified' : 'Not verified yet' }}</span>
+                </li>
+            </ul>
+        {% endif %}
+    </section>
+
+    <section>
+        <h2>Audits</h2>
+        {% if audits is empty %}
+            <p class="muted">No crawl has been launched for this project yet.</p>
+        {% else %}
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Started</th>
+                            <th>Domain</th>
+                            <th>Status</th>
+                            <th>Score</th>
+                            <th>Pages</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for audit in audits %}
+                            <tr>
+                                <td>{{ audit.crawlStartedAt ? audit.crawlStartedAt|date('Y-m-d H:i') : audit.createdAt|date('Y-m-d H:i') }}</td>
+                                <td>{{ audit.domain.rootDomain }}</td>
+                                <td>{{ audit.status.value|lower|capitalize }}</td>
+                                <td>{{ audit.seoScore is not null ? audit.seoScore ~ '/100' : 'Pending' }}</td>
+                                <td>{{ audit.pagesCrawled ?? 0 }}</td>
+                                <td>
+                                    <a class="btn-action" href="{{ path('app_project_invitation_audit_view', { token: invitation.token, auditId: audit.id }) }}">
+                                        View Details
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </section>
+{% endblock %}
