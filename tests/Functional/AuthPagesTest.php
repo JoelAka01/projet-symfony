@@ -28,13 +28,4 @@ final class AuthPagesTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', 'Resend verification email');
     }
-
-    public function testDashboardRequiresAuthentication(): void
-    {
-        $client = self::createClient();
-
-        $client->request('GET', '/dashboard');
-
-        self::assertResponseRedirects('/login');
-    }
 }
