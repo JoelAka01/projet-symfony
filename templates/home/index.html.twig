@@ -11,12 +11,11 @@
     <div class="lp-hero__inner">
         <p class="eyebrow">SEO · GEO · AI Visibility</p>
         <h1 class="lp-hero__title">
-            Rank higher.<br>
-            <span class="lp-accent">Be cited by AI.</span>
+            Rank on search engines.<br>
+            <span class="lp-accent">Get cited by AI.</span>
         </h1>
         <p class="lp-hero__sub">
-            One workspace to audit your SEO, track keyword rankings, and monitor
-            how AI models like ChatGPT and Gemini talk about your brand.
+            Audit your website's SEO and monitor how ChatGPT, Gemini, and other AI engines recommend your brand.
         </p>
         {% if app.user %}
             <div class="hero-actions">
@@ -27,7 +26,7 @@
         {% else %}
             <div class="hero-actions">
                 <a class="button primary lp-btn-lg" href="{{ path('app_register') }}">
-                    Get started for free
+                    Get started free
                 </a>
                 <a class="button secondary lp-btn-lg" href="{{ path('app_login') }}">
                     Sign in
@@ -40,8 +39,8 @@
 
 {# ── FEATURES ─────────────────────────────────────────────────────────────── #}
 <section class="lp-features">
-    <p class="lp-section-label">Everything you need</p>
-    <h2 class="lp-section-title">One platform, full visibility</h2>
+    <p class="lp-section-label">Features</p>
+    <h2 class="lp-section-title">Everything you need, in one place</h2>
     <div class="lp-feature-grid">
 
         <div class="lp-feature-card">
@@ -51,17 +50,7 @@
                 </svg>
             </div>
             <h3>SEO Audit</h3>
-            <p>Crawl your domain, surface technical issues, and get an actionable SEO score for every page.</p>
-        </div>
-
-        <div class="lp-feature-card">
-            <div class="lp-feature-icon">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-                </svg>
-            </div>
-            <h3>Keyword Tracking</h3>
-            <p>Monitor search volume, difficulty and CPC. Cluster keywords by intent and track positions over time.</p>
+            <p>Scan your website, find technical issues, and get direct recommendations.</p>
         </div>
 
         <div class="lp-feature-card">
@@ -70,8 +59,8 @@
                     <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
                 </svg>
             </div>
-            <h3>GEO Monitoring</h3>
-            <p>See how ChatGPT, Gemini and Perplexity cite your brand. Track sentiment, competitors and visibility score.</p>
+            <h3>AI Search (GEO)</h3>
+            <p>Monitor if and how major AI models like ChatGPT and Gemini recommend your brand.</p>
         </div>
 
         <div class="lp-feature-card">
@@ -81,49 +70,20 @@
                 </svg>
             </div>
             <h3>AI Content</h3>
-            <p>Generate optimized articles with FAQs, internal links, and structured data — ready to publish.</p>
+            <p>Generate optimized articles with FAQs and structured data ready to publish.</p>
         </div>
 
     </div>
 </section>
 
-{# ── HOW IT WORKS ────────────────────────────────────────────────────────── #}
-<section class="lp-steps">
-    <p class="lp-section-label">How it works</p>
-    <h2 class="lp-section-title">Up and running in minutes</h2>
-    <ol class="lp-step-list">
-        <li class="lp-step">
-            <span class="lp-step__num">1</span>
-            <div>
-                <strong>Create your project</strong>
-                <p>Add your domain, set your target language and country.</p>
-            </div>
-        </li>
-        <li class="lp-step">
-            <span class="lp-step__num">2</span>
-            <div>
-                <strong>Run your first audit</strong>
-                <p>Our crawler scans your pages and surfaces every SEO issue with a score.</p>
-            </div>
-        </li>
-        <li class="lp-step">
-            <span class="lp-step__num">3</span>
-            <div>
-                <strong>Track keywords & AI responses</strong>
-                <p>Import your keywords and set up GEO prompts to start monitoring.</p>
-            </div>
-        </li>
-    </ol>
-</section>
-
 {# ── CTA BOTTOM ───────────────────────────────────────────────────────────── #}
 {% if not app.user %}
 <section class="lp-cta">
-    <h2>Ready to grow your visibility?</h2>
-    <p>Join hundreds of teams already tracking their SEO &amp; AI presence.</p>
+    <h2>Ready to optimize your website?</h2>
+    <p>Sign up now to scan your pages and check your AI presence.</p>
     <div class="hero-actions lp-cta__actions">
-        <a class="button primary lp-btn-lg" href="{{ path('app_register') }}">Create your free account</a>
-        <a class="button secondary lp-btn-lg" href="{{ path('app_login') }}">I already have an account</a>
+        <a class="button primary lp-btn-lg" href="{{ path('app_register') }}">Get started free</a>
+        <a class="button secondary lp-btn-lg" href="{{ path('app_login') }}">Sign in</a>
     </div>
 </section>
 {% endif %}

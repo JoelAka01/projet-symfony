@@ -25,6 +25,12 @@
                     <button class="button primary" type="submit">Retry Claude analysis</button>
                 </form>
             {% endif %}
+            {% if aiCompleted and is_granted('PROJECT_MANAGE', project) %}
+                <form method="post" action="{{ path('app_article_create_from_audit', { audit: audit.id }) }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('create_article_from_audit_' ~ audit.id) }}">
+                    <button class="button primary" type="submit">Create CMS-ready article draft</button>
+                </form>
+            {% endif %}
         </div>
     </section>
 
