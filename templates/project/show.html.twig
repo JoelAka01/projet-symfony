@@ -112,6 +112,74 @@
         {% endif %}
     </section>
 
+    {% if is_granted('PROJECT_EDIT', project) %}
+        <section class="panel full-panel" style="margin-top: 32px;">
+            <h2>Project Guests & Invitations</h2>
+            <p class="muted" style="margin-bottom: 24px;">Invite guests to view this project, download report PDFs, and write/manage articles in the Content studio.</p>
+
+            <div class="split-grid">
+                <div>
+                    <h3>Invite a New Guest</h3>
+                    <form method="post" action="{{ path('app_project_invitation_invite', { id: project.id }) }}" style="max-width: 400px; margin-top: 12px;">
+                        <input type="hidden" name="project_invitation[_token]" value="{{ csrf_token('project_invitation') }}">
+                        <div class="form-group" style="margin-bottom: 16px;">
+                            <label for="invite_email" style="display: block; font-weight: bold; margin-bottom: 6px;">Email Address</label>
+                            <input type="email" id="invite_email" name="project_invitation[email]" required placeholder="guest@example.com" class="form-control" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                        </div>
+                        <button type="submit" class="button primary">Send Invitation</button>
+                    </form>
+                </div>
+                
+                <div>
+                    <h3>Active Guests</h3>
+                    {% if project.guests is empty %}
+                        <p class="muted" style="margin-top: 12px;">No guests have joined this project yet.</p>
+                    {% else %}
+                        <ul class="plain-list" style="margin-top: 12px;">
+                            {% for guest in project.guests %}
+                                <li style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 8px; background: #f8fafc; border-radius: 4px;">
+                                    <span>
+                                        <strong>{{ guest.displayName }}</strong> <span class="muted">({{ guest.email }})</span>
+                                    </span>
+                                    <form method="post" action="{{ path('app_project_guest_remove', { id: project.id, userId: guest.id }) }}" style="margin: 0;" onsubmit="return confirm('Remove this guest from the project?');">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('remove_guest_' ~ guest.id) }}">
+                                        <button type="submit" class="btn-action btn-danger" style="padding: 4px 8px; font-size: 0.8rem;">Remove</button>
+                                    </form>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+
+                    <h3 style="margin-top: 24px;">Pending Invitations</h3>
+                    {% set pending_invites = [] %}
+                    {% for invite in project.invitations %}
+                        {% if invite.status == 'pending' %}
+                            {% set pending_invites = pending_invites|merge([invite]) %}
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if pending_invites is empty %}
+                        <p class="muted" style="margin-top: 12px;">No pending invitations.</p>
+                    {% else %}
+                        <ul class="plain-list" style="margin-top: 12px;">
+                            {% for invite in pending_invites %}
+                                <li style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 8px; background: #f8fafc; border-radius: 4px;">
+                                    <span>
+                                        <strong>{{ invite.email }}</strong> <span class="muted">Sent: {{ invite.createdAt|date('Y-m-d') }}</span>
+                                    </span>
+                                    <form method="post" action="{{ path('app_project_invitation_cancel', { id: project.id, invitationId: invite.id }) }}" style="margin: 0;" onsubmit="return confirm('Cancel this invitation?');">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('cancel_invitation_' ~ invite.id) }}">
+                                        <button type="submit" class="btn-action btn-danger" style="padding: 4px 8px; font-size: 0.8rem;">Cancel</button>
+                                    </form>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+    {% endif %}
+
     <section class="split-grid">
         <article class="panel">
             <h2>Content publishing</h2>
