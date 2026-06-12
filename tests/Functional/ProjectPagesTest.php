@@ -16,4 +16,22 @@ final class ProjectPagesTest extends WebTestCase
 
         self::assertResponseRedirects('/login');
     }
+
+    public function testCmsConnectionsRequireAuthentication(): void
+    {
+        $client = self::createClient();
+
+        $client->request('GET', '/projects/00000000-0000-0000-0000-000000000000/cms');
+
+        self::assertResponseRedirects('/login');
+    }
+
+    public function testContentStudioRequiresAuthentication(): void
+    {
+        $client = self::createClient();
+
+        $client->request('GET', '/projects/00000000-0000-0000-0000-000000000000/articles');
+
+        self::assertResponseRedirects('/login');
+    }
 }
