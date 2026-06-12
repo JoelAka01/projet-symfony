@@ -27,6 +27,19 @@ final class ProjectInvitationController extends AbstractController
 {
     private const ISSUE_SEVERITIES = ['critical', 'high', 'medium', 'low', 'info'];
 
+    #[Route('/projects/{id}/guests', name: 'app_project_guests_index', methods: ['GET'])]
+    public function guests(Project $project): Response
+    {
+        $this->denyAccessUnlessGranted(ProjectVoter::EDIT, $project);
+
+        $form = $this->createForm(ProjectInvitationType::class);
+
+        return $this->render('project/guests.html.twig', [
+            'project' => $project,
+            'form' => $form->createView(),
+        ]);
+    }
+
     #[Route('/projects/{id}/invitations/invite', name: 'app_project_invitation_invite', methods: ['POST'])]
     public function invite(
         Project $project,
@@ -52,21 +65,21 @@ final class ProjectInvitationController extends AbstractController
 
             if (null !== $existing) {
                 $this->addFlash('error', sprintf('An invitation is already pending for %s.', $email));
-                return $this->redirectToRoute('app_project_show', ['id' => $project->getId()]);
+                return $this->redirectToRoute('app_project_guests_index', ['id' => $project->getId()]);
             }
 
             // Check if the user is already a guest of the project
             foreach ($project->getGuests() as $guest) {
                 if ($guest->getEmail() === $email) {
                     $this->addFlash('error', sprintf('%s is already a guest of this project.', $email));
-                    return $this->redirectToRoute('app_project_show', ['id' => $project->getId()]);
+                    return $this->redirectToRoute('app_project_guests_index', ['id' => $project->getId()]);
                 }
             }
 
             // Check if the user is the owner
             if ($project->getOwner()?->getEmail() === $email) {
                 $this->addFlash('error', 'You cannot invite yourself or the project owner.');
-                return $this->redirectToRoute('app_project_show', ['id' => $project->getId()]);
+                return $this->redirectToRoute('app_project_guests_index', ['id' => $project->getId()]);
             }
 
 
@@ -88,7 +101,7 @@ final class ProjectInvitationController extends AbstractController
             $this->addFlash('error', 'Invalid email address provided.');
         }
 
-        return $this->redirectToRoute('app_project_show', ['id' => $project->getId()]);
+        return $this->redirectToRoute('app_project_guests_index', ['id' => $project->getId()]);
     }
 
     #[Route('/projects/invitations/view/{token}', name: 'app_project_invitation_view', methods: ['GET'])]
@@ -226,7 +239,7 @@ final class ProjectInvitationController extends AbstractController
             $this->addFlash('success', 'Invitation has been cancelled.');
         }
 
-        return $this->redirectToRoute('app_project_show', ['id' => $project->getId()]);
+        return $this->redirectToRoute('app_project_guests_index', ['id' => $project->getId()]);
     }
 
     #[Route('/projects/{id}/guests/{userId}/remove', name: 'app_project_guest_remove', methods: ['POST'])]
@@ -250,7 +263,7 @@ final class ProjectInvitationController extends AbstractController
             $this->addFlash('success', sprintf('Guest %s has been removed from the project.', $guest->getDisplayName()));
         }
 
-        return $this->redirectToRoute('app_project_show', ['id' => $project->getId()]);
+        return $this->redirectToRoute('app_project_guests_index', ['id' => $project->getId()]);
     }
 
     /**

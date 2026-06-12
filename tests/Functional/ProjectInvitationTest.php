@@ -51,6 +51,11 @@ final class ProjectInvitationTest extends WebTestCase
         // 2. View project page
         $crawler = $client->request('GET', '/projects/' . $project->getId());
         self::assertResponseIsSuccessful();
+        self::assertSelectorTextNotContains('body', 'Project Guests & Invitations');
+
+        // Click "Add members" link/button
+        $crawler = $client->clickLink('Add members');
+        self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('.panel.full-panel h2', 'Project Guests & Invitations');
 
         // 3. Invite a guest
@@ -59,7 +64,7 @@ final class ProjectInvitationTest extends WebTestCase
         ]);
         $client->submit($form);
 
-        self::assertResponseRedirects('/projects/' . $project->getId());
+        self::assertResponseRedirects('/projects/' . $project->getId() . '/guests');
         $client->followRedirect();
 
         // 4. Verify invitation is created
