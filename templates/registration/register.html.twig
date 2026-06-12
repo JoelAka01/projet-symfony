@@ -18,7 +18,9 @@
             {{ form_end(registrationForm) }}
 
             <div class="auth-links">
-                <a href="{{ path('app_login') }}">Already have an account?</a>
+                <div class="auth-cta-container">
+                    Already have an account? <a href="{{ path('app_login') }}">Login</a>
+                </div>
             </div>
         </div>
     </section>
