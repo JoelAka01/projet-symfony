@@ -1,0 +1,11 @@
+<h1>Payment Receipt</h1>
+<p>Hello {{ user.displayName }},</p>
+<p>Thank you for your payment. This is your receipt for your SEO GEO AI subscription.</p>
+<ul>
+    <li><strong>Subscription Plan:</strong> {{ payment.plan.value }}</li>
+    <li><strong>Amount Paid:</strong> €{{ (payment.amountCents / 100)|number_format(2) }} EUR</li>
+    <li><strong>Payment Method:</strong> Card ending in •••• {{ payment.cardLastFour }}</li>
+    <li><strong>Paid At:</strong> {{ payment.paidAt|date('Y-m-d H:i') }}</li>
+    <li><strong>Status:</strong> Successful</li>
+</ul>
+<p>If you have any questions, please contact our support team.</p>

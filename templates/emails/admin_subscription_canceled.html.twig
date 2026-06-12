@@ -1,0 +1,7 @@
+<h1>[Admin] Subscription Canceled</h1>
+<p>A user has canceled their subscription.</p>
+<ul>
+    <li><strong>User:</strong> {{ user.email }} ({{ user.displayName }})</li>
+    <li><strong>Plan:</strong> {{ subscription.plan.value }}</li>
+    <li><strong>Expiration:</strong> {{ subscription.endsAt|date('Y-m-d H:i') }}</li>
+</ul>

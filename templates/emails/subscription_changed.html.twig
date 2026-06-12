@@ -1,0 +1,10 @@
+<h1>Subscription Plan Changed</h1>
+<p>Hello {{ user.displayName }},</p>
+<p>Your subscription plan has been successfully changed from <strong>{{ oldPlan.value }}</strong> to <strong>{{ subscription.plan.value }}</strong>.</p>
+<p><strong>New Plan Limits:</strong></p>
+<ul>
+    <li>Analyses: {{ subscription.weeklyAnalysisLimit }} / week</li>
+    <li>AI Credits: {{ (subscription.monthlyCreditLimit / 1000000)|number_format(1) }}M / month</li>
+</ul>
+<p>Your new plan is active and will renew on {{ subscription.endsAt|date('Y-m-d H:i') }}.</p>
+<p>Thank you for using SEO GEO AI!</p>
