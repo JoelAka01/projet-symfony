@@ -44,6 +44,10 @@ class CmsConnection
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $encryptedApiKey = null;
 
+    /** @var array<string, mixed>|null */
+    #[ORM\Column(type: Types::JSON, nullable: true, options: ['jsonb' => true])]
+    private ?array $settings = null;
+
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $tokenExpiresAt = null;
 
@@ -52,6 +56,9 @@ class CmsConnection
 
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $lastTestedAt = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $lastError = null;
 
     /** @var Collection<int, CmsPublication> */
     #[ORM\OneToMany(mappedBy: 'cmsConnection', targetEntity: CmsPublication::class, orphanRemoval: true)]
@@ -112,6 +119,20 @@ class CmsConnection
         return $this;
     }
 
+    /** @return array<string, mixed>|null */
+    public function getSettings(): ?array
+    {
+        return $this->settings;
+    }
+
+    /** @param array<string, mixed>|null $settings */
+    public function setSettings(?array $settings): static
+    {
+        $this->settings = $settings;
+
+        return $this;
+    }
+
     public function isActive(): bool
     {
         return $this->isActive;
@@ -168,6 +189,18 @@ class CmsConnection
     public function setLastTestedAt(?\DateTimeImmutable $lastTestedAt): static
     {
         $this->lastTestedAt = $lastTestedAt;
+
+        return $this;
+    }
+
+    public function getLastError(): ?string
+    {
+        return $this->lastError;
+    }
+
+    public function setLastError(?string $lastError): static
+    {
+        $this->lastError = $lastError;
 
         return $this;
     }
