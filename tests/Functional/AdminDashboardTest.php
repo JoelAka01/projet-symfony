@@ -42,11 +42,14 @@ final class AdminDashboardTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', 'Platform overview');
         self::assertSelectorTextContains('body', 'AI credits consumed');
+        self::assertSelectorNotExists('.nav-upgrade-btn');
+        self::assertSelectorExists('.brand[href="/admin"]');
 
         $client->request('GET', '/admin/users');
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', 'Users and roles');
         self::assertSelectorTextContains('body', 'admin@example.com');
+        self::assertSelectorTextContains('table.admin-table', 'Subscription');
 
         $client->request('GET', '/admin/users/new');
         self::assertResponseIsSuccessful();
@@ -63,5 +66,19 @@ final class AdminDashboardTest extends WebTestCase
         $client->request('GET', '/admin/payments');
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', 'Simulated payments');
+    }
+
+    public function testRegularUserHasUpgradeButtonAndLogoRedirectsToProjects(): void
+    {
+        $client = self::createClient();
+        $user = self::getContainer()->get(UserRepository::class)->findOneBy(['email' => 'user@example.com']);
+        self::assertInstanceOf(User::class, $user);
+
+        $client->loginUser($user);
+        $client->request('GET', '/projects');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('.nav-upgrade-btn');
+        self::assertSelectorExists('.brand[href="/projects"]');
     }
 }

@@ -36,6 +36,45 @@ final class SubscriptionRepository extends ServiceEntityRepository
             ->getOneOrNullResult();
     }
 
+    /**
+     * @param list<User> $users
+     * @return array<string, Subscription> Map of user ID string to active Subscription
+     */
+    public function findActiveForUsers(array $users, ?\DateTimeImmutable $at = null): array
+    {
+        if (empty($users)) {
+            return [];
+        }
+
+        $at ??= new \DateTimeImmutable();
+
+        /** @var list<Subscription> $subscriptions */
+        $subscriptions = $this->createQueryBuilder('subscription')
+            ->andWhere('subscription.user IN (:users)')
+            ->andWhere('subscription.status = :status')
+            ->andWhere('subscription.startsAt <= :at')
+            ->andWhere('subscription.endsAt > :at')
+            ->setParameter('users', $users)
+            ->setParameter('status', SubscriptionStatus::ACTIVE)
+            ->setParameter('at', $at)
+            ->orderBy('subscription.createdAt', 'DESC')
+            ->getQuery()
+            ->getResult();
+
+        $map = [];
+        foreach ($subscriptions as $sub) {
+            $user = $sub->getUser();
+            if ($user !== null) {
+                $userId = $user->getId();
+                if (!isset($map[$userId])) {
+                    $map[$userId] = $sub;
+                }
+            }
+        }
+
+        return $map;
+    }
+
     /** @return list<Subscription> */
     public function findActiveSubscriptionsForUser(User $user): array
     {
