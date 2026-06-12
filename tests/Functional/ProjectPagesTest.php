@@ -68,7 +68,7 @@ final class ProjectPagesTest extends WebTestCase
 
         $projectManager = $container->get(\App\Service\Project\ProjectManager::class);
         $project2 = new \App\Entity\Project();
-        $project2->setName('Another unique name');
+        $project2->setName('Another unique name ' . uniqid());
         $projectManager->createForUser($project2, $user, 'https://another.com');
 
         $client->loginUser($user);
