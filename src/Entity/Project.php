@@ -17,6 +17,7 @@ use App\Repository\ProjectRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -34,6 +35,12 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: ProjectRepository::class)]
 #[ORM\Table(name: 'projects')]
 #[ORM\Index(name: 'idx_projects_status', columns: ['status'])]
+#[ORM\UniqueConstraint(name: 'uniq_projects_owner_name', columns: ['owner_id', 'name'])]
+#[UniqueEntity(
+    fields: ['owner', 'name'],
+    message: 'You already have a project with this name.',
+    errorPath: 'name',
+)]
 class Project
 {
     use TimestampableTrait;
