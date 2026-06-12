@@ -62,7 +62,6 @@ final class ProjectType extends AbstractType
                 'choices' => [
                     'Active' => ProjectStatus::ACTIVE,
                     'Paused' => ProjectStatus::PAUSED,
-                    'Archived' => ProjectStatus::ARCHIVED,
                 ],
                 'choice_value' => static fn(?ProjectStatus $status): string => null === $status ? '' : $status->value,
             ]);

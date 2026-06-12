@@ -8,5 +8,4 @@ enum ProjectStatus: string
 {
     case ACTIVE = 'ACTIVE';
     case PAUSED = 'PAUSED';
-    case ARCHIVED = 'ARCHIVED';
 }

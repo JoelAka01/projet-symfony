@@ -45,10 +45,10 @@
                                         {% if is_granted('PROJECT_EDIT', project) %}
                                             <a class="btn-action" href="{{ path('app_project_edit', { id: project.id }) }}">Edit</a>
                                         {% endif %}
-                                        {% if is_granted('PROJECT_DELETE', project) and project.status.value != 'ARCHIVED' %}
-                                            <form method="post" action="{{ path('app_project_archive', { id: project.id }) }}">
-                                                <input type="hidden" name="_token" value="{{ csrf_token('archive_project_' ~ project.id) }}">
-                                                <button class="btn-action btn-danger" type="submit">Archive</button>
+                                        {% if is_granted('PROJECT_DELETE', project) %}
+                                            <form method="post" action="{{ path('app_project_delete', { id: project.id }) }}" onsubmit="return confirm('Are you sure you want to delete this project? This action cannot be undone.');">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('delete_project_' ~ project.id) }}">
+                                                <button class="btn-action btn-danger" type="submit">Delete</button>
                                             </form>
                                         {% endif %}
                                     </div>

@@ -58,15 +58,6 @@ final class ProjectVoterTest extends TestCase
         self::assertSame(VoterInterface::ACCESS_DENIED, $this->vote($manager, $project, ProjectVoter::CRAWL));
     }
 
-    public function testArchivedProjectCannotBeEditedByOwnerButAdminKeepsAccess(): void
-    {
-        $owner = $this->user(UserRole::OWNER);
-        $admin = $this->user(UserRole::ADMIN);
-        $project = $this->project(owner: $owner, status: ProjectStatus::ARCHIVED);
-
-        self::assertSame(VoterInterface::ACCESS_DENIED, $this->vote($owner, $project, ProjectVoter::EDIT));
-        self::assertSame(VoterInterface::ACCESS_GRANTED, $this->vote($admin, $project, ProjectVoter::EDIT));
-    }
 
     public function testOrganizationEditorCanManageOrganizationProject(): void
     {

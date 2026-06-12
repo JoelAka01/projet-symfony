@@ -71,10 +71,6 @@ final class ProjectVoter extends Voter
 
     private function canManage(Project $project, User $user, TokenInterface $token): bool
     {
-        if (ProjectStatus::ARCHIVED === $project->getStatus()) {
-            return false;
-        }
-
         return $this->isOwner($project, $user)
             || ($this->isProjectMember($project, $user) && $this->hasRole($token, 'ROLE_MANAGER'))
             || $this->hasOrganizationRole($project, $user, UserRole::OWNER, UserRole::ADMIN, UserRole::EDITOR);

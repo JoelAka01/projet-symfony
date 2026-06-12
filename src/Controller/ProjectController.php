@@ -149,22 +149,20 @@ final class ProjectController extends AbstractController
         ]);
     }
 
-    #[Route('/projects/{id}/archive', name: 'app_project_archive', methods: ['POST'])]
-    public function archive(
+    #[Route('/projects/{id}/delete', name: 'app_project_delete', methods: ['POST'])]
+    public function delete(
         Project $project,
         Request $request,
         ProjectManager $projectManager,
     ): RedirectResponse {
         $this->denyAccessUnlessGranted(ProjectVoter::DELETE, $project);
 
-        if (!$this->isCsrfTokenValid('archive_project_' . $project->getId(), (string) $request->request->get('_token', ''))) {
-            throw $this->createAccessDeniedException('Invalid project archive CSRF token.');
+        if (!$this->isCsrfTokenValid('delete_project_' . $project->getId(), (string) $request->request->get('_token', ''))) {
+            throw $this->createAccessDeniedException('Invalid project delete CSRF token.');
         }
 
-        if (ProjectStatus::ARCHIVED !== $project->getStatus()) {
-            $projectManager->archive($project);
-            $this->addFlash('success', 'Project archived.');
-        }
+        $projectManager->delete($project);
+        $this->addFlash('success', 'Project deleted.');
 
         return $this->redirectToRoute('app_project_index');
     }
