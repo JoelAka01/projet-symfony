@@ -33,9 +33,9 @@
         <div class="hero-actions">
             <a class="button secondary" href="{{ path('app_audit_pdf', { id: audit.id }) }}">Download PDF report</a>
             {% if canRetryAi %}
-                <form method="post" action="{{ path('app_audit_ai_retry', { id: audit.id }) }}">
+                <form method="post" action="{{ path('app_audit_ai_retry', { id: audit.id }) }}" data-analysis-form>
                     <input type="hidden" name="_token" value="{{ csrf_token('retry_ai_' ~ audit.id) }}">
-                    <button class="button primary" type="submit">Retry Claude analysis</button>
+                    <button class="button primary" type="submit" data-analysis-submit>Retry Claude analysis</button>
                 </form>
             {% endif %}
             {% if aiCompleted and is_granted('PROJECT_MANAGE', project) %}
@@ -98,13 +98,47 @@
     {% endif %}
 
     {% if isProcessing %}
-        <section class="notice">
-            <h2>Analysis running</h2>
-            <p>The crawl or Claude SEO critique is being processed by the Messenger worker. This page refreshes automatically.</p>
+        <section
+            class="notice analysis-progress"
+            data-audit-progress
+            data-status-url="{{ path('app_audit_status', { id: audit.id }) }}"
+            aria-live="polite"
+        >
+            <div class="analysis-progress__header">
+                <span class="spinner" aria-hidden="true"></span>
+                <div>
+                    <h2 data-progress-title>{{ aiRunning and audit.status.value == 'COMPLETED' ? 'Claude is analyzing the crawl' : 'Crawling the website' }}</h2>
+                    <p data-progress-message>
+                        {{ aiRunning and audit.status.value == 'COMPLETED'
+                            ? 'Claude is producing the SEO, content, and AI recommendation audit.'
+                            : 'The crawler is collecting real SEO facts before Claude starts.' }}
+                    </p>
+                </div>
+            </div>
+            <div class="analysis-progress__track" aria-hidden="true"><span></span></div>
+            <ol class="analysis-progress__steps" aria-label="Audit progress">
+                <li data-progress-step="crawl" class="{{ audit.status.value == 'COMPLETED' ? 'is-complete' : 'is-active' }}">Website crawl</li>
+                <li data-progress-step="ai" class="{{ aiRunning and audit.status.value == 'COMPLETED' ? 'is-active' : '' }}">Claude analysis</li>
+                <li data-progress-step="ready">Report ready</li>
+            </ol>
+            <dl class="analysis-progress__facts">
+                <div>
+                    <dt>Elapsed</dt>
+                    <dd data-progress-elapsed>Calculating...</dd>
+                </div>
+                <div>
+                    <dt>Expected wait</dt>
+                    <dd data-progress-estimate>Most Claude analyses finish in 1-4 minutes.</dd>
+                </div>
+                <div>
+                    <dt>Pages collected</dt>
+                    <dd data-progress-pages>{{ audit.pagesCrawled ?? 0 }} / {{ audit.maxPages ?? 'configured limit' }}</dd>
+                </div>
+            </dl>
+            <p class="analysis-progress__connection" data-progress-connection>
+                Updating automatically without reloading the page. You can leave and return; processing continues in the background.
+            </p>
         </section>
-        <script>
-            window.setTimeout(() => window.location.reload(), 5000);
-        </script>
     {% endif %}
 
     <section class="analytics-grid">
@@ -335,7 +369,14 @@
                     {% else %}
                         <ul class="plain-list">
                             {% for quickWin in executive.top_3_quick_wins %}
-                                <li>{{ quickWin }}</li>
+                                <li>
+                                    {% if quickWin is iterable %}
+                                        <strong>{{ quickWin.title|default('Quick win') }}</strong>
+                                        {% if quickWin.action|default(null) %}: {{ quickWin.action }}{% endif %}
+                                    {% else %}
+                                        {{ quickWin }}
+                                    {% endif %}
+                                </li>
                             {% endfor %}
                         </ul>
                     {% endif %}
