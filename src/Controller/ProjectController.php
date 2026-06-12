@@ -10,6 +10,7 @@ use App\Entity\Domain;
 use App\Entity\Project;
 use App\Entity\User;
 use App\Enum\AuditStatus;
+use App\Exception\AnalysisLimitExceededException;
 use App\Exception\InvalidWebsiteUrlException;
 use App\Form\ProjectType;
 use App\Message\RunClaudeAnalysisMessage;
@@ -19,6 +20,7 @@ use App\Security\Voter\ProjectVoter;
 use App\Service\Audit\AuditInsightsBuilder;
 use App\Service\Audit\AuditProgressStatusBuilder;
 use App\Service\Audit\WebsiteAuditRunner;
+use App\Service\Billing\AnalysisQuotaManager;
 use App\Service\Project\ProjectManager;
 use App\Service\Report\AuditPdfGenerator;
 use Doctrine\ORM\EntityManagerInterface;
@@ -62,12 +64,14 @@ final class ProjectController extends AbstractController
         Request $request,
         ProjectManager $projectManager,
         WebsiteAuditRunner $auditRunner,
+        AnalysisQuotaManager $quotaManager,
         MessageBusInterface $messageBus,
     ): Response {
         $user = $this->getUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
+        $allowance = $quotaManager->getAllowance($user, $request->getClientIp());
 
         $project = new Project();
         $project->setOwner($user);
@@ -75,6 +79,12 @@ final class ProjectController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            if (!$allowance['allowed']) {
+                $this->addFlash('warning', $allowance['message']);
+
+                return $this->redirectToRoute('app_pricing');
+            }
+
             try {
                 $projectManager->createForUser($project, $user, (string) $form->get('websiteUrl')->getData());
 
@@ -85,25 +95,38 @@ final class ProjectController extends AbstractController
                     return $this->redirectToRoute('app_project_show', ['id' => $project->getId()]);
                 }
 
-                $audit = $auditRunner->createQueued($project, $domain, $user);
+                $audit = $auditRunner->createQueued($project, $domain, $user, $request->getClientIp());
                 $messageBus->dispatch(new RunWebsiteAuditMessage($audit->getId()));
                 $this->addFlash('info', 'Project created. The crawler and Claude SEO analysis are running in the background.');
 
                 return $this->redirectToRoute('app_audit_show', ['id' => $audit->getId()]);
             } catch (InvalidWebsiteUrlException $exception) {
                 $form->get('websiteUrl')->addError(new FormError($exception->getMessage()));
+            } catch (AnalysisLimitExceededException $exception) {
+                $this->addFlash('warning', $exception->getMessage());
+
+                return $this->redirectToRoute('app_project_show', ['id' => $project->getId()]);
             }
         }
 
         return $this->render('project/new.html.twig', [
             'form' => $form,
+            'allowance' => $allowance,
         ]);
     }
 
     #[Route('/projects/{id}', name: 'app_project_show', methods: ['GET'])]
-    public function show(Project $project, ProjectManager $projectManager): Response
-    {
+    public function show(
+        Project $project,
+        Request $request,
+        ProjectManager $projectManager,
+        AnalysisQuotaManager $quotaManager,
+    ): Response {
         $this->denyAccessUnlessGranted(ProjectVoter::VIEW, $project);
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException();
+        }
 
         $audits = $project->getAudits()->toArray();
         usort(
@@ -115,6 +138,7 @@ final class ProjectController extends AbstractController
             'project' => $project,
             'primaryDomain' => $projectManager->getPrimaryDomain($project),
             'audits' => $audits,
+            'allowance' => $quotaManager->getAllowance($user, $request->getClientIp()),
         ]);
     }
 
@@ -191,7 +215,14 @@ final class ProjectController extends AbstractController
             return $this->redirectToRoute('app_project_show', ['id' => $project->getId()]);
         }
 
-        $audit = $auditRunner->createQueued($project, $domain, $user);
+        try {
+            $audit = $auditRunner->createQueued($project, $domain, $user, $request->getClientIp());
+        } catch (AnalysisLimitExceededException $exception) {
+            $this->addFlash('warning', $exception->getMessage());
+
+            return $this->redirectToRoute('app_pricing');
+        }
+
         $messageBus->dispatch(new RunWebsiteAuditMessage($audit->getId()));
         $this->addFlash('info', 'Website crawl and Claude SEO analysis queued. Progress updates automatically, and you can leave this page while it runs.');
 
@@ -262,6 +293,7 @@ final class ProjectController extends AbstractController
         Request $request,
         EntityManagerInterface $entityManager,
         MessageBusInterface $messageBus,
+        AnalysisQuotaManager $quotaManager,
     ): RedirectResponse {
         $project = $audit->getProject();
         if (null === $project) {
@@ -289,6 +321,14 @@ final class ProjectController extends AbstractController
         $user = $this->getUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
+        }
+
+        try {
+            $quotaManager->reserve($audit, $user, $request->getClientIp());
+        } catch (AnalysisLimitExceededException $exception) {
+            $this->addFlash('warning', $exception->getMessage());
+
+            return $this->redirectToRoute('app_pricing');
         }
 
         $metadata = $audit->getMetadata() ?? [];
