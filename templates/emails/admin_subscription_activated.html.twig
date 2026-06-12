@@ -1,0 +1,9 @@
+<h1>[Admin] New Subscription Activated</h1>
+<p>A user has activated a subscription.</p>
+<ul>
+    <li><strong>User:</strong> {{ user.email }} ({{ user.displayName }})</li>
+    <li><strong>Plan:</strong> {{ subscription.plan.value }}</li>
+    <li><strong>Price:</strong> €{{ (subscription.monthlyPriceCents / 100)|number_format(2) }}/month</li>
+    <li><strong>Started At:</strong> {{ subscription.startsAt|date('Y-m-d H:i') }}</li>
+    <li><strong>Ends At:</strong> {{ subscription.endsAt|date('Y-m-d H:i') }}</li>
+</ul>

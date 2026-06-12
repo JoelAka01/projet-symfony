@@ -1,0 +1,10 @@
+<h1>[Admin] Payment Received</h1>
+<p>A payment has been successfully processed.</p>
+<ul>
+    <li><strong>User:</strong> {{ user.email }} ({{ user.displayName }})</li>
+    <li><strong>Plan:</strong> {{ payment.plan.value }}</li>
+    <li><strong>Amount:</strong> €{{ (payment.amountCents / 100)|number_format(2) }} EUR</li>
+    <li><strong>Card:</strong> •••• {{ payment.cardLastFour }}</li>
+    <li><strong>Paid At:</strong> {{ payment.paidAt|date('Y-m-d H:i') }}</li>
+    <li><strong>Payment ID:</strong> {{ payment.id }}</li>
+</ul>

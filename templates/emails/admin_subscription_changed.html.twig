@@ -1,0 +1,9 @@
+<h1>[Admin] Subscription Plan Changed</h1>
+<p>A user has changed their subscription plan.</p>
+<ul>
+    <li><strong>User:</strong> {{ user.email }} ({{ user.displayName }})</li>
+    <li><strong>Old Plan:</strong> {{ oldPlan.value }}</li>
+    <li><strong>New Plan:</strong> {{ subscription.plan.value }}</li>
+    <li><strong>New Price:</strong> €{{ (subscription.monthlyPriceCents / 100)|number_format(2) }}/month</li>
+    <li><strong>Effective:</strong> {{ subscription.startsAt|date('Y-m-d H:i') }}</li>
+</ul>

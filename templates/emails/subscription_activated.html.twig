@@ -1,0 +1,10 @@
+<h1>Subscription Activated</h1>
+<p>Hello {{ user.displayName }},</p>
+<p>Your subscription to the <strong>{{ subscription.plan.value }}</strong> plan has been activated successfully!</p>
+<p><strong>Plan Limits:</strong></p>
+<ul>
+    <li>Analyses: {{ subscription.weeklyAnalysisLimit }} / week</li>
+    <li>AI Credits: {{ (subscription.monthlyCreditLimit / 1000000)|number_format(1) }}M / month</li>
+</ul>
+<p>This plan will renew automatically on {{ subscription.endsAt|date('Y-m-d H:i') }}.</p>
+<p>Thank you for choosing SEO GEO AI!</p>
