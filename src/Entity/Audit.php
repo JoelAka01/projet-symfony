@@ -41,6 +41,10 @@ class Audit
     #[Groups(['audit:read'])]
     private ?Domain $domain = null;
 
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?User $requestedBy = null;
+
     #[ORM\Column(enumType: AuditStatus::class)]
     #[Groups(['audit:read'])]
     private AuditStatus $status = AuditStatus::QUEUED;
@@ -127,6 +131,18 @@ class Audit
     public function setDomain(?Domain $domain): self
     {
         $this->domain = $domain;
+
+        return $this;
+    }
+
+    public function getRequestedBy(): ?User
+    {
+        return $this->requestedBy;
+    }
+
+    public function setRequestedBy(?User $requestedBy): self
+    {
+        $this->requestedBy = $requestedBy;
 
         return $this;
     }
