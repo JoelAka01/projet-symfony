@@ -41,7 +41,7 @@
                 · Current SEO score: {{ project.seoScore }}/100
             {% endif %}
         </p>        <div class="hero-actions">
-            {% if is_granted('LAUNCH_AUDIT', project) and primaryDomain %}
+            {% if is_granted('LAUNCH_AUDIT', project) and primaryDomain and allowance.allowed %}
                 <form method="post" action="{{ path('app_project_audit_launch', { id: project.id }) }}">
                     <input type="hidden" name="_token" value="{{ csrf_token('launch_audit_' ~ project.id) }}">
                     <button class="button primary" type="submit">
@@ -49,6 +49,8 @@
                         Run crawl and AI analysis
                     </button>
                 </form>
+            {% elseif is_granted('LAUNCH_AUDIT', project) and primaryDomain %}
+                <a class="button primary" href="{{ path('app_pricing') }}">Upgrade to run another analysis</a>
             {% endif %}
             <a class="button secondary" href="{{ path('app_article_index', { project: project.id }) }}">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
@@ -71,6 +73,10 @@
                     Add members
                 </a>
             {% endif %}
+        </div>
+        <div class="quota-summary {{ allowance.allowed ? '' : 'is-blocked' }}">
+            <strong>{{ allowance.planName }} plan</strong>
+            <span>{{ allowance.message }}</span>
         </div>
     </section>
 
