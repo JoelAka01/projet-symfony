@@ -50,6 +50,20 @@ class Article extends ContentItem
     #[Groups(['article:read', 'article:write'])]
     private ?string $slug = null;
 
+    #[ORM\Column(length: 70, nullable: true)]
+    #[Assert\Length(max: 70)]
+    #[Groups(['article:read', 'article:write'])]
+    private ?string $seoTitle = null;
+
+    #[ORM\Column(length: 320, nullable: true)]
+    #[Assert\Length(max: 320)]
+    #[Groups(['article:read', 'article:write'])]
+    private ?string $seoDescription = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['article:read', 'article:write'])]
+    private ?string $excerpt = null;
+
     #[ORM\Column(enumType: ArticleStatus::class)]
     #[Groups(['article:read', 'article:write'])]
     private ArticleStatus $status = ArticleStatus::DRAFT;
@@ -87,6 +101,10 @@ class Article extends ContentItem
     /** @var array<string, mixed>|null */
     #[ORM\Column(type: Types::JSON, nullable: true, options: ['jsonb' => true])]
     private ?array $externalSourcesJson = null;
+
+    /** @var array<string, mixed>|null */
+    #[ORM\Column(type: Types::JSON, nullable: true, options: ['jsonb' => true])]
+    private ?array $generationMetadata = null;
 
     #[ORM\Column(type: 'smallint', nullable: true)]
     #[Assert\Range(min: 0, max: 100)]
@@ -186,6 +204,42 @@ class Article extends ContentItem
         return $this;
     }
 
+    public function getSeoTitle(): ?string
+    {
+        return $this->seoTitle;
+    }
+
+    public function setSeoTitle(?string $seoTitle): static
+    {
+        $this->seoTitle = $seoTitle;
+
+        return $this;
+    }
+
+    public function getSeoDescription(): ?string
+    {
+        return $this->seoDescription;
+    }
+
+    public function setSeoDescription(?string $seoDescription): static
+    {
+        $this->seoDescription = $seoDescription;
+
+        return $this;
+    }
+
+    public function getExcerpt(): ?string
+    {
+        return $this->excerpt;
+    }
+
+    public function setExcerpt(?string $excerpt): static
+    {
+        $this->excerpt = $excerpt;
+
+        return $this;
+    }
+
     public function getWordCount(): ?int
     {
         return $this->wordCount;
@@ -278,6 +332,20 @@ class Article extends ContentItem
     public function setExternalSourcesJson(?array $externalSourcesJson): static
     {
         $this->externalSourcesJson = $externalSourcesJson;
+
+        return $this;
+    }
+
+    /** @return array<string, mixed>|null */
+    public function getGenerationMetadata(): ?array
+    {
+        return $this->generationMetadata;
+    }
+
+    /** @param array<string, mixed>|null $generationMetadata */
+    public function setGenerationMetadata(?array $generationMetadata): static
+    {
+        $this->generationMetadata = $generationMetadata;
 
         return $this;
     }

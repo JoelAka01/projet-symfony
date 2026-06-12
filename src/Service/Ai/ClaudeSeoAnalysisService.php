@@ -25,8 +25,7 @@ final class ClaudeSeoAnalysisService
         private readonly AuditInsightsBuilder $insightsBuilder,
         private readonly ClaudeSeoAnalysisResponseParser $responseParser,
         private readonly LoggerInterface $logger,
-    ) {
-    }
+    ) {}
 
     public function analyze(Audit $audit): void
     {
@@ -72,7 +71,7 @@ final class ClaudeSeoAnalysisService
         $crawlSummary = $this->insightsBuilder->buildClaudePayload($audit);
 
         try {
-            $response = $this->httpClient->request('POST', $baseUrl.'/v1/messages', [
+            $response = $this->httpClient->request('POST', $baseUrl . '/v1/messages', [
                 'headers' => [
                     'x-api-key' => $apiKey,
                     'anthropic-version' => self::ANTHROPIC_VERSION,
@@ -89,7 +88,7 @@ final class ClaudeSeoAnalysisService
                             'content' => [
                                 [
                                     'type' => 'text',
-                                    'text' => "Analyze this real website crawl and return only valid JSON matching the requested schema:\n\n".json_encode($crawlSummary, JSON_THROW_ON_ERROR),
+                                    'text' => "Analyze this real website crawl and return only valid JSON matching the requested schema:\n\n" . json_encode($crawlSummary, JSON_THROW_ON_ERROR),
                                 ],
                             ],
                         ],
