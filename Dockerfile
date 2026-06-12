@@ -6,11 +6,15 @@ RUN apk add --no-cache \
         git \
         icu-dev \
         libzip-dev \
+        libxml2-dev \
+        oniguruma-dev \
         postgresql-dev \
         unzip \
     && docker-php-ext-install \
         curl \
+        dom \
         intl \
+        mbstring \
         opcache \
         pdo \
         pdo_pgsql \

@@ -40,6 +40,7 @@ final class ClaudeSeoAnalysisResponseParserTest extends TestCase
   "faq_suggestions": [{"question": "What is SEO?", "answer": "SEO improves search visibility."}],
   "geo_analysis": {
     "geo_score": 69,
+    "methodology_notice": "Claude estimates readiness; the external models were not queried.",
     "ai_brand_visibility": {
       "chatgpt": {
         "status": "visible",
@@ -50,6 +51,11 @@ final class ClaudeSeoAnalysisResponseParserTest extends TestCase
         "status": "low_visibility",
         "how_mentioned": "Gemini rarely references it.",
         "sentiment": "neutral"
+      },
+      "perplexity": {
+        "status": "low_visibility",
+        "how_mentioned": "Claude estimates weak citation readiness.",
+        "sentiment": "unknown"
       }
     },
     "ai_seo_optimizations": [
@@ -72,6 +78,7 @@ JSON);
         self::assertSame('What is SEO?', $result['faq_suggestions'][0]['question']);
         self::assertSame('visible', $result['geo_analysis']['ai_brand_visibility']['chatgpt']['status']);
         self::assertSame('low_visibility', $result['geo_analysis']['ai_brand_visibility']['gemini']['status']);
+        self::assertSame('low_visibility', $result['geo_analysis']['ai_brand_visibility']['perplexity']['status']);
         self::assertSame('ChatGPT', $result['geo_analysis']['ai_seo_optimizations'][0]['target_ai']);
     }
 
