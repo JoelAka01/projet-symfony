@@ -1,0 +1,29 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Invitation Error | SEO GEO AI{% endblock %}
+
+{% block body %}
+    <section class="hero compact">
+        <p class="eyebrow">Project Invitation</p>
+        <h1>Email Mismatch Error</h1>
+    </section>
+
+    <section class="panel notice danger" style="max-width: 600px; margin: 40px auto; padding: 32px; text-align: center;">
+        <h2>Incorrect Account</h2>
+        <p style="margin-bottom: 24px;">
+            This invitation was sent to <strong>{{ invitation.email }}</strong>, but you are currently logged in as <strong>{{ user.email }}</strong>.
+        </p>
+        <p class="muted" style="margin-bottom: 24px;">
+            To accept this invitation and manage the project, please log out and log in with the account corresponding to <strong>{{ invitation.email }}</strong> (or register an account if you do not have one yet).
+        </p>
+
+        <div style="display: flex; gap: 12px; justify-content: center;">
+            <a href="{{ path('app_logout') }}" class="button primary">
+                Log Out
+            </a>
+            <a href="{{ path('app_project_invitation_view', { token: invitation.token }) }}" class="button secondary">
+                View in Read-Only Mode
+            </a>
+        </div>
+    </section>
+{% endblock %}

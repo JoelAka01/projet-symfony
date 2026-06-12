@@ -1,0 +1,30 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Accept Project Invitation | SEO GEO AI{% endblock %}
+
+{% block body %}
+    <section class="hero compact">
+        <p class="eyebrow">Project Invitation</p>
+        <h1>Accept Invitation to {{ project.name }}</h1>
+        <p>You have been invited to join this project as a guest.</p>
+    </section>
+
+    <section class="panel" style="max-width: 600px; margin: 40px auto; padding: 32px; text-align: center;">
+        <h2>Join as Guest</h2>
+        <p class="muted" style="margin-bottom: 24px;">
+            By accepting, you will gain access to view this project's dashboard, view SEO audits, download reports, and manage the Content studio.
+        </p>
+
+        <form method="post">
+            <button type="submit" class="button primary" style="width: 100%; max-width: 300px; margin: 0 auto;">
+                Accept Invitation
+            </button>
+        </form>
+
+        <div style="margin-top: 16px;">
+            <a href="{{ path('app_project_invitation_view', { token: invitation.token }) }}" class="muted">
+                Keep viewing in read-only mode
+            </a>
+        </div>
+    </section>
+{% endblock %}
