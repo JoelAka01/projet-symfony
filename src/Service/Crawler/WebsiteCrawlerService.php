@@ -8,6 +8,7 @@ use App\Entity\Audit;
 use App\Entity\AuditIssue;
 use App\Entity\AuditPage;
 use App\Enum\AuditStatus;
+use App\Service\Audit\AuditProgressNotifier;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -24,6 +25,7 @@ final class WebsiteCrawlerService
         private readonly SeoIssueDetector $issueDetector,
         private readonly SeoScoreCalculator $scoreCalculator,
         private readonly LoggerInterface $logger,
+        private readonly AuditProgressNotifier $notifier,
     ) {}
 
     public function getConfiguredMaxPages(): int
@@ -51,6 +53,9 @@ final class WebsiteCrawlerService
             ->setPagesCrawled(0)
             ->setPagesFailed(0)
             ->setErrorMessage(null);
+
+        $this->entityManager->flush();
+        $this->notifier->notify($audit);
 
         $domain = $audit->getDomain();
         $project = $audit->getProject();
@@ -169,6 +174,7 @@ final class WebsiteCrawlerService
                 ->setPagesFailed($pagesFailed);
 
             $this->entityManager->flush();
+            $this->notifier->notify($audit);
 
             if ($delayMs > 0 && [] !== $queue && count($visited) < $maxPages) {
                 usleep($delayMs * 1000);
@@ -195,6 +201,7 @@ final class WebsiteCrawlerService
         $project->setSeoScore($score);
 
         $this->entityManager->flush();
+        $this->notifier->notify($audit);
     }
 
     private function createPage(Audit $audit, string $url): AuditPage
@@ -347,6 +354,7 @@ final class WebsiteCrawlerService
 
         $this->entityManager->persist($audit);
         $this->entityManager->flush();
+        $this->notifier->notify($audit);
     }
 
     private function envInt(string $name, int $default, int $min, int $max): int
