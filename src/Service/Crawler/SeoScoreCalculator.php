@@ -31,6 +31,6 @@ final class SeoScoreCalculator
             $score -= self::DEDUCTIONS[$severity] ?? self::DEDUCTIONS['medium'];
         }
 
-        return max(0, min(100, $score));
+        return max(0, $score);
     }
 }

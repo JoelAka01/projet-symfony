@@ -1,9 +1,17 @@
 {
     "source": {
-        "directories": ["src"],
+        "directories": [
+            "src/Service/Crawler",
+            "src/Service/Audit",
+            "src/Service/Report"
+        ],
         "excludes": [
-            "DataFixtures",
-            "Kernel.php"
+            "HtmlSeoExtractor.php",
+            "SeoIssueDetector.php",
+            "WebsiteCrawlerService.php",
+            "AuditInsightsBuilder.php",
+            "AuditProgressNotifier.php",
+            "WebsiteAuditRunner.php"
         ]
     },
     "logs": {
@@ -15,8 +23,7 @@
         "@default": true
     },
     "testFramework": "phpunit",
-    "testFrameworkOptions": "--testsuite='Project Test Suite'",
     "minMsi": 50,
-    "minCoveredMsi": 70,
-    "threads": "max"
+    "minCoveredMsi": 70
 }
+

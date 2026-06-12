@@ -10,6 +10,17 @@ RUN apk add --no-cache \
         oniguruma-dev \
         postgresql-dev \
         unzip \
+    && apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
+    && curl -fsSL https://github.com/krakjoe/pcov/archive/refs/tags/v1.0.11.tar.gz -o /tmp/pcov.tar.gz \
+    && tar -xf /tmp/pcov.tar.gz -C /tmp \
+    && cd /tmp/pcov-1.0.11 \
+    && phpize \
+    && ./configure \
+    && make -j$(nproc) \
+    && make install \
+    && docker-php-ext-enable pcov \
+    && rm -rf /tmp/pcov* \
+    && apk del .build-deps \
     && docker-php-ext-install \
         curl \
         dom \
