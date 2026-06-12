@@ -60,3 +60,27 @@ document.querySelectorAll('[data-cms-publish-form]').forEach((form) => {
         }
     });
 });
+
+// Profile dropdown toggle and click outside close handlers
+document.querySelectorAll('.profile-dropdown-container').forEach((container) => {
+    const trigger = container.querySelector('.profile-trigger');
+    if (trigger) {
+        trigger.addEventListener('click', (event) => {
+            event.stopPropagation();
+            container.classList.toggle('is-active');
+            const expanded = container.classList.contains('is-active');
+            trigger.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+        });
+    }
+});
+
+document.addEventListener('click', () => {
+    document.querySelectorAll('.profile-dropdown-container.is-active').forEach((container) => {
+        container.classList.remove('is-active');
+        const trigger = container.querySelector('.profile-trigger');
+        if (trigger) {
+            trigger.setAttribute('aria-expanded', 'false');
+        }
+    });
+});
+
