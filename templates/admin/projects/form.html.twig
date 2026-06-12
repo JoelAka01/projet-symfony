@@ -1,0 +1,37 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ pageTitle }} | Admin{% endblock %}
+
+{% block body %}
+    {% include 'admin/_nav.html.twig' %}
+
+    <div class="back-navigation">
+        <a class="back-link" href="{{ path('app_admin_projects') }}">&larr; Back to projects</a>
+    </div>
+
+    <section class="hero compact admin-hero">
+        <p class="eyebrow">Project administration</p>
+        <h1>{{ pageTitle }}</h1>
+        <p>Assign the project owner and workspace, and set the real website URL used by the crawler.</p>
+    </section>
+
+    <section class="panel full-panel">
+        {{ form_start(form, {attr: {class: 'form-stack'}}) }}
+            {{ form_row(form.name) }}
+            {{ form_row(form.websiteUrl) }}
+            <div class="form-grid">
+                {{ form_row(form.owner) }}
+                {{ form_row(form.organization) }}
+            </div>
+            <div class="form-grid">
+                {{ form_row(form.status) }}
+                {{ form_row(form.defaultLanguage) }}
+                {{ form_row(form.targetCountry) }}
+            </div>
+            <div class="form-actions">
+                <button class="button primary" type="submit">{{ buttonLabel }}</button>
+                <a class="button secondary" href="{{ path('app_admin_projects') }}">Cancel</a>
+            </div>
+        {{ form_end(form) }}
+    </section>
+{% endblock %}

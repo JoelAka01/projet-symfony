@@ -1,0 +1,96 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Users & Roles | Admin{% endblock %}
+
+{% block body %}
+    {% include 'admin/_nav.html.twig' %}
+
+    <section class="hero compact admin-hero">
+        <p class="eyebrow">Administration</p>
+        <div class="hero-top-bar">
+            <div>
+                <h1>Users and roles</h1>
+                <p>Manage platform access, verification status, passwords, and provider-reported AI consumption.</p>
+            </div>
+            <a class="button primary" href="{{ path('app_admin_user_new') }}">Create user</a>
+        </div>
+    </section>
+
+    <form class="admin-filter" method="get">
+        <label>
+            <span>Search</span>
+            <input type="search" name="q" value="{{ search }}" placeholder="Name or email">
+        </label>
+        <label>
+            <span>Role</span>
+            <select name="role">
+                <option value="">All roles</option>
+                {% for role in roles %}
+                    <option value="{{ role.value }}" {{ selectedRole == role.value ? 'selected' : '' }}>{{ role.value|lower|replace({'_': ' '})|title }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <button class="button secondary" type="submit">Filter</button>
+        {% if search or selectedRole %}
+            <a class="button secondary" href="{{ path('app_admin_users') }}">Clear</a>
+        {% endif %}
+    </form>
+
+    {% if rows is empty %}
+        <div class="empty-state">
+            <h2>No users found</h2>
+            <p class="muted">Adjust the filters or create a new account.</p>
+        </div>
+    {% else %}
+        <div class="table-wrap">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Projects</th>
+                        <th>AI credits</th>
+                        <th>AI calls</th>
+                        <th>Last login</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                        {% set user = row.user %}
+                        <tr>
+                            <td>
+                                <strong>{{ user.displayName }}</strong>
+                                <small class="table-subtitle">{{ user.email }}</small>
+                            </td>
+                            <td><span class="pill role-{{ user.role.value|lower }}">{{ user.role.value }}</span></td>
+                            <td>
+                                <span class="status-dot {{ user.verified ? 'is-success' : 'is-warning' }}">
+                                    {{ user.verified ? 'Verified' : 'Pending' }}
+                                </span>
+                            </td>
+                            <td>{{ user.ownedProjects|length }}</td>
+                            <td title="Input {{ row.usage.inputTokens|number_format }}, output {{ row.usage.outputTokens|number_format }}, cached {{ row.usage.cachedInputTokens|number_format }}">
+                                <strong>{{ row.usage.credits|number_format }}</strong>
+                            </td>
+                            <td>{{ row.usage.calls|number_format }}</td>
+                            <td>{{ user.lastLoginAt ? user.lastLoginAt|date('Y-m-d H:i') : 'Never' }}</td>
+                            <td>
+                                <div class="row-actions">
+                                    <a class="btn-action" href="{{ path('app_admin_user_edit', {id: user.id}) }}">Edit</a>
+                                    {% if app.user != user %}
+                                        <form method="post" action="{{ path('app_admin_user_delete', {id: user.id}) }}" data-confirm="Delete this user? Their historical AI usage will be anonymized.">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('admin_delete_user_' ~ user.id) }}">
+                                            <button class="btn-action btn-danger" type="submit">Delete</button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+{% endblock %}
