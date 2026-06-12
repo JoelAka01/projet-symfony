@@ -1,0 +1,82 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}CMS connections | {{ project.name }}{% endblock %}
+
+{% block body %}
+    <section class="hero compact">
+        <p class="eyebrow">CMS publishing</p>
+        <h1>{{ project.name }}</h1>
+        <p>Connect a real WordPress or Shopify account from this page, then publish reviewed SEO content without touching application files.</p>
+        <div class="hero-actions">
+            <a class="button secondary" href="{{ path('app_project_show', { id: project.id }) }}">Back to project</a>
+            <a class="button primary" href="{{ path('app_cms_connection_new', { project: project.id }) }}">Connect CMS</a>
+        </div>
+    </section>
+
+    <section class="panel full-panel">
+        <h2>Connections</h2>
+        {% if connections is empty %}
+            <div class="empty-state">
+                <h3>No CMS is connected</h3>
+                <p class="muted">Credentials are encrypted at rest. A real API test must pass before publishing is enabled.</p>
+            </div>
+        {% else %}
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Provider</th>
+                            <th>Website</th>
+                            <th>Status</th>
+                            <th>Last tested</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for connection in connections %}
+                            {% set connectionSettings = connection.settings ?? {} %}
+                            <tr>
+                                <td><strong>{{ connection.provider.value|lower|capitalize }}</strong></td>
+                                <td>
+                                    <a href="{{ connection.baseUrl }}" target="_blank" rel="noopener noreferrer">{{ connection.baseUrl }}</a>
+                                    {% if connectionSettings.blog_title is defined %}
+                                        <p class="muted">Blog: {{ connectionSettings.blog_title }}</p>
+                                    {% elseif connectionSettings.username is defined %}
+                                        <p class="muted">User: {{ connectionSettings.username }}</p>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="pill {{ connection.active ? 'priority-low' : 'priority-high' }}">
+                                        {{ connection.active ? 'Ready' : 'Failed' }}
+                                    </span>
+                                    {% if connection.lastError %}
+                                        <p class="field-error">{{ connection.lastError }}</p>
+                                    {% endif %}
+                                </td>
+                                <td>{{ connection.lastTestedAt ? connection.lastTestedAt|date('Y-m-d H:i') : 'Never' }}</td>
+                                <td>
+                                    <div class="row-actions">
+                                        <a href="{{ path('app_cms_connection_edit', { project: project.id, connection: connection.id }) }}">Edit</a>
+                                        <form method="post" action="{{ path('app_cms_connection_test', { project: project.id, connection: connection.id }) }}">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('test_cms_' ~ connection.id) }}">
+                                            <button class="link-button" type="submit">Test</button>
+                                        </form>
+                                        <form method="post" action="{{ path('app_cms_connection_delete', { project: project.id, connection: connection.id }) }}" data-confirm="Delete this CMS connection and its publication history?">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('delete_cms_' ~ connection.id) }}">
+                                            <button class="link-button danger-link" type="submit">Delete</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </section>
+
+    <section class="notice">
+        <h2>What happens after connecting?</h2>
+        <p>Create or generate an article in Content Studio, review it, then choose this CMS as the destination. WordPress posts and images use the core REST API. Shopify articles use Admin GraphQL. Start with a draft before publishing to the live website.</p>
+    </section>
+{% endblock %}
