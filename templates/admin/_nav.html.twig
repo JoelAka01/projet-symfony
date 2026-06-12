@@ -1,0 +1,5 @@
+<nav class="admin-nav" aria-label="Administration">
+    <a class="{{ app.request.attributes.get('_route') == 'app_admin_dashboard' ? 'is-active' : '' }}" href="{{ path('app_admin_dashboard') }}">Overview</a>
+    <a class="{{ app.request.attributes.get('_route') starts with 'app_admin_user' ? 'is-active' : '' }}" href="{{ path('app_admin_users') }}">Users & roles</a>
+    <a class="{{ app.request.attributes.get('_route') starts with 'app_admin_project' ? 'is-active' : '' }}" href="{{ path('app_admin_projects') }}">Projects</a>
+</nav>
