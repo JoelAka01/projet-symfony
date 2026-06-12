@@ -15,6 +15,13 @@ if [ ! -f vendor/autoload.php ] || [ "$lock_hash" != "$installed_hash" ]; then
 fi
 
 php bin/console cache:warmup --no-interaction
-php bin/console asset-map:compile --no-interaction
+
+if [ "${APP_DEBUG:-0}" = "1" ]; then
+    echo "Running in APP_DEBUG=1 development mode. Clearing pre-compiled assets to enable live asset-mapper reloading."
+    rm -rf public/assets
+else
+    echo "Running in production mode. Compiling assets."
+    php bin/console asset-map:compile --no-interaction
+fi
 
 exec php -S 0.0.0.0:8000 -t public docker/router.php

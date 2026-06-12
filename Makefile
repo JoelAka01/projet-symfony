@@ -22,6 +22,16 @@ fixtures:
 fixtures-local:
 	php bin/console doctrine:fixtures:load
 
+test-init:
+	docker compose exec -e APP_ENV=test -e DATABASE_URL="postgresql://app:app@database:5432/app_test?serverVersion=16&charset=utf8" php php bin/console doctrine:database:create --if-not-exists
+	docker compose exec -e APP_ENV=test -e DATABASE_URL="postgresql://app:app@database:5432/app_test?serverVersion=16&charset=utf8" php php bin/console doctrine:migrations:migrate --no-interaction
+	docker compose exec -e APP_ENV=test -e DATABASE_URL="postgresql://app:app@database:5432/app_test?serverVersion=16&charset=utf8" php php bin/console doctrine:fixtures:load --no-interaction
+
+test-init-local:
+	php bin/console doctrine:database:create --env=test --if-not-exists
+	php bin/console doctrine:migrations:migrate --env=test --no-interaction
+	php bin/console doctrine:fixtures:load --env=test --no-interaction
+
 test:
 	docker compose exec -e APP_ENV=test -e APP_DEBUG=1 -e DATABASE_URL="postgresql://app:app@database:5432/app_test?serverVersion=16&charset=utf8" php php bin/phpunit
 
