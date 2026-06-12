@@ -62,9 +62,7 @@ final class HtmlSeoExtractor
         'your' => true,
     ];
 
-    public function __construct(private readonly CrawlerUrlNormalizer $urlNormalizer)
-    {
-    }
+    public function __construct(private readonly CrawlerUrlNormalizer $urlNormalizer) {}
 
     public function extract(string $html, string $url, string $startHostname): HtmlSeoExtractionResult
     {

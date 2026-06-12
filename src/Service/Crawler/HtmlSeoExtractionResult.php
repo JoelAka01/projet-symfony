@@ -7,10 +7,10 @@ namespace App\Service\Crawler;
 final class HtmlSeoExtractionResult
 {
     /**
-     * @param list<string> $h1Headings
-     * @param list<string> $h2Headings
-     * @param list<string> $internalLinks
-     * @param list<string> $externalLinks
+     * @param list<string>         $h1Headings
+     * @param list<string>         $h2Headings
+     * @param list<string>         $internalLinks
+     * @param list<string>         $externalLinks
      * @param array<string, mixed> $metadata
      */
     public function __construct(
@@ -26,6 +26,5 @@ final class HtmlSeoExtractionResult
         public readonly int $imagesWithoutAltCount,
         public readonly bool $hasStructuredData,
         public readonly array $metadata = [],
-    ) {
-    }
+    ) {}
 }
