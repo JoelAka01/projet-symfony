@@ -85,7 +85,7 @@ final class ProjectController extends AbstractController
                     return $this->redirectToRoute('app_project_show', ['id' => $project->getId()]);
                 }
 
-                $audit = $auditRunner->createQueued($project, $domain);
+                $audit = $auditRunner->createQueued($project, $domain, $user);
                 $messageBus->dispatch(new RunWebsiteAuditMessage($audit->getId()));
                 $this->addFlash('info', 'Project created. The crawler and Claude SEO analysis are running in the background.');
 
@@ -175,6 +175,10 @@ final class ProjectController extends AbstractController
         MessageBusInterface $messageBus,
     ): RedirectResponse {
         $this->denyAccessUnlessGranted('LAUNCH_AUDIT', $project);
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException();
+        }
 
         if (!$this->isCsrfTokenValid('launch_audit_' . $project->getId(), (string) $request->request->get('_token', ''))) {
             throw $this->createAccessDeniedException('Invalid audit launch CSRF token.');
@@ -187,7 +191,7 @@ final class ProjectController extends AbstractController
             return $this->redirectToRoute('app_project_show', ['id' => $project->getId()]);
         }
 
-        $audit = $auditRunner->createQueued($project, $domain);
+        $audit = $auditRunner->createQueued($project, $domain, $user);
         $messageBus->dispatch(new RunWebsiteAuditMessage($audit->getId()));
         $this->addFlash('info', 'Website crawl and Claude SEO analysis queued. Progress updates automatically, and you can leave this page while it runs.');
 
@@ -282,6 +286,11 @@ final class ProjectController extends AbstractController
             return $this->redirectToRoute('app_audit_show', ['id' => $audit->getId()]);
         }
 
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException();
+        }
+
         $metadata = $audit->getMetadata() ?? [];
         $existingAi = is_array($metadata['ai_analysis'] ?? null) ? $metadata['ai_analysis'] : [];
         $metadata['ai_analysis'] = [
@@ -291,7 +300,9 @@ final class ProjectController extends AbstractController
             'recommendations' => [],
             'queued_at' => (new \DateTimeImmutable())->format(\DateTimeInterface::ATOM),
         ];
-        $audit->setMetadata($metadata);
+        $audit
+            ->setMetadata($metadata)
+            ->setRequestedBy($user);
         $entityManager->flush();
 
         $messageBus->dispatch(new RunClaudeAnalysisMessage($audit->getId()));
