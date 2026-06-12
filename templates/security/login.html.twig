@@ -17,33 +17,41 @@
             <form method="post" class="form-stack">
                 <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
 
-                <label for="inputEmail">Email address</label>
-                <input
-                    id="inputEmail"
-                    type="email"
-                    name="email"
-                    value="{{ last_username }}"
-                    autocomplete="email"
-                    required
-                    autofocus
-                >
+                <div>
+                    <label for="inputEmail">Email address</label>
+                    <input
+                        id="inputEmail"
+                        type="email"
+                        name="email"
+                        value="{{ last_username }}"
+                        autocomplete="email"
+                        required
+                        autofocus
+                    >
+                </div>
 
-                <label for="inputPassword">Password</label>
-                <input
-                    id="inputPassword"
-                    type="password"
-                    name="password"
-                    autocomplete="current-password"
-                    required
-                >
+                <div>
+                    <label for="inputPassword">Password</label>
+                    <input
+                        id="inputPassword"
+                        type="password"
+                        name="password"
+                        autocomplete="current-password"
+                        required
+                    >
+                </div>
 
                 <button class="button primary" type="submit">Login</button>
             </form>
 
             <div class="auth-links">
-                <a href="{{ path('app_forgot_password_request') }}">Forgot password?</a>
-                <a href="{{ path('app_verify_email_resend') }}">Resend verification email</a>
-                <a href="{{ path('app_register') }}">Create an account</a>
+                <div class="auth-links-row">
+                    <a href="{{ path('app_forgot_password_request') }}">Forgot password?</a>
+                    <a href="{{ path('app_verify_email_resend') }}">Resend verification email</a>
+                </div>
+                <div class="auth-cta-container">
+                    Don't have an account? <a href="{{ path('app_register') }}">Create an account</a>
+                </div>
             </div>
         </div>
     </section>
