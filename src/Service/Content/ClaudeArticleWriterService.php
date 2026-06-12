@@ -6,9 +6,11 @@ namespace App\Service\Content;
 
 use App\Entity\Article;
 use App\Entity\Keyword;
+use App\Entity\User;
 use App\Enum\ArticleStatus;
 use App\Exception\CmsIntegrationException;
 use App\Repository\AuditRepository;
+use App\Service\Ai\AiUsageRecorder;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -21,10 +23,17 @@ final class ClaudeArticleWriterService
         private readonly ArticleHtmlSanitizer $htmlSanitizer,
         private readonly EntityManagerInterface $entityManager,
         private readonly LoggerInterface $logger,
+        private readonly AiUsageRecorder $usageRecorder,
     ) {}
 
-    public function generate(Article $article, string $brief, string $tone, int $targetWordCount, bool $includeFaq): void
-    {
+    public function generate(
+        Article $article,
+        User $requestedBy,
+        string $brief,
+        string $tone,
+        int $targetWordCount,
+        bool $includeFaq,
+    ): void {
         $apiKey = $this->envString('CLAUDE_API_KEY');
         if (null === $apiKey) {
             throw new CmsIntegrationException('CLAUDE_API_KEY is not configured. Real article writing cannot run.');
@@ -134,6 +143,20 @@ final class ClaudeArticleWriterService
                 ->setGeneratedAt(new \DateTimeImmutable())
                 ->setStatus(ArticleStatus::GENERATED)
                 ->setWordCount(str_word_count(strip_tags($contentHtml)));
+
+            $providerUsage = is_array($responseData['usage'] ?? null) ? $responseData['usage'] : [];
+            if ([] !== $providerUsage) {
+                $this->usageRecorder->record(
+                    $requestedBy,
+                    $project,
+                    'anthropic',
+                    $model,
+                    AiUsageRecorder::OPERATION_ARTICLE_GENERATION,
+                    $providerUsage,
+                    $article->getId(),
+                );
+            }
+
             $this->entityManager->flush();
         } catch (\Throwable $exception) {
             $this->logger->error('Claude article writing failed.', [

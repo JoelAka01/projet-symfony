@@ -7,6 +7,7 @@ namespace App\Service\Audit;
 use App\Entity\Audit;
 use App\Entity\Domain;
 use App\Entity\Project;
+use App\Entity\User;
 use App\Enum\AuditStatus;
 use App\Service\Ai\ClaudeSeoAnalysisService;
 use App\Service\Crawler\WebsiteCrawlerService;
@@ -20,12 +21,13 @@ final class WebsiteAuditRunner
         private readonly ClaudeSeoAnalysisService $claudeSeoAnalysis,
     ) {}
 
-    public function createQueued(Project $project, Domain $domain): Audit
+    public function createQueued(Project $project, Domain $domain, User $requestedBy): Audit
     {
         $audit = new Audit();
         $audit
             ->setProject($project)
             ->setDomain($domain)
+            ->setRequestedBy($requestedBy)
             ->setStatus(AuditStatus::QUEUED)
             ->setMaxPages($this->crawler->getConfiguredMaxPages())
             ->setMaxDepth($this->crawler->getConfiguredMaxDepth())

@@ -1,0 +1,90 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Projects | Admin{% endblock %}
+
+{% block body %}
+    {% include 'admin/_nav.html.twig' %}
+
+    <section class="hero compact admin-hero">
+        <p class="eyebrow">Administration</p>
+        <div class="hero-top-bar">
+            <div>
+                <h1>All projects</h1>
+                <p>Manage ownership, workspaces, crawl targets, project status, and related AI consumption.</p>
+            </div>
+            <a class="button primary" href="{{ path('app_admin_project_new') }}">Create project</a>
+        </div>
+    </section>
+
+    <form class="admin-filter" method="get">
+        <label>
+            <span>Search</span>
+            <input type="search" name="q" value="{{ search }}" placeholder="Project, owner, or website">
+        </label>
+        <label>
+            <span>Status</span>
+            <select name="status">
+                <option value="">All statuses</option>
+                {% for status in statuses %}
+                    <option value="{{ status.value }}" {{ selectedStatus == status.value ? 'selected' : '' }}>{{ status.value|lower|title }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <button class="button secondary" type="submit">Filter</button>
+        {% if search or selectedStatus %}
+            <a class="button secondary" href="{{ path('app_admin_projects') }}">Clear</a>
+        {% endif %}
+    </form>
+
+    {% if projects is empty %}
+        <div class="empty-state">
+            <h2>No projects found</h2>
+            <p class="muted">Adjust the filters or create a project.</p>
+        </div>
+    {% else %}
+        <div class="table-wrap">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Project</th>
+                        <th>Website</th>
+                        <th>Owner</th>
+                        <th>Workspace</th>
+                        <th>Status</th>
+                        <th>Audits</th>
+                        <th>AI credits</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for project in projects %}
+                        {% set domain = project.domains|first %}
+                        {% set projectUsage = usageByProject[project.id] ?? emptyUsage %}
+                        <tr>
+                            <td>
+                                <strong>{{ project.name }}</strong>
+                                <small class="table-subtitle">Updated {{ project.updatedAt|date('Y-m-d H:i') }}</small>
+                            </td>
+                            <td>{{ domain ? domain.rootDomain : 'No domain' }}</td>
+                            <td>{{ project.owner ? project.owner.email : 'Unassigned' }}</td>
+                            <td>{{ project.organization ? project.organization.name : 'None' }}</td>
+                            <td><span class="pill status-{{ project.status.value|lower }}">{{ project.status.value }}</span></td>
+                            <td>{{ project.audits|length }}</td>
+                            <td title="{{ projectUsage.calls }} completed calls"><strong>{{ projectUsage.credits|number_format }}</strong></td>
+                            <td>
+                                <div class="row-actions">
+                                    <a class="btn-action" href="{{ path('app_project_show', {id: project.id}) }}">View</a>
+                                    <a class="btn-action" href="{{ path('app_admin_project_edit', {id: project.id}) }}">Edit</a>
+                                    <form method="post" action="{{ path('app_admin_project_delete', {id: project.id}) }}" data-confirm="Delete this project and all related audits, pages, issues, and content?">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('admin_delete_project_' ~ project.id) }}">
+                                        <button class="btn-action btn-danger" type="submit">Delete</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+{% endblock %}

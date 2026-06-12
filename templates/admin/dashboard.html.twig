@@ -1,0 +1,137 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Admin Dashboard | SEO GEO AI{% endblock %}
+
+{% block body %}
+    {% include 'admin/_nav.html.twig' %}
+
+    <section class="hero compact admin-hero">
+        <p class="eyebrow">Administration</p>
+        <div class="hero-top-bar">
+            <div>
+                <h1>Platform overview</h1>
+                <p>Manage accounts and projects, and monitor credits reported by the real AI provider.</p>
+            </div>
+            <div class="hero-actions">
+                <a class="button primary" href="{{ path('app_admin_user_new') }}">Create user</a>
+                <a class="button secondary" href="{{ path('app_admin_project_new') }}">Create project</a>
+            </div>
+        </div>
+    </section>
+
+    <ul class="metric-grid admin-metrics">
+        <li class="metric-card primary">
+            <span>AI credits consumed</span>
+            <strong>{{ usage.credits|number_format }}</strong>
+            <small>{{ usage.calls|number_format }} completed AI calls</small>
+        </li>
+        <li class="metric-card">
+            <span>Users</span>
+            <strong>{{ metrics.users|number_format }}</strong>
+            <small>{{ metrics.verifiedUsers|number_format }} verified</small>
+        </li>
+        <li class="metric-card">
+            <span>Projects</span>
+            <strong>{{ metrics.projects|number_format }}</strong>
+            <small>{{ metrics.activeProjects|number_format }} active</small>
+        </li>
+        <li class="metric-card {{ metrics.failedAudits > 0 ? 'danger' : '' }}">
+            <span>Website audits</span>
+            <strong>{{ metrics.audits|number_format }}</strong>
+            <small>{{ metrics.failedAudits|number_format }} failed</small>
+        </li>
+    </ul>
+
+    <div class="notice">
+        <p><strong>Credit definition:</strong> one credit equals one token reported by Anthropic. Input, output, cache creation, and cache read tokens are included. No estimated or fake usage is added.</p>
+    </div>
+
+    <div class="analytics-grid">
+        <section class="panel">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">AI usage</p>
+                    <h2>Token breakdown</h2>
+                </div>
+            </div>
+            <dl class="fact-grid compact">
+                <div>
+                    <dt>Input</dt>
+                    <dd>{{ usage.inputTokens|number_format }}</dd>
+                </div>
+                <div>
+                    <dt>Output</dt>
+                    <dd>{{ usage.outputTokens|number_format }}</dd>
+                </div>
+                <div>
+                    <dt>Cached input</dt>
+                    <dd>{{ usage.cachedInputTokens|number_format }}</dd>
+                </div>
+            </dl>
+        </section>
+
+        <section class="panel">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Highest usage</p>
+                    <h2>Top users</h2>
+                </div>
+                <a href="{{ path('app_admin_users') }}">View all</a>
+            </div>
+            {% if topUsers is empty %}
+                <p class="muted">No provider-reported AI usage has been recorded yet.</p>
+            {% else %}
+                <ol class="admin-ranking">
+                    {% for row in topUsers %}
+                        <li>
+                            <span>
+                                <strong>{{ row.user.displayName }}</strong>
+                                <small>{{ row.user.email }}</small>
+                            </span>
+                            <b>{{ row.usage.credits|number_format }}</b>
+                        </li>
+                    {% endfor %}
+                </ol>
+            {% endif %}
+        </section>
+    </div>
+
+    <section class="panel full-panel">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">Provider ledger</p>
+                <h2>Recent AI consumption</h2>
+            </div>
+        </div>
+        {% if recentUsage is empty %}
+            <p class="muted">No completed AI calls have reported usage yet.</p>
+        {% else %}
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Project</th>
+                            <th>Operation</th>
+                            <th>Model</th>
+                            <th>Credits</th>
+                            <th>Recorded</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in recentUsage %}
+                            <tr>
+                                <td>{{ item.user ? item.user.email : 'Deleted user' }}</td>
+                                <td>{{ item.project ? item.project.name : 'Deleted project' }}</td>
+                                <td>{{ item.operation|replace({'_': ' '})|title }}</td>
+                                <td><code>{{ item.model }}</code></td>
+                                <td><strong>{{ item.credits|number_format }}</strong></td>
+                                <td>{{ item.createdAt|date('Y-m-d H:i') }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </section>
+{% endblock %}
