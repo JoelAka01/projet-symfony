@@ -17,6 +17,10 @@ final class CheckoutType extends AbstractType
         $builder
             ->add('cardholder', TextType::class, [
                 'label' => 'Name on card',
+                'attr' => [
+                    'placeholder' => 'John Doe',
+                    'maxlength' => '120',
+                ],
                 'constraints' => [
                     new Assert\NotBlank(),
                     new Assert\Length(max: 120),
@@ -24,7 +28,12 @@ final class CheckoutType extends AbstractType
             ])
             ->add('cardNumber', TextType::class, [
                 'label' => 'Card number',
-                'attr' => ['inputmode' => 'numeric', 'autocomplete' => 'cc-number'],
+                'attr' => [
+                    'inputmode' => 'numeric',
+                    'autocomplete' => 'cc-number',
+                    'placeholder' => '4242 4242 4242 4242',
+                    'maxlength' => '19',
+                ],
                 'constraints' => [
                     new Assert\NotBlank(),
                     new Assert\Regex(
@@ -35,7 +44,11 @@ final class CheckoutType extends AbstractType
             ])
             ->add('expiry', TextType::class, [
                 'label' => 'Expiry',
-                'attr' => ['placeholder' => 'MM/YY', 'autocomplete' => 'cc-exp'],
+                'attr' => [
+                    'placeholder' => 'MM/YY',
+                    'autocomplete' => 'cc-exp',
+                    'maxlength' => '5',
+                ],
                 'constraints' => [
                     new Assert\NotBlank(),
                     new Assert\Regex(pattern: '/^\d{2}\/\d{2}$/', message: 'Use MM/YY.'),
@@ -43,10 +56,15 @@ final class CheckoutType extends AbstractType
             ])
             ->add('cvc', TextType::class, [
                 'label' => 'CVC',
-                'attr' => ['inputmode' => 'numeric', 'autocomplete' => 'cc-csc'],
+                'attr' => [
+                    'inputmode' => 'numeric',
+                    'autocomplete' => 'cc-csc',
+                    'placeholder' => '123',
+                    'maxlength' => '3',
+                ],
                 'constraints' => [
                     new Assert\NotBlank(),
-                    new Assert\Regex(pattern: '/^\d{3,4}$/', message: 'Enter 3 or 4 digits.'),
+                    new Assert\Regex(pattern: '/^\d{3}$/', message: 'Enter 3 digits.'),
                 ],
             ]);
     }
