@@ -6,9 +6,9 @@ use Symfony\Component\Dotenv\Dotenv;
 
 require dirname(__DIR__) . '/vendor/autoload.php';
 
-$envFile = dirname(__DIR__).'/.env';
+$envFile = dirname(__DIR__) . '/.env';
 if (!is_file($envFile)) {
-    $envFile = dirname(__DIR__).'/.env.example';
+    $envFile = dirname(__DIR__) . '/.env.example';
 }
 
 (new Dotenv())->bootEnv($envFile);

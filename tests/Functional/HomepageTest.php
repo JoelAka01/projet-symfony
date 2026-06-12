@@ -14,6 +14,6 @@ final class HomepageTest extends WebTestCase
         $client->request('GET', '/');
 
         self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('h1', 'SEO, GEO and AI visibility workspace');
+        self::assertSelectorTextContains('h1', 'Rank on search engines. Get cited by AI.');
     }
 }
