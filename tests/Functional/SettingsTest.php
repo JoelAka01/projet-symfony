@@ -57,7 +57,7 @@ final class SettingsTest extends WebTestCase
             ->setMonthlyPriceCents(900)
             ->setMonthlyCreditLimit(1000000)
             ->setWeeklyAnalysisLimit(5);
-        
+
         $entityManager->persist($subscription);
         $entityManager->flush();
 
@@ -77,7 +77,7 @@ final class SettingsTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('body', 'canceled successfully');
-        
+
         // Assert subscription is CANCELED in DB
         $subRepo = self::getContainer()->get(\App\Repository\SubscriptionRepository::class);
         $freshSubscription = $subRepo->findOneBy(['id' => $subscription->getId()]);
@@ -90,4 +90,3 @@ final class SettingsTest extends WebTestCase
         $freshEntityManager->flush();
     }
 }
-

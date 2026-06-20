@@ -12,11 +12,11 @@ use App\Service\Audit\AuditInsightsBuilder;
 use App\Service\Audit\AuditProgressNotifier;
 use App\Service\Audit\AuditProgressStatusBuilder;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\Mercure\HubInterface;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
+use Symfony\Component\Mercure\HubInterface;
 
 final class ClaudeSeoAnalysisServiceTest extends TestCase
 {
@@ -92,7 +92,7 @@ final class ClaudeSeoAnalysisServiceTest extends TestCase
         $notifier = new AuditProgressNotifier(
             $this->createMock(HubInterface::class),
             new AuditProgressStatusBuilder(),
-            new NullLogger()
+            new NullLogger(),
         );
 
         $service = new ClaudeSeoAnalysisService(
@@ -174,7 +174,7 @@ final class ClaudeSeoAnalysisServiceTest extends TestCase
         $notifier = new AuditProgressNotifier(
             $this->createMock(HubInterface::class),
             new AuditProgressStatusBuilder(),
-            new NullLogger()
+            new NullLogger(),
         );
 
         $service = new ClaudeSeoAnalysisService(
@@ -245,7 +245,7 @@ final class ClaudeSeoAnalysisServiceTest extends TestCase
         $notifier = new AuditProgressNotifier(
             $this->createMock(HubInterface::class),
             new AuditProgressStatusBuilder(),
-            new NullLogger()
+            new NullLogger(),
         );
 
         $service = new ClaudeSeoAnalysisService(

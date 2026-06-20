@@ -38,6 +38,7 @@ final class SubscriptionRepository extends ServiceEntityRepository
 
     /**
      * @param list<User> $users
+     *
      * @return array<string, Subscription> Map of user ID string to active Subscription
      */
     public function findActiveForUsers(array $users, ?\DateTimeImmutable $at = null): array
@@ -64,7 +65,7 @@ final class SubscriptionRepository extends ServiceEntityRepository
         $map = [];
         foreach ($subscriptions as $sub) {
             $user = $sub->getUser();
-            if ($user !== null) {
+            if (null !== $user) {
                 $userId = $user->getId();
                 if (!isset($map[$userId])) {
                     $map[$userId] = $sub;

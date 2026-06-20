@@ -65,6 +65,7 @@ final class ProjectInvitationController extends AbstractController
 
             if (null !== $existing) {
                 $this->addFlash('error', sprintf('An invitation is already pending for %s.', $email));
+
                 return $this->redirectToRoute('app_project_guests_index', ['id' => $project->getId()]);
             }
 
@@ -72,6 +73,7 @@ final class ProjectInvitationController extends AbstractController
             foreach ($project->getGuests() as $guest) {
                 if ($guest->getEmail() === $email) {
                     $this->addFlash('error', sprintf('%s is already a guest of this project.', $email));
+
                     return $this->redirectToRoute('app_project_guests_index', ['id' => $project->getId()]);
                 }
             }
@@ -79,6 +81,7 @@ final class ProjectInvitationController extends AbstractController
             // Check if the user is the owner
             if ($project->getOwner()?->getEmail() === $email) {
                 $this->addFlash('error', 'You cannot invite yourself or the project owner.');
+
                 return $this->redirectToRoute('app_project_guests_index', ['id' => $project->getId()]);
             }
 
@@ -178,6 +181,7 @@ final class ProjectInvitationController extends AbstractController
         $invitation = $invitationRepository->findOneBy(['token' => $token, 'status' => 'pending']);
         if (null === $invitation) {
             $this->addFlash('error', 'This invitation link is invalid or has already been used.');
+
             return $this->redirectToRoute('app_project_index');
         }
 
@@ -191,7 +195,7 @@ final class ProjectInvitationController extends AbstractController
             $this->addFlash('error', sprintf(
                 'This invitation is for %s, but you are logged in as %s. Please log in with the correct account.',
                 $invitation->getEmail(),
-                $user->getEmail()
+                $user->getEmail(),
             ));
 
             return $this->render('project/accept_invitation_error.html.twig', [

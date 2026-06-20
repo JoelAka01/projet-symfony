@@ -281,8 +281,6 @@ class Project
         return $this;
     }
 
-
-
     /** @return Collection<int, Domain> */
     public function getDomains(): Collection
     {

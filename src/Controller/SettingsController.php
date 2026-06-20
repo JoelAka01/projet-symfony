@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Enum\SubscriptionStatus;
 use App\Form\UserAccountFormType;
 use App\Form\UserProfileFormType;
 use App\Repository\SubscriptionRepository;
-use App\Enum\SubscriptionStatus;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -146,6 +146,7 @@ final class SettingsController extends AbstractController
         $activeSubscriptions = $subscriptionRepository->findActiveSubscriptionsForUser($user);
         if (empty($activeSubscriptions)) {
             $this->addFlash('error', 'You do not have an active subscription to cancel.');
+
             return $this->redirectToRoute('app_settings');
         }
 

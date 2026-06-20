@@ -38,8 +38,6 @@ final class ProjectVoterTest extends TestCase
         self::assertSame(VoterInterface::ACCESS_GRANTED, $this->vote($owner, $project, ProjectVoter::CRAWL));
     }
 
-
-
     public function testOrganizationEditorCanManageOrganizationProject(): void
     {
         $editor = $this->user(UserRole::VIEWER);

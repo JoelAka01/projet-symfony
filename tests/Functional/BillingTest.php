@@ -72,12 +72,12 @@ final class BillingTest extends WebTestCase
 
         // Clean up
         $freshEntityManager = self::getContainer()->get(\Doctrine\ORM\EntityManagerInterface::class);
-        $subRepo = self::getContainer()->get(\App\Repository\SubscriptionRepository::class);
+        $subRepo = self::getContainer()->get(SubscriptionRepository::class);
         $freshSub = $subRepo->findActiveForUser($user);
         if ($freshSub) {
             $freshEntityManager->remove($freshSub);
         }
-        $paymentRepo = self::getContainer()->get(\App\Repository\PaymentRepository::class);
+        $paymentRepo = self::getContainer()->get(PaymentRepository::class);
         $freshPayment = $paymentRepo->findOneBy(['id' => $payment->getId()]);
         if ($freshPayment) {
             $freshEntityManager->remove($freshPayment);
@@ -98,7 +98,7 @@ final class BillingTest extends WebTestCase
         // Add a subscription first
         $subscription = new \App\Entity\Subscription();
         $subscription->setUser($user)
-            ->setPlan(\App\Enum\SubscriptionPlan::STARTER)
+            ->setPlan(SubscriptionPlan::STARTER)
             ->setStatus(\App\Enum\SubscriptionStatus::ACTIVE)
             ->setMonthlyPriceCents(900)
             ->setMonthlyCreditLimit(1000000)
@@ -133,7 +133,7 @@ final class BillingTest extends WebTestCase
         $entityManager->flush();
 
         // Create 5 consumption records to hit the weekly limit of 5
-        for ($i = 0; $i < 5; $i++) {
+        for ($i = 0; $i < 5; ++$i) {
             $usage = new \App\Entity\AnalysisQuotaUsage();
             $usage->setUser($user)
                 ->setProject($project)
@@ -153,7 +153,7 @@ final class BillingTest extends WebTestCase
 
         // Clean up
         $freshEntityManager = self::getContainer()->get(\Doctrine\ORM\EntityManagerInterface::class);
-        $subRepo = self::getContainer()->get(\App\Repository\SubscriptionRepository::class);
+        $subRepo = self::getContainer()->get(SubscriptionRepository::class);
         $freshSub = $subRepo->findOneBy(['id' => $subscription->getId()]);
         if ($freshSub) {
             $freshEntityManager->remove($freshSub);
@@ -186,10 +186,10 @@ final class BillingTest extends WebTestCase
         $billingEmailService->sendPaymentReceiptEmail($user, $payment);
 
         $emails = self::getMailerMessages();
-        
+
         $userReceipt = null;
         $adminReceipt = null;
-        
+
         foreach ($emails as $email) {
             self::assertInstanceOf(\Symfony\Component\Mime\Email::class, $email);
             $subject = $email->getSubject();

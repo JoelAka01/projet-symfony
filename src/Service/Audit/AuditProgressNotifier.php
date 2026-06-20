@@ -15,9 +15,7 @@ final class AuditProgressNotifier
         private readonly HubInterface $hub,
         private readonly AuditProgressStatusBuilder $statusBuilder,
         private readonly LoggerInterface $logger,
-    ) {
-    }
-
+    ) {}
 
     public function notify(Audit $audit): void
     {
@@ -27,7 +25,7 @@ final class AuditProgressNotifier
 
             $update = new Update(
                 $topic,
-                json_encode($statusData, JSON_THROW_ON_ERROR)
+                json_encode($statusData, JSON_THROW_ON_ERROR),
             );
 
             $this->hub->publish($update);
@@ -40,4 +38,3 @@ final class AuditProgressNotifier
         }
     }
 }
-

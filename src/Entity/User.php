@@ -323,8 +323,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->ownedProjects;
     }
 
-
-
     public function addOrganizationUser(OrganizationUser $organizationUser): static
     {
         if (!$this->organizationUsers->contains($organizationUser)) {
@@ -368,8 +366,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
         return $this;
     }
-
-
 
     /**
      * @return Collection<int, AuditLog>

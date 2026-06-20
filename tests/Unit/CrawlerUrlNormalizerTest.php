@@ -84,7 +84,7 @@ final class CrawlerUrlNormalizerTest extends TestCase
         $normalizer = new CrawlerUrlNormalizer();
         self::assertSame(
             'https://other.com/page',
-            $normalizer->normalizeForCrawl('//other.com/page', 'https://example.com/', 'other.com')
+            $normalizer->normalizeForCrawl('//other.com/page', 'https://example.com/', 'other.com'),
         );
     }
 
@@ -93,7 +93,7 @@ final class CrawlerUrlNormalizerTest extends TestCase
         $normalizer = new CrawlerUrlNormalizer();
         self::assertSame(
             'https://example.com/page',
-            $normalizer->normalizeForCrawl('https://example.com/page', 'https://other.com/', 'example.com')
+            $normalizer->normalizeForCrawl('https://example.com/page', 'https://other.com/', 'example.com'),
         );
     }
 
@@ -102,7 +102,7 @@ final class CrawlerUrlNormalizerTest extends TestCase
         $normalizer = new CrawlerUrlNormalizer();
         self::assertSame(
             'https://example.com/blog/sub/page',
-            $normalizer->normalizeForCrawl('sub/page', 'https://example.com/blog/post', 'example.com')
+            $normalizer->normalizeForCrawl('sub/page', 'https://example.com/blog/post', 'example.com'),
         );
     }
 
