@@ -41,3 +41,9 @@ RUN composer install --no-interaction --prefer-dist --no-progress --optimize-aut
     && sha256sum composer.lock | awk '{ print $1 }' > vendor/.composer.lock.sha256
 
 COPY docker/php/conf.d/app.ini /usr/local/etc/php/conf.d/app.ini
+
+COPY . .
+
+EXPOSE 8000
+
+CMD ["sh", "docker/entrypoint.sh"]

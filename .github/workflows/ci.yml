@@ -11,6 +11,34 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  lint:
+    name: PHP CS Fixer
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+      - uses: ramsey/composer-install@v3
+        with:
+          dependency-versions: locked
+      - run: vendor/bin/php-cs-fixer check --diff
+
+  static-analysis:
+    name: PHPStan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+      - uses: ramsey/composer-install@v3
+        with:
+          dependency-versions: locked
+      - run: vendor/bin/phpstan analyse --no-progress
+
   tests:
     name: PHPUnit
     runs-on: ubuntu-latest
@@ -19,7 +47,7 @@ jobs:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_DB: app_test
+          POSTGRES_DB: app_test_test
           POSTGRES_USER: app
           POSTGRES_PASSWORD: app
         options: >-
@@ -31,50 +59,87 @@ jobs:
           - 5432:5432
 
     env:
-      DATABASE_URL: postgresql://app:app@127.0.0.1:5432/app_test?serverVersion=16&charset=utf8
       APP_ENV: test
       APP_SECRET: ci-secret-replace-in-prod
+      DATABASE_URL: postgresql://app:app@127.0.0.1:5432/app_test?serverVersion=16&charset=utf8
+      MESSENGER_TRANSPORT_DSN: in-memory://
+      MAILER_DSN: null://null
 
     steps:
       - uses: actions/checkout@v4
-
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
           extensions: pdo_pgsql, intl, zip
-          coverage: none
-
-      - name: Create .env file
-        run: cp .env.example .env
-
+          coverage: pcov
+      - run: cp .env.example .env
       - uses: ramsey/composer-install@v3
         with:
           dependency-versions: locked
+      - run: composer validate --strict
+      - run: php bin/console lint:yaml config --parse-tags
+      - run: php bin/console lint:twig templates
+      - run: php bin/console lint:container
+      - run: php bin/console doctrine:database:create --if-not-exists --no-interaction
+      - run: php bin/console doctrine:migrations:migrate --no-interaction
+      - run: php bin/console doctrine:fixtures:load --no-interaction
+      - run: php bin/phpunit --coverage-xml coverage/xml --log-junit coverage/junit.xml
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 1
 
-      - name: Valider le fichier composer.json
-        run: composer validate --strict
+  mutation:
+    name: Infection
+    runs-on: ubuntu-latest
+    needs: tests
+    if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
 
-      - name: Linter les fichiers YAML
-        run: php bin/console lint:yaml config --parse-tags
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: app_test_test
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: app
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
 
-      - name: Linter les templates Twig
-        run: php bin/console lint:twig templates
+    env:
+      APP_ENV: test
+      APP_SECRET: ci-secret-replace-in-prod
+      DATABASE_URL: postgresql://app:app@127.0.0.1:5432/app_test?serverVersion=16&charset=utf8
+      MESSENGER_TRANSPORT_DSN: in-memory://
+      MAILER_DSN: null://null
 
-      - name: Linter le conteneur Symfony
-        run: php bin/console lint:container
-
-      - name: Lancer l'analyse PHPStan
-        run: vendor/bin/phpstan analyse --no-progress
-
-      - name: Créer la base de données de test
-        run: php bin/console doctrine:database:create --if-not-exists --no-interaction
-
-      - name: Créer le schéma de base de données
-        run: php bin/console doctrine:migrations:migrate --no-interaction
-
-      - name: Charger les fixtures
-        run: php bin/console doctrine:fixtures:load --no-interaction
-
-      - name: Lancer les tests
-        run: php bin/phpunit
-
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_pgsql, intl, zip
+          coverage: pcov
+      - run: cp .env.example .env
+      - uses: ramsey/composer-install@v3
+        with:
+          dependency-versions: locked
+      - uses: actions/download-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+      - run: php bin/console doctrine:database:create --if-not-exists --no-interaction
+      - run: php bin/console doctrine:migrations:migrate --no-interaction
+      - run: php bin/console doctrine:fixtures:load --no-interaction
+      - run: vendor/bin/infection --coverage=coverage/xml --threads=max --show-mutations --no-progress
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: infection-reports
+          path: var/infection/
+          retention-days: 7

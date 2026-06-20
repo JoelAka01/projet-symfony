@@ -1,0 +1,136 @@
+services:
+
+  traefik:
+    image: traefik:v3.0
+    container_name: traefik
+    restart: unless-stopped
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--providers.file.directory=/etc/traefik/dynamic"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /home/madox/app/certs:/certs:ro
+      - /home/madox/app/traefik-dynamic:/etc/traefik/dynamic:ro
+    networks:
+      - proxy
+
+  php:
+    image: ghcr.io/joelaka01/projet-symfony:latest
+    restart: always
+    environment:
+      APP_ENV: prod
+      APP_DEBUG: 0
+      APP_SECRET: ${APP_SECRET}
+      APP_CACHE_DIR: /tmp/symfony-cache
+      APP_LOG_DIR: /tmp/symfony-log
+      PHP_CLI_SERVER_WORKERS: 16
+      DEFAULT_URI: ${DEFAULT_URI}
+      DATABASE_URL: ${DATABASE_URL}
+      MESSENGER_TRANSPORT_DSN: ${MESSENGER_TRANSPORT_DSN}
+      MAILER_DSN: ${MAILER_DSN}
+      MAILER_FROM_EMAIL: ${MAILER_FROM_EMAIL}
+      MAILER_FROM_NAME: ${MAILER_FROM_NAME}
+      SENTRY_DSN: ${SENTRY_DSN}
+      CRAWLER_MAX_PAGES: ${CRAWLER_MAX_PAGES:-50}
+      CRAWLER_MAX_DEPTH: ${CRAWLER_MAX_DEPTH:-3}
+      CRAWLER_TIMEOUT_SECONDS: ${CRAWLER_TIMEOUT_SECONDS:-10}
+      CRAWLER_DELAY_MS: ${CRAWLER_DELAY_MS:-250}
+      CLAUDE_API_KEY: ${CLAUDE_API_KEY}
+      CLAUDE_MODEL: ${CLAUDE_MODEL}
+      CLAUDE_API_BASE_URL: ${CLAUDE_API_BASE_URL:-https://api.anthropic.com}
+      CLAUDE_MAX_TOKENS: ${CLAUDE_MAX_TOKENS:-16000}
+      CLAUDE_TIMEOUT_SECONDS: ${CLAUDE_TIMEOUT_SECONDS:-180}
+      CLAUDE_MAX_DURATION_SECONDS: ${CLAUDE_MAX_DURATION_SECONDS:-240}
+    depends_on:
+      database:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.php.rule=Host(`${VPS_IP}`)"
+      - "traefik.http.routers.php.entrypoints=websecure"
+      - "traefik.http.routers.php.tls=true"
+      - "traefik.http.services.php.loadbalancer.server.port=8000"
+      - "traefik.http.routers.php-http.rule=Host(`${VPS_IP}`)"
+      - "traefik.http.routers.php-http.entrypoints=web"
+      - "traefik.http.routers.php-http.middlewares=redirect-https"
+      - "traefik.http.middlewares.redirect-https.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.redirect-https.redirectscheme.permanent=true"
+    command: ["sh", "docker/entrypoint.sh"]
+    networks:
+      - proxy
+      - internal
+
+  worker:
+    image: ghcr.io/joelaka01/projet-symfony:latest
+    restart: always
+    environment:
+      APP_ENV: prod
+      APP_DEBUG: 0
+      APP_SECRET: ${APP_SECRET}
+      APP_CACHE_DIR: /tmp/symfony-cache
+      APP_LOG_DIR: /tmp/symfony-log
+      DEFAULT_URI: ${DEFAULT_URI}
+      DATABASE_URL: ${DATABASE_URL}
+      MESSENGER_TRANSPORT_DSN: ${MESSENGER_TRANSPORT_DSN}
+      MAILER_DSN: ${MAILER_DSN}
+      MAILER_FROM_EMAIL: ${MAILER_FROM_EMAIL}
+      MAILER_FROM_NAME: ${MAILER_FROM_NAME}
+      SENTRY_DSN: ${SENTRY_DSN}
+      CLAUDE_API_KEY: ${CLAUDE_API_KEY}
+      CLAUDE_MODEL: ${CLAUDE_MODEL}
+      CLAUDE_API_BASE_URL: ${CLAUDE_API_BASE_URL:-https://api.anthropic.com}
+      CLAUDE_MAX_TOKENS: ${CLAUDE_MAX_TOKENS:-16000}
+      CLAUDE_TIMEOUT_SECONDS: ${CLAUDE_TIMEOUT_SECONDS:-180}
+      CLAUDE_MAX_DURATION_SECONDS: ${CLAUDE_MAX_DURATION_SECONDS:-240}
+    depends_on:
+      database:
+        condition: service_healthy
+      php:
+        condition: service_started
+    command: ["sh", "docker/worker-entrypoint.sh"]
+    networks:
+      - internal
+
+  database:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-app}
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-app}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    volumes:
+      - database_data:/var/lib/postgresql/data:rw
+    networks:
+      - internal
+
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    networks:
+      - proxy
+      - internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mailpit.rule=Host(`${VPS_IP}`) && PathPrefix(`/mailpit`)"
+      - "traefik.http.routers.mailpit.entrypoints=websecure"
+      - "traefik.http.routers.mailpit.tls=true"
+      - "traefik.http.services.mailpit.loadbalancer.server.port=8025"
+
+networks:
+  proxy:
+  internal:
+
+volumes:
+  database_data:
