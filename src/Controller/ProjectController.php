@@ -34,6 +34,7 @@ use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
+
 final class ProjectController extends AbstractController
 {
     private const ISSUE_SEVERITIES = ['critical', 'high', 'medium', 'low', 'info'];
