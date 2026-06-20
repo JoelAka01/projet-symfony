@@ -1,4 +1,32 @@
 services:
+
+  traefik:
+    image: traefik:v3.0
+    container_name: traefik
+    restart: unless-stopped
+    command:
+      - "--providers.docker=true"
+      # Traefik surveille le socket Docker pour détecter les services automatiquement
+      - "--providers.docker.exposedbydefault=false"
+      # Sécurité : aucun conteneur n'est exposé sauf si il a le label traefik.enable=true
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--providers.file.directory=/etc/traefik/dynamic"
+      # Traefik lira aussi les fichiers dans ce dossier (notre cert auto-signé)
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Traefik lit le socket Docker en lecture seule pour découvrir les conteneurs
+      - /home/madox/app/certs:/certs:ro
+      # Nos certificats auto-signés montés en lecture seule
+      - /home/madox/app/traefik-dynamic:/etc/traefik/dynamic:ro
+      # Les fichiers de config dynamique (tls.yml)
+    networks:
+      - proxy
+      # Traefik n'a besoin que du réseau "proxy", il ne doit pas voir la DB
+
   php:
     build:
       context: .
@@ -31,9 +59,33 @@ services:
     depends_on:
       database:
         condition: service_healthy
-    ports:
-      - "8080:8000"
+    labels:
+      - "traefik.enable=true"
+      # Active l'exposition de ce conteneur via Traefik
+
+      # --- Routeur HTTPS ---
+      - "traefik.http.routers.php.rule=Host(`${VPS_IP}`)"
+      # Traefik répond aux requêtes qui arrivent sur cette IP
+      - "traefik.http.routers.php.entrypoints=websecure"
+      # Via l'entrypoint HTTPS (port 443)
+      - "traefik.http.routers.php.tls=true"
+      # Active TLS avec notre certificat auto-signé
+      - "traefik.http.services.php.loadbalancer.server.port=8000"
+      # Traefik forward vers le port 8000 du conteneur (ton php -S 0.0.0.0:8000)
+
+      # --- Routeur HTTP → redirection HTTPS ---
+      - "traefik.http.routers.php-http.rule=Host(`${VPS_IP}`)"
+      - "traefik.http.routers.php-http.entrypoints=web"
+      - "traefik.http.routers.php-http.middlewares=redirect-https"
+      - "traefik.http.middlewares.redirect-https.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.redirect-https.redirectscheme.permanent=true"
+      # Toute requête HTTP est redirigée en 301 vers HTTPS
     command: ["sh", "docker/entrypoint.sh"]
+    networks:
+      - proxy
+      # Pour que Traefik puisse lui parler
+      - internal
+      # Pour qu'il puisse parler à la DB et au worker
 
   worker:
     build:
@@ -65,6 +117,9 @@ services:
       php:
         condition: service_started
     command: ["sh", "docker/worker-entrypoint.sh"]
+    networks:
+      - internal
+      # Le worker n'est jamais exposé à l'extérieur, pas besoin du réseau proxy
 
   database:
     image: postgres:16-alpine
@@ -81,6 +136,34 @@ services:
       start_period: 10s
     volumes:
       - database_data:/var/lib/postgresql/data:rw
+    networks:
+      - internal
+      # La DB n'est JAMAIS sur le réseau proxy, uniquement interne
+
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    networks:
+      - proxy
+      - internal
+      # internal : pour recevoir les mails de ton conteneur php
+      # proxy : pour exposer l'UI web via Traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mailpit.rule=Host(`${VPS_IP}`) && PathPrefix(`/mailpit`)"
+      # Accessible sur https://IP/mailpit
+      - "traefik.http.routers.mailpit.entrypoints=websecure"
+      - "traefik.http.routers.mailpit.tls=true"
+      - "traefik.http.services.mailpit.loadbalancer.server.port=8025"
+      # L'UI Mailpit écoute sur le port 8025 en interne
+
+networks:
+  proxy:
+    # Réseau partagé entre Traefik et les services exposés à l'extérieur
+    # Traefik est le seul point d'entrée sur ce réseau
+  internal:
+    # Réseau privé : app ↔ worker ↔ database ↔ mailpit
+    # Jamais accessible depuis l'extérieur
 
 volumes:
   database_data:
