@@ -33,7 +33,7 @@ final class ProjectInvitationTest extends WebTestCase
             }
             $entityManager->remove($existingGuest);
         }
-        
+
         $existingInvites = $invitationRepository->findBy(['email' => 'invited-guest@example.com']);
         foreach ($existingInvites as $invite) {
             $entityManager->remove($invite);
@@ -85,8 +85,8 @@ final class ProjectInvitationTest extends WebTestCase
 
         // 5.1 Create a test audit for the project and access its guest detail view
         $entityManager = self::getContainer()->get('doctrine.orm.entity_manager');
-        $project = $entityManager->getRepository(\App\Entity\Project::class)->findOneBy(['name' => 'Example public website']);
-        self::assertInstanceOf(\App\Entity\Project::class, $project);
+        $project = $entityManager->getRepository(Project::class)->findOneBy(['name' => 'Example public website']);
+        self::assertInstanceOf(Project::class, $project);
         $domain = $project->getDomains()->first();
         self::assertInstanceOf(\App\Entity\Domain::class, $domain);
 
@@ -144,7 +144,7 @@ final class ProjectInvitationTest extends WebTestCase
 
         // 8. Accept invitation with matching email
         $client->getCookieJar()->clear(); // Log out
-        
+
         // We need the invited guest user to exist to log in. Let's create one dynamically or use an existing one.
         // Actually, we can create the invited guest user in DB first.
         $entityManager = $container->get('doctrine.orm.entity_manager');
@@ -174,7 +174,7 @@ final class ProjectInvitationTest extends WebTestCase
         $projectRepository = self::getContainer()->get(ProjectRepository::class);
         $project = $projectRepository->find($project->getId());
         self::assertInstanceOf(Project::class, $project);
-        
+
         $guestUserLoaded = self::getContainer()->get(UserRepository::class)->find($guestUser->getId());
         self::assertInstanceOf(User::class, $guestUserLoaded);
         self::assertTrue($project->getGuests()->contains($guestUserLoaded));

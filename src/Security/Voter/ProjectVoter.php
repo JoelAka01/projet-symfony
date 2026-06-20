@@ -108,8 +108,6 @@ final class ProjectVoter extends Voter
         return null !== $owner && $this->isSameUser($owner, $user);
     }
 
-
-
     private function hasOrganizationMembership(Project $project, User $user): bool
     {
         $organization = $project->getOrganization();

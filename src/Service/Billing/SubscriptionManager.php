@@ -61,7 +61,7 @@ final class SubscriptionManager
         $this->entityManager->flush();
 
         // Send activation/change emails
-        if ($oldPlan !== null && $oldPlan !== $plan) {
+        if (null !== $oldPlan && $oldPlan !== $plan) {
             $this->billingEmailService->sendSubscriptionChangedEmail($user, $subscription, $oldPlan);
         } else {
             $this->billingEmailService->sendSubscriptionActivatedEmail($user, $subscription);
@@ -106,7 +106,7 @@ final class SubscriptionManager
             $this->entityManager->flush();
 
             // Send activation/change emails
-            if ($oldPlan !== null && $oldPlan !== $subscription->getPlan()) {
+            if (null !== $oldPlan && $oldPlan !== $subscription->getPlan()) {
                 $this->billingEmailService->sendSubscriptionChangedEmail($user, $subscription, $oldPlan);
             } else {
                 $this->billingEmailService->sendSubscriptionActivatedEmail($user, $subscription);

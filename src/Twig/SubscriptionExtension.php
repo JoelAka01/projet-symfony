@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Twig;
 
 use App\Entity\User;
-use App\Repository\SubscriptionRepository;
 use App\Repository\AnalysisQuotaUsageRepository;
+use App\Repository\SubscriptionRepository;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
 
@@ -51,6 +51,7 @@ final class SubscriptionExtension extends AbstractExtension
         }
 
         $weeklyUsed = $this->quotaUsageRepository->countForUserSince($user, $weekStartedAt);
+
         return $weeklyUsed >= $subscription->getWeeklyAnalysisLimit();
     }
 }

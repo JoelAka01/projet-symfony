@@ -23,8 +23,7 @@ final class BillingEmailService
         private readonly string $fromName,
         #[Autowire(param: 'app.admin_email')]
         private readonly string $adminEmail,
-    ) {
-    }
+    ) {}
 
     public function sendSubscriptionActivatedEmail(User $user, Subscription $subscription): void
     {
