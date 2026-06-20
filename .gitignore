@@ -37,7 +37,9 @@ AGENTS.md
 ###> infection/infection ###
 /var/infection/
 ###< infection/infection ###
+
 .env
-env.dev
+.env.dev
+.env.prod
 
 instructions-cms-testing.md
