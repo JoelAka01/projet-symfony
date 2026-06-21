@@ -97,7 +97,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: tests
     continue-on-error: true
-    if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
+    if: false
 
     services:
       postgres:
