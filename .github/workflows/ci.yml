@@ -7,8 +7,8 @@ on:
     branches: [main]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.sha }}
+  cancel-in-progress: false
 
 jobs:
   lint:
@@ -91,54 +91,3 @@ jobs:
           name: coverage
           path: coverage/
           retention-days: 1
-
-  mutation:
-    name: Infection
-    runs-on: ubuntu-latest
-    needs: tests
-    continue-on-error: true
-    if: false
-
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_DB: app_test_test
-          POSTGRES_USER: app
-          POSTGRES_PASSWORD: app
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-    env:
-      APP_ENV: test
-      APP_SECRET: ci-secret-replace-in-prod
-      DATABASE_URL: postgresql://app:app@127.0.0.1:5432/app_test?serverVersion=16&charset=utf8
-      MESSENGER_TRANSPORT_DSN: in-memory://
-      MAILER_DSN: null://null
-
-    steps:
-      - uses: actions/checkout@v4
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.3'
-          extensions: pdo_pgsql, intl, zip
-          coverage: pcov
-      - run: cp .env.example .env
-      - uses: ramsey/composer-install@v3
-        with:
-          dependency-versions: locked
-      - run: php bin/console doctrine:database:create --if-not-exists --no-interaction
-      - run: php bin/console doctrine:migrations:migrate --no-interaction
-      - run: php bin/console doctrine:fixtures:load --no-interaction
-      - run: vendor/bin/infection --coverage=coverage --skip-initial-tests --threads=1 --show-mutations --no-progress
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: infection-reports
-          path: var/infection/
-          retention-days: 7
