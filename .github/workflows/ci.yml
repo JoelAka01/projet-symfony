@@ -85,7 +85,12 @@ jobs:
       - run: php bin/console doctrine:database:create --if-not-exists --no-interaction
       - run: php bin/console doctrine:migrations:migrate --no-interaction
       - run: php bin/console doctrine:fixtures:load --no-interaction
-      - run: php bin/phpunit
+      - run: php bin/phpunit --coverage-xml coverage/coverage-xml --log-junit coverage/junit.xml
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 1
 
   mutation:
     name: Infection
@@ -129,7 +134,7 @@ jobs:
       - run: php bin/console doctrine:database:create --if-not-exists --no-interaction
       - run: php bin/console doctrine:migrations:migrate --no-interaction
       - run: php bin/console doctrine:fixtures:load --no-interaction
-      - run: vendor/bin/infection --threads=1 --show-mutations --no-progress
+      - run: vendor/bin/infection --coverage=coverage --threads=max --show-mutations --no-progress
       - uses: actions/upload-artifact@v4
         if: always()
         with:
