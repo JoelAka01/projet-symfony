@@ -23,6 +23,7 @@
         "@default": true
     },
     "testFramework": "phpunit",
+    "testFrameworkOptions": "--order-by=default",
     "minMsi": 50,
     "minCoveredMsi": 70
 }
