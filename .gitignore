@@ -43,3 +43,4 @@ AGENTS.md
 .env.prod
 
 instructions-cms-testing.md
+/coverage/
