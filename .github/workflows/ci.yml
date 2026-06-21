@@ -8,7 +8,7 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   lint:
@@ -131,10 +131,6 @@ jobs:
       - uses: ramsey/composer-install@v3
         with:
           dependency-versions: locked
-      - uses: actions/download-artifact@v4
-        with:
-          name: coverage
-          path: coverage/
       - run: php bin/console doctrine:database:create --if-not-exists --no-interaction
       - run: php bin/console doctrine:migrations:migrate --no-interaction
       - run: php bin/console doctrine:fixtures:load --no-interaction
