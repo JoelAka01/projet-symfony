@@ -21,7 +21,7 @@ services:
       - proxy
 
   php:
-    image: ghcr.io/madoxsio/projet-symfony:latest
+    image: ghcr.io/joelaka01/projet-symfony:latest
     restart: always
     environment:
       APP_ENV: prod
@@ -67,7 +67,7 @@ services:
       - internal
 
   worker:
-    image: ghcr.io/madoxsio/projet-symfony:latest
+    image: ghcr.io/joelaka01/projet-symfony:latest
     restart: always
     environment:
       APP_ENV: prod
