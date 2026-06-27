@@ -4,6 +4,8 @@ services:
     image: traefik:v3.0
     container_name: traefik
     restart: unless-stopped
+    environment:
+      - DOCKER_API_VERSION=1.41
     command:
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
@@ -21,7 +23,7 @@ services:
       - proxy
 
   php:
-    image: ghcr.io/madoxsio/projet-symfony:latest
+    image: ghcr.io/joelaka01/projet-symfony:latest
     restart: always
     environment:
       APP_ENV: prod
@@ -67,7 +69,7 @@ services:
       - internal
 
   worker:
-    image: ghcr.io/madoxsio/projet-symfony:latest
+    image: ghcr.io/joelaka01/projet-symfony:latest
     restart: always
     environment:
       APP_ENV: prod
