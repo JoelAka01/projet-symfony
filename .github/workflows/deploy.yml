@@ -13,7 +13,7 @@ concurrency:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: joelaka01/projet-symfony
+  IMAGE_NAME: madoxsio/projet-symfony
 
 jobs:
   build-push:
