@@ -54,7 +54,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: compose.prod.yaml
+          source: "compose.prod.yaml,traefik-dynamic/"
           target: /home/madox/app
 
       - uses: appleboy/ssh-action@v1.0.3
