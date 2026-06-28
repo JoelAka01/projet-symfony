@@ -4,11 +4,7 @@ services:
     image: traefik:v3.4
     container_name: traefik
     restart: unless-stopped
-    environment:
-      - DOCKER_API_VERSION=1.41
     command:
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
       - "--providers.file.directory=/etc/traefik/dynamic"
@@ -16,7 +12,6 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
       - /home/madox/app/certs:/certs:ro
       - /home/madox/app/traefik-dynamic:/etc/traefik/dynamic:ro
     networks:
@@ -52,17 +47,6 @@ services:
     depends_on:
       database:
         condition: service_healthy
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.php.rule=Host(`${VPS_IP}`)"
-      - "traefik.http.routers.php.entrypoints=websecure"
-      - "traefik.http.routers.php.tls=true"
-      - "traefik.http.services.php.loadbalancer.server.port=8000"
-      - "traefik.http.routers.php-http.rule=Host(`${VPS_IP}`)"
-      - "traefik.http.routers.php-http.entrypoints=web"
-      - "traefik.http.routers.php-http.middlewares=redirect-https"
-      - "traefik.http.middlewares.redirect-https.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.redirect-https.redirectscheme.permanent=true"
     command: ["sh", "docker/entrypoint.sh"]
     networks:
       - proxy
@@ -123,12 +107,6 @@ services:
     networks:
       - proxy
       - internal
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.mailpit.rule=Host(`${VPS_IP}`) && PathPrefix(`/mailpit`)"
-      - "traefik.http.routers.mailpit.entrypoints=websecure"
-      - "traefik.http.routers.mailpit.tls=true"
-      - "traefik.http.services.mailpit.loadbalancer.server.port=8025"
 
 networks:
   proxy:

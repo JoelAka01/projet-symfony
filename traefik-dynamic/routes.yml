@@ -1,0 +1,25 @@
+http:
+  routers:
+    php:
+      rule: "Host(`134.122.113.115`)"
+      entrypoints:
+        - websecure
+      tls: {}
+      service: php-svc
+    php-http:
+      rule: "Host(`134.122.113.115`)"
+      entrypoints:
+        - web
+      middlewares:
+        - redirect-https
+      service: php-svc
+  middlewares:
+    redirect-https:
+      redirectScheme:
+        scheme: https
+        permanent: true
+  services:
+    php-svc:
+      loadBalancer:
+        servers:
+          - url: "http://php:8000"
