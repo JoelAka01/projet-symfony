@@ -19,6 +19,7 @@ services:
       DEFAULT_URI: http://localhost:8080
       DATABASE_URL: postgresql://app:app@database:5432/app?serverVersion=16&charset=utf8
       MESSENGER_TRANSPORT_DSN: doctrine://default?auto_setup=1
+      REDIS_DSN: redis://redis:6379
       MAILER_DSN: smtp://mailpit:1025
       MAILER_FROM_EMAIL: ${MAILER_FROM_EMAIL:-no-reply@seo-geo-ai.local}
       MERCURE_URL: ${MERCURE_URL:-http://mercure/.well-known/mercure}
@@ -35,6 +36,7 @@ services:
       CLAUDE_MAX_TOKENS: ${CLAUDE_MAX_TOKENS:-32000}
       CLAUDE_TIMEOUT_SECONDS: ${CLAUDE_TIMEOUT_SECONDS:-300}
       CLAUDE_MAX_DURATION_SECONDS: ${CLAUDE_MAX_DURATION_SECONDS:-480}
+      ZENSERP_API_KEY: ${ZENSERP_API_KEY:-}
       CMS_CREDENTIAL_ENCRYPTION_KEY: ${CMS_CREDENTIAL_ENCRYPTION_KEY:-}
       SHOPIFY_API_VERSION: ${SHOPIFY_API_VERSION:-2026-04}
       CMS_HTTP_TIMEOUT_SECONDS: ${CMS_HTTP_TIMEOUT_SECONDS:-30}
@@ -42,6 +44,8 @@ services:
     depends_on:
       database:
         condition: service_healthy
+      redis:
+        condition: service_started
       mailpit:
         condition: service_started
     ports:
@@ -67,6 +71,7 @@ services:
       DEFAULT_URI: http://localhost:8080
       DATABASE_URL: postgresql://app:app@database:5432/app?serverVersion=16&charset=utf8
       MESSENGER_TRANSPORT_DSN: doctrine://default?auto_setup=1
+      REDIS_DSN: redis://redis:6379
       MAILER_DSN: smtp://mailpit:1025
       MAILER_FROM_EMAIL: ${MAILER_FROM_EMAIL:-no-reply@seo-geo-ai.local}
       MERCURE_URL: ${MERCURE_URL:-http://mercure/.well-known/mercure}
@@ -83,6 +88,7 @@ services:
       CLAUDE_MAX_TOKENS: ${CLAUDE_MAX_TOKENS:-32000}
       CLAUDE_TIMEOUT_SECONDS: ${CLAUDE_TIMEOUT_SECONDS:-300}
       CLAUDE_MAX_DURATION_SECONDS: ${CLAUDE_MAX_DURATION_SECONDS:-480}
+      ZENSERP_API_KEY: ${ZENSERP_API_KEY:-}
       CMS_CREDENTIAL_ENCRYPTION_KEY: ${CMS_CREDENTIAL_ENCRYPTION_KEY:-}
       SHOPIFY_API_VERSION: ${SHOPIFY_API_VERSION:-2026-04}
       CMS_HTTP_TIMEOUT_SECONDS: ${CMS_HTTP_TIMEOUT_SECONDS:-30}
@@ -90,6 +96,8 @@ services:
     depends_on:
       database:
         condition: service_healthy
+      redis:
+        condition: service_started
       php:
         condition: service_started
     command: ["sh", "docker/worker-entrypoint.sh"]
@@ -110,6 +118,11 @@ services:
       - "5432:5432"
     volumes:
       - database_data:/var/lib/postgresql/data:rw
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
 
   mailpit:
     image: axllent/mailpit:latest
