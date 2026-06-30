@@ -45,7 +45,7 @@ final class ArticleImageFixtures extends Fixture implements DependentFixtureInte
 
         $imageCount = 0;
 
-        for ($a = 0; $a < FixtureConfig::ARTICLES; ++$a) {
+        for ($a = 0; $a < FixtureConfig::ARTICLES; $a++) {
             $article = $this->getReference(FixtureReference::article($a), Article::class);
 
             if (!\in_array($article->getStatus(), [ArticleStatus::PUBLISHED, ArticleStatus::GENERATED], true)) {
@@ -55,7 +55,7 @@ final class ArticleImageFixtures extends Fixture implements DependentFixtureInte
             // 1-2 images par article publié/généré
             $nbImages = random_int(1, 2);
 
-            for ($i = 0; $i < $nbImages; ++$i) {
+            for ($i = 0; $i < $nbImages; $i++) {
                 $dim = $dimensions[array_rand($dimensions)];
 
                 $image = new ArticleImage();
@@ -68,7 +68,7 @@ final class ArticleImageFixtures extends Fixture implements DependentFixtureInte
                     ->setHeight($dim['height']);
 
                 $manager->persist($image);
-                ++$imageCount;
+                $imageCount++;
             }
         }
 
