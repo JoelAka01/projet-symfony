@@ -46,7 +46,7 @@ final class AuditLogFixtures extends Fixture implements DependentFixtureInterfac
         $actions = FixtureHelper::auditLogActions();
         $orgRefs = [FixtureReference::ORG_AFRIDIL, FixtureReference::ORG_SKYMOTION, FixtureReference::ORG_WEBPULSE, FixtureReference::ORG_FREELANCE];
 
-        for ($i = 0; $i < FixtureConfig::AUDIT_LOG_ENTRIES; ++$i) {
+        for ($i = 0; $i < FixtureConfig::AUDIT_LOG_ENTRIES; $i++) {
             $action = $actions[array_rand($actions)];
             $orgRef = $orgRefs[$i % \count($orgRefs)];
             $userIdx = $i % FixtureConfig::USERS;
