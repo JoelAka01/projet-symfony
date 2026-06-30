@@ -88,7 +88,7 @@ final class SubscriptionFixtures extends Fixture implements DependentFixtureInte
         ];
 
         $remaining = FixtureConfig::SUBSCRIPTIONS - $subscriptionIndex;
-        for ($i = 0; $i < $remaining; ++$i) {
+        for ($i = 0; $i < $remaining; $i++) {
             $userIdx = 3 + ($i % (FixtureConfig::USERS - FixtureConfig::DEMO_USERS));
             $user = $this->getReference(FixtureReference::user($userIdx), User::class);
 
