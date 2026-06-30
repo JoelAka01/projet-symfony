@@ -45,7 +45,16 @@ final class AnalyzeSerpHandler
             $country = $topicResearch->getCountry() ?? 'FR';
             $language = $topicResearch->getLanguage() ?? 'fr';
             $serpResult = $this->serpProvider->search($topicResearch->getPrimaryKeyword(), $country, $language);
-            $suggestions = $this->serpProvider->suggest($topicResearch->getPrimaryKeyword(), $country, $language);
+            $suggestions = [];
+            try {
+                $suggestions = $this->serpProvider->suggest($topicResearch->getPrimaryKeyword(), $country, $language);
+            } catch (\Throwable $exception) {
+                $this->logger->warning('Pipeline SERP suggestions unavailable; continuing with search results only.', [
+                    'topic_research_id' => $topicResearch->getId(),
+                    'error' => $exception->getMessage(),
+                ]);
+            }
+
             $serpAnalysis = $this->serpQuestionAnalyzer->analyze($topicResearch, $serpResult, $suggestions);
 
             $topicResearch
