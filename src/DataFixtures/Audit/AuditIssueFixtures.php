@@ -49,7 +49,7 @@ final class AuditIssueFixtures extends Fixture implements DependentFixtureInterf
         $issueIndex = 0;
         $pageRefIndex = 0;
 
-        for ($a = 0; $a < FixtureConfig::AUDITS; ++$a) {
+        for ($a = 0; $a < FixtureConfig::AUDITS; $a++) {
             $ref = FixtureReference::audit($a);
             if (!$this->hasReference($ref, Audit::class)) {
                 continue;
@@ -57,7 +57,7 @@ final class AuditIssueFixtures extends Fixture implements DependentFixtureInterf
 
             $audit = $this->getReference($ref, Audit::class);
 
-            if (AuditStatus::COMPLETED !== $audit->getStatus()) {
+            if ($audit->getStatus() !== AuditStatus::COMPLETED) {
                 // Avancer le pageRefIndex pour les audits RUNNING aussi
                 $pagesCrawled = $audit->getPagesCrawled() ?? 0;
                 $pageRefIndex += $pagesCrawled;
@@ -70,7 +70,7 @@ final class AuditIssueFixtures extends Fixture implements DependentFixtureInterf
 
             // Collecter les pages de cet audit
             $auditPages = [];
-            for ($p = 0; $p < $pagesCrawled; ++$p) {
+            for ($p = 0; $p < $pagesCrawled; $p++) {
                 $pageRef = FixtureReference::auditPage($pageRefIndex + $p);
                 if ($this->hasReference($pageRef, AuditPage::class)) {
                     $auditPages[] = $this->getReference($pageRef, AuditPage::class);
@@ -80,7 +80,7 @@ final class AuditIssueFixtures extends Fixture implements DependentFixtureInterf
 
             // Générer les issues par sévérité
             foreach ($issueCounts as $severity => $count) {
-                for ($i = 0; $i < $count; ++$i) {
+                for ($i = 0; $i < $count; $i++) {
                     $issueType = $issueTypes[array_rand($issueTypes)];
 
                     // 80% des issues liées à une page, 20% audit-level
@@ -100,7 +100,7 @@ final class AuditIssueFixtures extends Fixture implements DependentFixtureInterf
                         $issueType['recommendation'],
                     );
 
-                    ++$issueIndex;
+                    $issueIndex++;
                     FixtureHelper::batchFlush($manager, $issueIndex);
                 }
             }

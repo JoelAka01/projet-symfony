@@ -87,11 +87,11 @@ final class AuditFixtures extends Fixture implements DependentFixtureInterface, 
             'Too many redirects (>10)',
         ];
 
-        for ($p = $projectStart; $p < $projectEnd; ++$p) {
+        for ($p = $projectStart; $p < $projectEnd; $p++) {
             $project = $this->getReference(FixtureReference::project($p), Project::class);
             $domain = $this->getReference(FixtureReference::domain($p), Domain::class);
 
-            for ($a = 0; $a < $auditsPerProject; ++$a) {
+            for ($a = 0; $a < $auditsPerProject; $a++) {
                 // Date de l'audit : espacement temporel réaliste
                 $monthsAgo = match ($profile) {
                     'growing' => (($auditsPerProject - 1 - $a) * 2) + 1,     // 5, 3, 1 mois
@@ -103,7 +103,7 @@ final class AuditFixtures extends Fixture implements DependentFixtureInterface, 
 
                 // Injecter des statuts variés (~10% QUEUED, ~10% RUNNING, ~10% FAILED, ~70% COMPLETED)
                 $rand = random_int(0, 100);
-                if ($a === $auditsPerProject - 1 && $rand < 15 && 'new' !== $profile) {
+                if ($a === $auditsPerProject - 1 && $rand < 15 && $profile !== 'new') {
                     // Dernier audit d'un projet : possibilité QUEUED ou RUNNING
                     if ($rand < 8) {
                         AuditFactory::createQueued($manager, $project, $domain, $user);
@@ -115,7 +115,7 @@ final class AuditFixtures extends Fixture implements DependentFixtureInterface, 
                     continue;
                 }
 
-                if ('struggling' === $profile && $a === $auditsPerProject - 1 && $p === $projectEnd - 1) {
+                if ($profile === 'struggling' && $a === $auditsPerProject - 1 && $p === $projectEnd - 1) {
                     // Studio Freelance : dernier audit du dernier projet = FAILED
                     $audit = AuditFactory::createFailed(
                         $manager,
