@@ -36,7 +36,7 @@ final class AuditPageFactory
             ->setExternalLinksCount(random_int(0, 8))
             ->setImagesWithoutAltCount(random_int(0, 5))
             ->setLoadTimeMs($loadTimeMs ?? random_int(200, 4000))
-            ->setIsIndexable(200 === $statusCode)
+            ->setIsIndexable($statusCode === 200)
             ->setStructuredDataPresent(random_int(0, 100) < 30);
 
         $manager->persist($page);
