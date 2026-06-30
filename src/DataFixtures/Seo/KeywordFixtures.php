@@ -88,7 +88,7 @@ final class KeywordFixtures extends Fixture implements DependentFixtureInterface
             'ia' => $this->getReference(FixtureReference::keywordCluster(14), KeywordCluster::class),
         ];
 
-        for ($i = 0; $i < 100; ++$i) {
+        for ($i = 0; $i < 100; $i++) {
             $projectIdx = 13 + ($i % 10);
             $project = $this->getReference(FixtureReference::project($projectIdx), Project::class);
 
@@ -113,7 +113,7 @@ final class KeywordFixtures extends Fixture implements DependentFixtureInterface
         }
 
         // ── Studio Freelance — 40 mots-clés Faker ─────────────────────
-        for ($i = 0; $i < 40; ++$i) {
+        for ($i = 0; $i < 40; $i++) {
             $projectIdx = 23 + ($i % 2);
             $project = $this->getReference(FixtureReference::project($projectIdx), Project::class);
 
