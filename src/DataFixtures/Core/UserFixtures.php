@@ -40,15 +40,15 @@ final class UserFixtures extends Fixture implements FixtureGroupInterface
         $index = 0;
 
         // ── Comptes démo ───────────────────────────────────────────────
-        $admin = UserFactory::create($manager, $this->passwordHasher, 'admin@seo-ai.test', 'Admin', 'Demo', UserRole::ADMIN);
+        $admin = UserFactory::create($manager, $this->passwordHasher, 'admin@example.com', 'Admin', 'Demo', UserRole::ADMIN);
         $this->addReference(FixtureReference::USER_ADMIN, $admin);
         $this->addReference(FixtureReference::user($index++), $admin);
 
-        $managerUser = UserFactory::create($manager, $this->passwordHasher, 'manager@seo-ai.test', 'Manager', 'Demo', UserRole::EDITOR);
+        $managerUser = UserFactory::create($manager, $this->passwordHasher, 'manager@example.com', 'Manager', 'Demo', UserRole::EDITOR);
         $this->addReference(FixtureReference::USER_MANAGER, $managerUser);
         $this->addReference(FixtureReference::user($index++), $managerUser);
 
-        $user = UserFactory::create($manager, $this->passwordHasher, 'user@seo-ai.test', 'User', 'Demo', UserRole::VIEWER);
+        $user = UserFactory::create($manager, $this->passwordHasher, 'user@example.com', 'User', 'Demo', UserRole::VIEWER);
         $this->addReference(FixtureReference::USER_USER, $user);
         $this->addReference(FixtureReference::user($index++), $user);
 
@@ -59,7 +59,7 @@ final class UserFixtures extends Fixture implements FixtureGroupInterface
             $fakerUser = UserFactory::create(
                 $manager,
                 $this->passwordHasher,
-                sprintf('user%d@seo-ai.test', $i),
+                sprintf('user%d@example.com', $i),
                 $faker->firstName(),
                 $faker->lastName(),
                 $faker->randomElement($roles),
