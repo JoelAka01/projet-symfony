@@ -31,7 +31,7 @@ final class ArticleFactory
             ->setSeoScore($seoScore)
             ->setWordCount($wordCount);
 
-        if (ArticleStatus::PUBLISHED === $status || ArticleStatus::GENERATED === $status) {
+        if ($status === ArticleStatus::PUBLISHED || $status === ArticleStatus::GENERATED) {
             $slug = self::slugify($title);
             $article
                 ->setSlug($slug)
@@ -45,11 +45,11 @@ final class ArticleFactory
                 ->setGeneratedAt(new \DateTimeImmutable(sprintf('-%d days', random_int(1, 60))));
         }
 
-        if (ArticleStatus::PUBLISHED === $status) {
+        if ($status === ArticleStatus::PUBLISHED) {
             $article->setPublishedAt(new \DateTimeImmutable(sprintf('-%d days', random_int(1, 30))));
         }
 
-        if (ArticleStatus::SCHEDULED === $status) {
+        if ($status === ArticleStatus::SCHEDULED) {
             $article->setScheduledAt(new \DateTimeImmutable(sprintf('+%d days', random_int(1, 14))));
         }
 
@@ -70,11 +70,11 @@ final class ArticleFactory
     {
         return sprintf(
             '<h1>%s</h1><p>Cet article présente une analyse approfondie du sujet. '
-            . 'Nos experts ont compilé les meilleures pratiques et recommandations.</p>'
-            . '<h2>Points clés</h2><ul><li>Analyse détaillée du marché</li>'
-            . '<li>Recommandations stratégiques</li><li>Tendances actuelles</li></ul>'
-            . '<h2>Conclusion</h2><p>En résumé, ce sujet mérite une attention particulière '
-            . 'pour optimiser votre stratégie digitale.</p>',
+            .'Nos experts ont compilé les meilleures pratiques et recommandations.</p>'
+            .'<h2>Points clés</h2><ul><li>Analyse détaillée du marché</li>'
+            .'<li>Recommandations stratégiques</li><li>Tendances actuelles</li></ul>'
+            .'<h2>Conclusion</h2><p>En résumé, ce sujet mérite une attention particulière '
+            .'pour optimiser votre stratégie digitale.</p>',
             htmlspecialchars($title),
         );
     }
