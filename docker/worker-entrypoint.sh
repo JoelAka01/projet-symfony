@@ -25,4 +25,4 @@ done
 
 php bin/console cache:warmup --no-interaction
 
-exec php bin/console messenger:consume async --time-limit=3600 --memory-limit=256M -vv
+exec php bin/console messenger:consume async pipeline --time-limit=3600 --memory-limit=256M -vv
