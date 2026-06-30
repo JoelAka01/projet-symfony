@@ -404,14 +404,20 @@ class TopicResearch
             return $this->failedStep === $step;
         }
 
-        return match ($step) {
-            self::STEP_SERP_ANALYSIS => null !== $this->serpAnalysis,
-            self::STEP_INTELLIGENCE => null !== $this->intelligenceAnalysis,
-            self::STEP_BRIEF_OUTLINE => null !== $this->contentBrief,
-            self::STEP_ARTICLE => null !== $this->getArticle()?->getContentHtml(),
-            self::STEP_SEO_SCORE => null !== $this->getArticle()?->getSeoScore(),
-            default => false,
-        };
+        if (self::STEP_SERP_ANALYSIS === $step) {
+            return null !== $this->serpAnalysis;
+        }
+        if (self::STEP_INTELLIGENCE === $step) {
+            return null !== $this->intelligenceAnalysis;
+        }
+        if (self::STEP_BRIEF_OUTLINE === $step) {
+            return null !== $this->contentBrief;
+        }
+        if (self::STEP_ARTICLE === $step) {
+            return null !== $this->getArticle()?->getContentHtml();
+        }
+
+        return null !== $this->getArticle()?->getSeoScore();
     }
 
     private function optionalString(?string $value, ?int $maxLength = null): ?string
