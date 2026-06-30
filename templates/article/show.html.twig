@@ -96,7 +96,7 @@
     {% if is_granted('PROJECT_MANAGE', project) %}
         <section class="split-grid">
             <article class="panel">
-                <h2>Write or improve with Claude</h2>
+                <h2>Fast generation</h2>
                 <p class="muted">Uses the selected keywords and the latest completed real crawl analysis. It never substitutes fake content when the API is unavailable.</p>
                 {{ form_start(generateForm, { attr: { class: 'form-stack', 'data-analysis-form': '' } }) }}
                     {{ form_widget(generateForm) }}
@@ -106,6 +106,9 @@
                         <span>SeoGeo is writing and structuring the article.</span>
                     </div>
                 {{ form_end(generateForm) }}
+                <p style="margin-top: 16px;">
+                    <a class="button secondary" href="{{ path('app_topic_research_new', { project: project.id }) }}">Start intelligent generation</a>
+                </p>
             </article>
 
             <article class="panel">

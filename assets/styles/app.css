@@ -577,6 +577,20 @@ a {
     background: #0f766e;
 }
 
+.pipeline-progress .analysis-progress__steps {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.pipeline-retry-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.pipeline-retry-actions form {
+    margin: 0;
+}
+
 .analysis-progress__facts {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
