@@ -66,7 +66,7 @@ final class BacklinkFixtures extends Fixture implements DependentFixtureInterfac
             'Source', 'Référence', 'Guide complet', 'Comparatif',
         ];
 
-        for ($i = 0; $i < FixtureConfig::BACKLINKS; ++$i) {
+        for ($i = 0; $i < FixtureConfig::BACKLINKS; $i++) {
             // Choisir source et target (projets différents)
             $sourceIdx = $i % FixtureConfig::PROJECTS;
             $targetIdx = ($sourceIdx + random_int(1, FixtureConfig::PROJECTS - 1)) % FixtureConfig::PROJECTS;
@@ -99,7 +99,7 @@ final class BacklinkFixtures extends Fixture implements DependentFixtureInterfac
                 $backlink->setLastCheckedAt(new \DateTimeImmutable(sprintf('-%d days', random_int(0, 7))));
             }
 
-            if (BacklinkStatus::REMOVED === $status) {
+            if ($status === BacklinkStatus::REMOVED) {
                 $backlink->setRemovedAt(new \DateTimeImmutable(sprintf('-%d days', random_int(1, 30))));
             }
 
