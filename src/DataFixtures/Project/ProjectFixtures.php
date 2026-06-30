@@ -54,7 +54,7 @@ final class ProjectFixtures extends Fixture implements DependentFixtureInterface
         $this->addReference(FixtureReference::PROJECT_AFRIDIL, $afridil);
         $this->addReference(FixtureReference::project($projectIndex++), $afridil);
 
-        for ($i = 0; $i < 9; ++$i) {
+        for ($i = 0; $i < 9; $i++) {
             $name = $projectNames[$i % \count($projectNames)];
             $status = $i < 7 ? ProjectStatus::ACTIVE : ProjectStatus::PAUSED;
             $project = ProjectFactory::create($manager, $orgAfridil, $admin, $name, $status, 'fr', 'CI');
@@ -69,8 +69,8 @@ final class ProjectFixtures extends Fixture implements DependentFixtureInterface
         $this->addReference(FixtureReference::PROJECT_SKYMOTION, $skymotion);
         $this->addReference(FixtureReference::project($projectIndex++), $skymotion);
 
-        for ($i = 0; $i < 2; ++$i) {
-            $name = 0 === $i ? 'SkyMotion Blog' : 'SkyMotion Boutique';
+        for ($i = 0; $i < 2; $i++) {
+            $name = $i === 0 ? 'SkyMotion Blog' : 'SkyMotion Boutique';
             $project = ProjectFactory::create($manager, $orgSkymotion, $managerUser, $name, ProjectStatus::ACTIVE, 'fr', 'FR');
             $this->addReference(FixtureReference::project($projectIndex++), $project);
         }
@@ -79,13 +79,13 @@ final class ProjectFixtures extends Fixture implements DependentFixtureInterface
         $orgWebpulse = $this->getReference(FixtureReference::ORG_WEBPULSE, Organization::class);
         $webpulseOwner = $this->getReference(FixtureReference::user(8), User::class);
 
-        for ($i = 0; $i < 10; ++$i) {
+        for ($i = 0; $i < 10; $i++) {
             $nameIndex = (9 + $i) % \count($projectNames);
             $name = $projectNames[$nameIndex];
             $status = $i < 8 ? ProjectStatus::ACTIVE : ProjectStatus::PAUSED;
             $lang = $i < 6 ? 'fr' : 'en';
             $country = $i < 6 ? 'FR' : 'US';
-            $owner = 0 === $i % 3 ? $webpulseOwner : $this->getReference(FixtureReference::user(9 + ($i % 2)), User::class);
+            $owner = $i % 3 === 0 ? $webpulseOwner : $this->getReference(FixtureReference::user(9 + ($i % 2)), User::class);
 
             $project = ProjectFactory::create($manager, $orgWebpulse, $owner, $name, $status, $lang, $country);
             $this->addReference(FixtureReference::project($projectIndex++), $project);

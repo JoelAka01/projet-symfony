@@ -40,7 +40,7 @@ final class DomainFixtures extends Fixture implements DependentFixtureInterface,
     {
         $projectDomains = FixtureHelper::projectDomains();
 
-        for ($i = 0; $i < FixtureConfig::PROJECTS; ++$i) {
+        for ($i = 0; $i < FixtureConfig::PROJECTS; $i++) {
             $project = $this->getReference(FixtureReference::project($i), Project::class);
 
             $rootDomain = match ($i) {
@@ -67,9 +67,9 @@ final class DomainFixtures extends Fixture implements DependentFixtureInterface,
 
             $this->addReference(FixtureReference::domain($i), $domain);
 
-            if (0 === $i) {
+            if ($i === 0) {
                 $this->addReference(FixtureReference::DOMAIN_AFRIDIL, $domain);
-            } elseif (10 === $i) {
+            } elseif ($i === 10) {
                 $this->addReference(FixtureReference::DOMAIN_SKYMOTION, $domain);
             }
         }
