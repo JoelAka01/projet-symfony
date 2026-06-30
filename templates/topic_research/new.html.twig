@@ -1,0 +1,23 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}New V2 run | {{ project.name }}{% endblock %}
+
+{% block body %}
+    <div class="back-navigation">
+        <a class="back-link" href="{{ path('app_topic_research_index', { project: project.id }) }}">
+            Back to V2 runs
+        </a>
+    </div>
+
+    <div class="auth-panel wide">
+        <p class="eyebrow">Article pipeline V2</p>
+        <h1>New structured run</h1>
+        {{ form_start(form, { attr: { class: 'form-stack' } }) }}
+            {{ form_widget(form) }}
+            <div class="form-actions">
+                <button class="button primary" type="submit">Start V2 run</button>
+                <a class="button secondary" href="{{ path('app_article_index', { project: project.id }) }}">Cancel</a>
+            </div>
+        {{ form_end(form) }}
+    </div>
+{% endblock %}
