@@ -62,10 +62,10 @@ final class ArticleFixtures extends Fixture implements DependentFixtureInterface
         foreach ($afridilTitles as $i => $title) {
             $status = $afridilStatuses[$i] ?? ArticleStatus::DRAFT;
             $primaryKw = $i < 30 ? $this->getReference(FixtureReference::keyword($i), Keyword::class) : null;
-            $article = ArticleFactory::create($manager, $afridil, $title, $status, $primaryKw, ArticleStatus::PUBLISHED === $status ? random_int(65, 85) : null, random_int(800, 2500));
+            $article = ArticleFactory::create($manager, $afridil, $title, $status, $primaryKw, $status === ArticleStatus::PUBLISHED ? random_int(65, 85) : null, random_int(800, 2500));
 
             // Ajouter des target keywords ManyToMany
-            if (null !== $primaryKw && $i + 1 < 30) {
+            if ($primaryKw !== null && $i + 1 < 30) {
                 $article->addTargetKeyword($this->getReference(FixtureReference::keyword($i + 1), Keyword::class));
             }
 
@@ -95,7 +95,7 @@ final class ArticleFixtures extends Fixture implements DependentFixtureInterface
             ArticleStatus::FAILED,
         ];
 
-        for ($i = 0; $i < 25; ++$i) {
+        for ($i = 0; $i < 25; $i++) {
             $projectIdx = 13 + ($i % 10);
             $project = $this->getReference(FixtureReference::project($projectIdx), Project::class);
             $status = $webpulseStatuses[$i];
@@ -104,13 +104,13 @@ final class ArticleFixtures extends Fixture implements DependentFixtureInterface
             $kwIdx = 60 + ($i % 100);
             $primaryKw = $this->getReference(FixtureReference::keyword($kwIdx), Keyword::class);
 
-            $article = ArticleFactory::create($manager, $project, $title, $status, $primaryKw, ArticleStatus::PUBLISHED === $status ? random_int(55, 90) : null, random_int(600, 3000));
+            $article = ArticleFactory::create($manager, $project, $title, $status, $primaryKw, $status === ArticleStatus::PUBLISHED ? random_int(55, 90) : null, random_int(600, 3000));
             $this->addReference(FixtureReference::article($articleIndex++), $article);
         }
 
         // ── Studio Freelance — 5 articles (DRAFT/FAILED) ─────────────
         $freelanceStatuses = [ArticleStatus::DRAFT, ArticleStatus::DRAFT, ArticleStatus::DRAFT, ArticleStatus::FAILED, ArticleStatus::FAILED];
-        for ($i = 0; $i < 5; ++$i) {
+        for ($i = 0; $i < 5; $i++) {
             $projectIdx = 23 + ($i % 2);
             $project = $this->getReference(FixtureReference::project($projectIdx), Project::class);
             $title = sprintf('Brouillon — %s', $faker->sentence(4));
