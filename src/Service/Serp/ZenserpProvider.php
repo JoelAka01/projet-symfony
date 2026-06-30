@@ -108,7 +108,7 @@ final class ZenserpProvider implements SerpProviderInterface
             }
         }
 
-        throw $lastException ?? new \RuntimeException('Zenserp request failed.');
+        throw $lastException;
     }
 
     private function apiKey(): string
