@@ -48,7 +48,7 @@ final class ProjectPagesTest extends WebTestCase
         self::assertResponseIsSuccessful();
 
         $form = $crawler->selectButton('Create project and analyze')->form([
-            'project[name]' => 'Example public website',
+            'project[name]' => 'Portfolio Personnel',
             'project[websiteUrl]' => 'https://duplicate.com',
         ]);
         $client->submit($form);
@@ -77,7 +77,7 @@ final class ProjectPagesTest extends WebTestCase
         self::assertResponseIsSuccessful();
 
         $form = $crawler->selectButton('Save changes')->form([
-            'project[name]' => 'Example public website',
+            'project[name]' => 'Portfolio Personnel',
         ]);
         $client->submit($form);
 

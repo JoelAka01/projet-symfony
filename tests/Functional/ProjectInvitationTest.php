@@ -27,7 +27,7 @@ final class ProjectInvitationTest extends WebTestCase
         // Cleanup existing test guest user and invitations to ensure test isolation
         $existingGuest = $userRepository->findOneBy(['email' => 'invited-guest@example.com']);
         if ($existingGuest) {
-            $project = $projectRepository->findOneBy(['name' => 'Example public website']);
+            $project = $projectRepository->findOneBy(['name' => 'Portfolio Personnel']);
             if ($project) {
                 $project->removeGuest($existingGuest);
             }
@@ -40,12 +40,12 @@ final class ProjectInvitationTest extends WebTestCase
         }
         $entityManager->flush();
 
-        // 1. Log in as owner of 'Example public website' (user@example.com)
+        // 1. Log in as owner of 'Portfolio Personnel' (user@example.com)
         $owner = $userRepository->findOneBy(['email' => 'user@example.com']);
         self::assertInstanceOf(User::class, $owner);
         $client->loginUser($owner);
 
-        $project = $projectRepository->findOneBy(['name' => 'Example public website']);
+        $project = $projectRepository->findOneBy(['name' => 'Portfolio Personnel']);
         self::assertInstanceOf(Project::class, $project);
 
         // 2. View project page
@@ -81,11 +81,11 @@ final class ProjectInvitationTest extends WebTestCase
         $crawler = $client->request('GET', '/projects/invitations/view/' . $token);
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('body', 'Read-only access:');
-        self::assertSelectorTextContains('h1', 'Example public website');
+        self::assertSelectorTextContains('h1', 'Portfolio Personnel');
 
         // 5.1 Create a test audit for the project and access its guest detail view
         $entityManager = self::getContainer()->get('doctrine.orm.entity_manager');
-        $project = $entityManager->getRepository(Project::class)->findOneBy(['name' => 'Example public website']);
+        $project = $entityManager->getRepository(Project::class)->findOneBy(['name' => 'Portfolio Personnel']);
         self::assertInstanceOf(Project::class, $project);
         $domain = $project->getDomains()->first();
         self::assertInstanceOf(\App\Entity\Domain::class, $domain);
@@ -127,7 +127,7 @@ final class ProjectInvitationTest extends WebTestCase
         $crawler = $client->request('GET', '/projects/invitations/view/' . $token . '/audits/' . $audit->getId());
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('body', 'Read-only access:');
-        self::assertSelectorTextContains('h1', 'Example public website');
+        self::assertSelectorTextContains('h1', 'Portfolio Personnel');
         self::assertSelectorTextContains('body', 'This is a test audit summary.');
 
         // 6. Access accepting page without authentication -> redirects to login
