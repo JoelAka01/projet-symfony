@@ -94,6 +94,95 @@
         {% endif %}
     </section>
 
+    <section class="panel full-panel">
+        <div class="section-heading">
+            <h2>Internal pages</h2>
+            {% if is_granted('PROJECT_MANAGE_CONTENT', project) %}
+                <form method="post" action="{{ path('app_site_page_discover', { project: project.id }) }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('discover_site_pages_' ~ project.id) }}">
+                    <button class="button secondary" type="submit">Discover pages</button>
+                </form>
+            {% endif %}
+        </div>
+
+        {% if is_granted('PROJECT_MANAGE_CONTENT', project) %}
+            <form method="post" action="{{ path('app_site_page_create', { project: project.id }) }}" class="inline-form">
+                <input type="hidden" name="_token" value="{{ csrf_token('create_site_page_' ~ project.id) }}">
+                <div class="form-grid">
+                    <label>
+                        URL
+                        <input type="text" name="url" placeholder="https://example.com/contact/" required>
+                    </label>
+                    <label>
+                        Title
+                        <input type="text" name="title" required>
+                    </label>
+                    <label>
+                        Type
+                        <select name="pageType">
+                            {% for type in sitePageTypes %}
+                                <option value="{{ type.value }}">{{ type.label() }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <label>
+                        Priority
+                        <input type="number" name="businessPriority" min="0" max="100" value="50">
+                    </label>
+                </div>
+                <div class="form-grid">
+                    <label>
+                        Target keyword
+                        <input type="text" name="targetKeyword">
+                    </label>
+                    <label>
+                        Anchor suggestions
+                        <input type="text" name="anchorSuggestions" placeholder="demander un devis, location camera">
+                    </label>
+                </div>
+                <button class="button primary" type="submit">Add page</button>
+            </form>
+        {% endif %}
+
+        {% if sitePages is empty %}
+            <p class="muted">No internal pages configured yet.</p>
+        {% else %}
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Page</th>
+                            <th>Type</th>
+                            <th>Keyword</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            {% if is_granted('PROJECT_MANAGE_CONTENT', project) %}<th></th>{% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sitePage in sitePages %}
+                            <tr>
+                                <td><a href="{{ sitePage.url }}" target="_blank" rel="noopener">{{ sitePage.title }}</a></td>
+                                <td>{{ sitePage.pageType.label() }}</td>
+                                <td>{{ sitePage.targetKeyword ?? 'Not set' }}</td>
+                                <td>{{ sitePage.businessPriority }}</td>
+                                <td>{{ sitePage.active ? 'Active' : 'Disabled' }}</td>
+                                {% if is_granted('PROJECT_MANAGE_CONTENT', project) %}
+                                    <td>
+                                        <form method="post" action="{{ path('app_site_page_toggle', { project: project.id, sitePage: sitePage.id }) }}">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('toggle_site_page_' ~ sitePage.id) }}">
+                                            <button class="btn-action" type="submit">{{ sitePage.active ? 'Disable' : 'Activate' }}</button>
+                                        </form>
+                                    </td>
+                                {% endif %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </section>
+
     <section>
         <h2>Audits</h2>
         {% if audits is empty %}

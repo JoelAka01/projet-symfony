@@ -15,6 +15,8 @@ enum PipelineStatus: string
     case BRIEF_READY = 'BRIEF_READY';
     case CONTENT_GENERATING = 'CONTENT_GENERATING';
     case CONTENT_GENERATED = 'CONTENT_GENERATED';
+    case INTERNAL_LINKING = 'INTERNAL_LINKING';
+    case INTERNAL_LINKED = 'INTERNAL_LINKED';
     case SEO_OPTIMIZING = 'SEO_OPTIMIZING';
     case SEO_OPTIMIZED = 'SEO_OPTIMIZED';
     case READY_TO_PUBLISH = 'READY_TO_PUBLISH';
@@ -28,6 +30,7 @@ enum PipelineStatus: string
             self::INTELLIGENCE_ANALYZING,
             self::BRIEF_GENERATING,
             self::CONTENT_GENERATING,
+            self::INTERNAL_LINKING,
             self::SEO_OPTIMIZING,
         ], true);
     }
@@ -53,6 +56,8 @@ enum PipelineStatus: string
             self::BRIEF_READY => 'Brief pret',
             self::CONTENT_GENERATING => 'Article en cours',
             self::CONTENT_GENERATED => 'Article genere',
+            self::INTERNAL_LINKING => 'Maillage interne',
+            self::INTERNAL_LINKED => 'Maillage interne pret',
             self::SEO_OPTIMIZING => 'Score SEO en cours',
             self::SEO_OPTIMIZED => 'Score SEO pret',
             self::READY_TO_PUBLISH => 'Pret a publier',

@@ -134,6 +134,7 @@ final class TopicResearchController extends AbstractController
             ['key' => TopicResearch::STEP_INTELLIGENCE, 'label' => 'Intent + Semantic'],
             ['key' => TopicResearch::STEP_BRIEF_OUTLINE, 'label' => 'Brief + Outline'],
             ['key' => TopicResearch::STEP_ARTICLE, 'label' => 'Article'],
+            ['key' => TopicResearch::STEP_INTERNAL_LINKING, 'label' => 'Internal Links'],
             ['key' => TopicResearch::STEP_SEO_SCORE, 'label' => 'SEO Score'],
         ];
     }

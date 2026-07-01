@@ -27,6 +27,7 @@ class TopicResearch
     public const STEP_INTELLIGENCE = 'intelligence';
     public const STEP_BRIEF_OUTLINE = 'brief_outline';
     public const STEP_ARTICLE = 'article';
+    public const STEP_INTERNAL_LINKING = 'internal_linking';
     public const STEP_SEO_SCORE = 'seo_score';
 
     public const STEPS = [
@@ -34,6 +35,7 @@ class TopicResearch
         self::STEP_INTELLIGENCE,
         self::STEP_BRIEF_OUTLINE,
         self::STEP_ARTICLE,
+        self::STEP_INTERNAL_LINKING,
         self::STEP_SEO_SCORE,
     ];
 
@@ -414,6 +416,9 @@ class TopicResearch
             return null !== $this->contentBrief;
         }
         if (self::STEP_ARTICLE === $step) {
+            return null !== $this->getArticle()?->getContentHtml();
+        }
+        if (self::STEP_INTERNAL_LINKING === $step) {
             return null !== $this->getArticle()?->getContentHtml();
         }
 

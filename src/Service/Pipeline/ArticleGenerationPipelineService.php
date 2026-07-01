@@ -10,6 +10,7 @@ use App\Entity\User;
 use App\Enum\PipelineStatus;
 use App\Message\Pipeline\AnalyzeIntelligenceMessage;
 use App\Message\Pipeline\AnalyzeSerpMessage;
+use App\Message\Pipeline\ApplyInternalLinksMessage;
 use App\Message\Pipeline\GenerateArticleMessage;
 use App\Message\Pipeline\GenerateBriefMessage;
 use App\Message\Pipeline\OptimizeSeoMessage;
@@ -76,7 +77,8 @@ final class ArticleGenerationPipelineService
             TopicResearch::STEP_SERP_ANALYSIS => TopicResearch::STEP_INTELLIGENCE,
             TopicResearch::STEP_INTELLIGENCE => TopicResearch::STEP_BRIEF_OUTLINE,
             TopicResearch::STEP_BRIEF_OUTLINE => TopicResearch::STEP_ARTICLE,
-            TopicResearch::STEP_ARTICLE => TopicResearch::STEP_SEO_SCORE,
+            TopicResearch::STEP_ARTICLE => TopicResearch::STEP_INTERNAL_LINKING,
+            TopicResearch::STEP_INTERNAL_LINKING => TopicResearch::STEP_SEO_SCORE,
             default => null,
         };
 
@@ -92,6 +94,7 @@ final class ArticleGenerationPipelineService
             TopicResearch::STEP_INTELLIGENCE => new AnalyzeIntelligenceMessage($topicResearch->getId()),
             TopicResearch::STEP_BRIEF_OUTLINE => new GenerateBriefMessage($topicResearch->getId()),
             TopicResearch::STEP_ARTICLE => new GenerateArticleMessage($topicResearch->getId()),
+            TopicResearch::STEP_INTERNAL_LINKING => new ApplyInternalLinksMessage($topicResearch->getId()),
             TopicResearch::STEP_SEO_SCORE => new OptimizeSeoMessage($topicResearch->getId()),
             default => throw new \InvalidArgumentException(sprintf('Unknown pipeline step "%s".', $step)),
         };
@@ -106,7 +109,8 @@ final class ArticleGenerationPipelineService
             TopicResearch::STEP_INTELLIGENCE => PipelineStatus::SERP_ANALYZED,
             TopicResearch::STEP_BRIEF_OUTLINE => PipelineStatus::INTELLIGENCE_ANALYZED,
             TopicResearch::STEP_ARTICLE => PipelineStatus::BRIEF_READY,
-            TopicResearch::STEP_SEO_SCORE => PipelineStatus::CONTENT_GENERATED,
+            TopicResearch::STEP_INTERNAL_LINKING => PipelineStatus::CONTENT_GENERATED,
+            TopicResearch::STEP_SEO_SCORE => PipelineStatus::INTERNAL_LINKED,
             default => throw new \InvalidArgumentException(sprintf('Unknown pipeline step "%s".', $step)),
         };
     }
