@@ -34,11 +34,11 @@ final class PaymentFactory
             ->setCardLastFour(sprintf('%04d', random_int(1000, 9999)))
             ->setSimulated(true);
 
-        if ($paidAt !== null) {
+        if (null !== $paidAt) {
             $payment->setPaidAt($paidAt);
         }
 
-        if ($adminNote !== null) {
+        if (null !== $adminNote) {
             $payment->setAdminNote($adminNote);
         }
 

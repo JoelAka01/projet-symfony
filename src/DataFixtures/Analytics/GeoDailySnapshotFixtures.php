@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\DataFixtures\Analytics;
 
-use App\DataFixtures\Helper\FixtureConfig;
 use App\DataFixtures\Helper\FixtureReference;
 use App\DataFixtures\Project\ProjectFixtures;
 use App\Entity\GeoDailySnapshot;
@@ -43,7 +42,7 @@ final class GeoDailySnapshotFixtures extends Fixture implements DependentFixture
         foreach ($projectConfigs as [$projectRef, $profile, $days]) {
             $project = $this->getReference($projectRef, Project::class);
 
-            for ($d = 0; $d < $days; $d++) {
+            for ($d = 0; $d < $days; ++$d) {
                 $snapshotDate = new \DateTimeImmutable(sprintf('-%d days', $days - $d));
                 $progress = $d / max(1, $days - 1);
 
