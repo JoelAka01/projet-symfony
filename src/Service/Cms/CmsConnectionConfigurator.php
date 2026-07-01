@@ -36,6 +36,10 @@ final class CmsConnectionConfigurator
             throw new CmsIntegrationException('Enter the WordPress username linked to the application password.');
         }
 
+        if (!str_starts_with($connection->getBaseUrl(), 'https://')) {
+            throw new CmsIntegrationException('WordPress Application Passwords require HTTPS. Please use an https:// URL.');
+        }
+
         if (null !== $applicationPassword) {
             $connection->setEncryptedAccessToken($this->credentialEncryption->encrypt($applicationPassword));
         } elseif (null === $connection->getEncryptedAccessToken()) {

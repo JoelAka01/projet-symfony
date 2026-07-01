@@ -22,15 +22,28 @@ fixtures:
 fixtures-local:
 	php bin/console doctrine:fixtures:load
 
+fixtures-demo:
+	docker compose exec php rm -rf var/cache/* || true
+	docker compose exec php php bin/console doctrine:fixtures:load --group=demo
+
+fixtures-demo-local:
+	php bin/console doctrine:fixtures:load --group=demo
+
+fixtures-test:
+	docker compose exec php php bin/console doctrine:fixtures:load --group=test --no-interaction
+
+fixtures-test-local:
+	php bin/console doctrine:fixtures:load --group=test --no-interaction
+
 test-init:
 	docker compose exec -e APP_ENV=test -e DATABASE_URL="postgresql://app:app@database:5432/app_test?serverVersion=16&charset=utf8" php php bin/console doctrine:database:create --if-not-exists
 	docker compose exec -e APP_ENV=test -e DATABASE_URL="postgresql://app:app@database:5432/app_test?serverVersion=16&charset=utf8" php php bin/console doctrine:migrations:migrate --no-interaction
-	docker compose exec -e APP_ENV=test -e DATABASE_URL="postgresql://app:app@database:5432/app_test?serverVersion=16&charset=utf8" php php bin/console doctrine:fixtures:load --no-interaction
+	docker compose exec -e APP_ENV=test -e DATABASE_URL="postgresql://app:app@database:5432/app_test?serverVersion=16&charset=utf8" php php bin/console doctrine:fixtures:load --group=test --no-interaction
 
 test-init-local:
 	php bin/console doctrine:database:create --env=test --if-not-exists
 	php bin/console doctrine:migrations:migrate --env=test --no-interaction
-	php bin/console doctrine:fixtures:load --env=test --no-interaction
+	php bin/console doctrine:fixtures:load --env=test --group=test --no-interaction
 
 test:
 	docker compose exec -e APP_ENV=test -e APP_DEBUG=1 -e DATABASE_URL="postgresql://app:app@database:5432/app_test?serverVersion=16&charset=utf8" php php bin/phpunit
@@ -106,6 +119,10 @@ help:
 	@echo "  migrate-local - Run Doctrine migrations locally"
 	@echo "  fixtures      - Load Doctrine fixtures in Docker"
 	@echo "  fixtures-local- Load Doctrine fixtures locally"
+	@echo "  fixtures-demo - Load demo fixtures (--group=demo)"
+	@echo "  fixtures-demo-local - Load demo fixtures locally"
+	@echo "  fixtures-test - Load test fixtures (--group=test)"
+	@echo "  fixtures-test-local - Load test fixtures locally"
 	@echo "  test          - Run PHPUnit in Docker"
 	@echo "  test-local    - Run PHPUnit locally"
 	@echo "  phpstan       - Run PHPStan in Docker"

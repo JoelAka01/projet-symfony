@@ -166,7 +166,13 @@ final class WordPressCmsClient implements CmsProviderClientInterface
         $statusCode = $response->getStatusCode();
         if ($statusCode >= 400) {
             $body = $response->getContent(false);
-            throw new CmsIntegrationException(sprintf('WordPress returned HTTP %d: %s', $statusCode, $this->errorMessage($body)));
+            $message = $this->errorMessage($body);
+
+            if (401 === $statusCode) {
+                $message .= ' — Verify that: (1) the Application Password is correct, (2) the username matches the WordPress account that generated it, (3) no security plugin blocks REST API authentication, (4) your server passes the Authorization header to PHP (Apache may need: RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]).';
+            }
+
+            throw new CmsIntegrationException(sprintf('WordPress returned HTTP %d: %s', $statusCode, $message));
         }
 
         return $response;
