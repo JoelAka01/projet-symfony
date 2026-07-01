@@ -40,7 +40,7 @@ final class BacklinkSiteFixtures extends Fixture implements DependentFixtureInte
             'Finance', 'Immobilier', 'Voyage', 'Santé', 'Éducation', 'Mode',
         ];
 
-        for ($i = 0; $i < FixtureConfig::BACKLINK_SITES; $i++) {
+        for ($i = 0; $i < FixtureConfig::BACKLINK_SITES; ++$i) {
             $projectIdx = $i % FixtureConfig::PROJECTS;
             $project = $this->getReference(FixtureReference::project($projectIdx), Project::class);
             $domain = $this->getReference(FixtureReference::domain($projectIdx), Domain::class);

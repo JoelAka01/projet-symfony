@@ -47,7 +47,7 @@ final class BacklinkExchangeFixtures extends Fixture implements DependentFixture
             BacklinkStatus::BROKEN,
         ];
 
-        for ($i = 0; $i < FixtureConfig::BACKLINK_EXCHANGES; $i++) {
+        for ($i = 0; $i < FixtureConfig::BACKLINK_EXCHANGES; ++$i) {
             $requesterIdx = $i % FixtureConfig::PROJECTS;
             $publisherIdx = ($requesterIdx + random_int(2, 10)) % FixtureConfig::PROJECTS;
 
@@ -65,7 +65,7 @@ final class BacklinkExchangeFixtures extends Fixture implements DependentFixture
                 ->setProposedSourceUrl(sprintf('https://%s/blog/partenaire', $projectDomains[$publisherIdx % \count($projectDomains)]));
 
             // Lier au backlink correspondant si PLACED
-            if ($statuses[$i] === BacklinkStatus::PLACED) {
+            if (BacklinkStatus::PLACED === $statuses[$i]) {
                 $backlink = $this->getReference(FixtureReference::backlink($i), Backlink::class);
                 $exchange->setBacklink($backlink);
                 $exchange->setCompletedAt(new \DateTimeImmutable(sprintf('-%d days', random_int(1, 30))));
