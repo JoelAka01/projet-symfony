@@ -21,6 +21,7 @@ framework:
             App\Message\Pipeline\AnalyzeIntelligenceMessage: pipeline
             App\Message\Pipeline\GenerateBriefMessage: pipeline
             App\Message\Pipeline\GenerateArticleMessage: pipeline
+            App\Message\Pipeline\ApplyInternalLinksMessage: pipeline
             App\Message\Pipeline\OptimizeSeoMessage: pipeline
 
 when@test:

@@ -9,6 +9,7 @@
     {% if topicResearch.intelligenceAnalysis %}{% set completedSteps = completedSteps|merge(['intelligence']) %}{% endif %}
     {% if topicResearch.contentBrief %}{% set completedSteps = completedSteps|merge(['brief_outline']) %}{% endif %}
     {% if article and article.contentHtml %}{% set completedSteps = completedSteps|merge(['article']) %}{% endif %}
+    {% if article and article.generationMetadata.internal_linking is defined %}{% set completedSteps = completedSteps|merge(['internal_linking']) %}{% endif %}
     {% if article and article.seoScore is not null %}{% set completedSteps = completedSteps|merge(['seo_score']) %}{% endif %}
 
     <div class="back-navigation">
@@ -192,10 +193,23 @@
                     <dd>{{ article.seoScore is not null ? article.seoScore ~ '/100' : 'Pending' }}</dd>
                 </div>
                 <div>
+                    <dt>Internal links</dt>
+                    <dd>{{ article.internalLinksJson ? article.internalLinksJson|length : 0 }}</dd>
+                </div>
+                <div>
                     <dt>Status</dt>
                     <dd>{{ article.status.value|replace({'_': ' '})|title }}</dd>
                 </div>
             </dl>
+            {% set internalLinking = article.generationMetadata.internal_linking|default(null) %}
+            {% if internalLinking %}
+                <h3>Internal links</h3>
+                <ul class="plain-list">
+                    {% for link in internalLinking.inserted_links|merge(internalLinking.existing_links|default([])) %}
+                        <li><a href="{{ link.url }}">{{ link.anchor }}</a> · {{ link.type }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
             {% set recommendations = article.generationMetadata.seo_review.recommendations|default([]) %}
             {% if recommendations is not empty %}
                 <h3>SEO recommendations</h3>

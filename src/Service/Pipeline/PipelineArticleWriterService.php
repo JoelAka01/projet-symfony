@@ -9,9 +9,11 @@ use App\Entity\ContentBrief;
 use App\Entity\IntelligenceAnalysis;
 use App\Entity\Keyword;
 use App\Entity\SerpAnalysis;
+use App\Entity\SitePage;
 use App\Entity\TopicResearch;
 use App\Enum\ArticleStatus;
 use App\Repository\KeywordRepository;
+use App\Repository\SitePageRepository;
 use App\Service\Ai\AiUsageRecorder;
 use App\Service\Content\ArticleHtmlSanitizer;
 use Doctrine\ORM\EntityManagerInterface;
@@ -22,6 +24,7 @@ final class PipelineArticleWriterService
         private readonly PipelineClaudeClient $claudeClient,
         private readonly ArticleHtmlSanitizer $htmlSanitizer,
         private readonly KeywordRepository $keywordRepository,
+        private readonly SitePageRepository $sitePageRepository,
         private readonly EntityManagerInterface $entityManager,
         private readonly AiUsageRecorder $usageRecorder,
     ) {}
@@ -32,6 +35,11 @@ final class PipelineArticleWriterService
         IntelligenceAnalysis $intelligenceAnalysis,
         SerpAnalysis $serpAnalysis,
     ): Article {
+        $project = $topicResearch->getProject();
+        if (null === $project) {
+            throw new \RuntimeException('The topic research is not attached to a project.');
+        }
+
         $result = $this->claudeClient->requestJson(
             $topicResearch,
             TopicResearch::STEP_ARTICLE,
@@ -68,6 +76,7 @@ final class PipelineArticleWriterService
                     'questions' => $serpAnalysis->getQuestions(),
                     'content_gaps' => $serpAnalysis->getContentGaps(),
                 ],
+                'internal_pages_available' => $this->internalPagesPayload($project),
             ],
             16000,
             0.35,
@@ -77,11 +86,6 @@ final class PipelineArticleWriterService
         $contentHtml = $this->htmlSanitizer->sanitize($this->requiredString($parsed['content_html'] ?? null, 'content_html', 200000));
         if ('' === trim($contentHtml)) {
             throw new \UnexpectedValueException('Generated article HTML is empty after sanitization.');
-        }
-
-        $project = $topicResearch->getProject();
-        if (null === $project) {
-            throw new \RuntimeException('The topic research is not attached to a project.');
         }
 
         $article = $topicResearch->getArticle() ?? new Article();
@@ -135,9 +139,14 @@ final class PipelineArticleWriterService
     private function systemPrompt(): string
     {
         return <<<'PROMPT'
-You are an expert SEO writer producing the article step of a 5-step asynchronous pipeline.
+You are an expert SEO writer producing the article step of an asynchronous editorial pipeline.
 Write a complete, useful, CMS-ready article that follows the provided outline section by section.
 Cover the priority questions, naturally integrate the entities and semantic concepts, and avoid unsupported statistics or invented citations.
+Add a natural internal linking section inside content_html when internal_pages_available is provided.
+Use only URLs listed in internal_pages_available. Never invent an internal URL.
+Place internal links in relevant paragraphs, never in headings.
+Add at minimum, when available: 1 home link, 2 service/product/category links, 1 contact or quote link, and 2 complementary blog links.
+Vary anchors and never repeat the exact same anchor.
 Return only one valid JSON object with this schema:
 {
   "title": "visible article title",
@@ -154,6 +163,22 @@ Return only one valid JSON object with this schema:
 Allowed HTML tags in content_html: p, h2, h3, h4, ul, ol, li, strong, em, blockquote, a, table, thead, tbody, tr, th, td, code, pre, hr, br.
 Do not include scripts, styles, iframes, forms, SVG, an H1, or Markdown fences.
 PROMPT;
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function internalPagesPayload(\App\Entity\Project $project): array
+    {
+        return array_map(
+            static fn(SitePage $sitePage): array => [
+                'url' => $sitePage->getUrl(),
+                'title' => $sitePage->getTitle(),
+                'type' => $sitePage->getPageType()->value,
+                'target_keyword' => $sitePage->getTargetKeyword(),
+                'business_priority' => $sitePage->getBusinessPriority(),
+                'anchor_suggestions' => $sitePage->getAnchorSuggestions(),
+            ],
+            array_slice($this->sitePageRepository->findActiveForProject($project), 0, 20),
+        );
     }
 
     private function attachKeywords(Article $article, TopicResearch $topicResearch, ContentBrief $contentBrief): void
