@@ -10,9 +10,9 @@ use App\Entity\KeywordSuggestion;
 use App\Entity\Project;
 use App\Enum\AuditStatus;
 use App\Enum\KeywordSuggestionSource;
+use App\Repository\ApiUsageLogRepository;
 use App\Repository\ArticleRepository;
 use App\Repository\AuditRepository;
-use App\Repository\ApiUsageLogRepository;
 use App\Repository\KeywordRepository;
 use App\Repository\KeywordSuggestionRepository;
 use App\Repository\ProjectApiBudgetRepository;
@@ -198,10 +198,10 @@ final class AuditKeywordDiscoveryServiceTest extends TestCase
     }
 
     /**
-     * @param list<Keyword>                         $keywords
+     * @param list<Keyword>                             $keywords
      * @param list<array{title: string, slug: ?string}> $articles
-     * @param list<KeywordSuggestion>               $suggestions
-     * @param list<KeywordSuggestion>               $persisted
+     * @param list<KeywordSuggestion>                   $suggestions
+     * @param list<KeywordSuggestion>                   $persisted
      */
     private function service(
         Project $project,

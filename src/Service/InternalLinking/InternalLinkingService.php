@@ -211,9 +211,9 @@ final class InternalLinkingService
     }
 
     /**
-     * @param list<SitePage>               $selected
+     * @param list<SitePage>                $selected
      * @param array<string, list<SitePage>> $groups
-     * @param list<SitePageType>           $types
+     * @param list<SitePageType>            $types
      */
     private function appendFromTypes(array &$selected, array $groups, array $types, int $limit): void
     {

@@ -55,7 +55,7 @@ final class TopicResearchType extends AbstractType
                     'Economy' => PipelineQualityMode::ECONOMY,
                     'Quality' => PipelineQualityMode::QUALITY,
                 ],
-                'choice_label' => static fn (PipelineQualityMode $mode): string => $mode->label(),
+                'choice_label' => static fn(PipelineQualityMode $mode): string => $mode->label(),
             ])
             ->add('sector', TextType::class, [
                 'label' => 'Sector',

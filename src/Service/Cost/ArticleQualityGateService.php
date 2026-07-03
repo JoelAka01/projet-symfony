@@ -100,7 +100,7 @@ final class ArticleQualityGateService
 
         return $loaded && [] === array_filter(
             $errors,
-            static fn (\LibXMLError $error): bool => $error->level >= LIBXML_ERR_ERROR,
+            static fn(\LibXMLError $error): bool => $error->level >= LIBXML_ERR_ERROR,
         );
     }
 
@@ -113,7 +113,7 @@ final class ArticleQualityGateService
 
         $text = mb_strtolower(strip_tags((string) $article->getContentHtml()));
         if (str_contains($intent, 'transactional') || str_contains($intent, 'commercial')) {
-            return preg_match('/\b(devis|contact|prix|tarif|location|service|solution|acheter|demander)\b/u', $text) === 1;
+            return 1 === preg_match('/\b(devis|contact|prix|tarif|location|service|solution|acheter|demander)\b/u', $text);
         }
 
         return true;
