@@ -111,7 +111,7 @@ final class CmsConnectionFixtures extends Fixture implements DependentFixtureInt
         foreach ($publishedArticleIndices as $articleIdx) {
             $article = $this->getReference(FixtureReference::article($articleIdx), Article::class);
 
-            if ($article->getStatus() !== ArticleStatus::PUBLISHED) {
+            if (ArticleStatus::PUBLISHED !== $article->getStatus()) {
                 continue;
             }
 

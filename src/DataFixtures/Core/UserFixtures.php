@@ -55,7 +55,7 @@ final class UserFixtures extends Fixture implements FixtureGroupInterface
         // ── Utilisateurs Faker ─────────────────────────────────────────
         $roles = [UserRole::EDITOR, UserRole::VIEWER];
 
-        for ($i = FixtureConfig::DEMO_USERS; $i < FixtureConfig::USERS; $i++) {
+        for ($i = FixtureConfig::DEMO_USERS; $i < FixtureConfig::USERS; ++$i) {
             $fakerUser = UserFactory::create(
                 $manager,
                 $this->passwordHasher,

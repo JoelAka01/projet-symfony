@@ -57,12 +57,12 @@ final class ApiKeyFixtures extends Fixture implements DependentFixtureInterface,
                 $key->setScopesJson($config['scopes']);
 
                 // Révoquer certaines clés (dernière org = freelance en difficulté)
-                if ($orgIdx === 3 && $configIdx === 1) {
+                if (3 === $orgIdx && 1 === $configIdx) {
                     $key->setRevokedAt(new \DateTimeImmutable('-15 days'));
                 }
 
                 // Expiration future pour la plupart
-                if ($orgIdx !== 3) {
+                if (3 !== $orgIdx) {
                     $key->setExpiresAt(new \DateTimeImmutable('+6 months'));
                 } else {
                     // Freelance : clé expirée
@@ -70,7 +70,7 @@ final class ApiKeyFixtures extends Fixture implements DependentFixtureInterface,
                 }
 
                 $manager->persist($key);
-                $keyIndex++;
+                ++$keyIndex;
             }
         }
 

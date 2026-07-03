@@ -9,7 +9,6 @@ use App\DataFixtures\Helper\FixtureHelper;
 use App\DataFixtures\Helper\FixtureReference;
 use App\Entity\Keyword;
 use App\Entity\KeywordRanking;
-use App\Entity\Project;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Bundle\FixturesBundle\FixtureGroupInterface;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
@@ -45,11 +44,11 @@ final class KeywordRankingFixtures extends Fixture implements DependentFixtureIn
     {
         $rankingIndex = 0;
 
-        for ($k = 0; $k < FixtureConfig::KEYWORDS; $k++) {
+        for ($k = 0; $k < FixtureConfig::KEYWORDS; ++$k) {
             $keyword = $this->getReference(FixtureReference::keyword($k), Keyword::class);
             $project = $keyword->getProject();
 
-            if ($project === null) {
+            if (null === $project) {
                 continue;
             }
 
@@ -58,7 +57,7 @@ final class KeywordRankingFixtures extends Fixture implements DependentFixtureIn
 
             $previousPosition = null;
 
-            for ($w = 0; $w < self::RANKINGS_PER_KEYWORD; $w++) {
+            for ($w = 0; $w < self::RANKINGS_PER_KEYWORD; ++$w) {
                 $checkedAt = new \DateTimeImmutable(sprintf('-%d days', (self::RANKINGS_PER_KEYWORD - 1 - $w) * 7));
                 $position = FixtureHelper::rankPositionForProfile($profile, $w);
                 $position = max(1, min(100, $position));
@@ -69,14 +68,14 @@ final class KeywordRankingFixtures extends Fixture implements DependentFixtureIn
                     ->setProject($project)
                     ->setRankPosition($position)
                     ->setPreviousRankPosition($previousPosition)
-                    ->setSearchEngine($w % 5 === 0 ? 'bing' : 'google')
-                    ->setDevice($w % 3 === 0 ? 'mobile' : 'desktop')
+                    ->setSearchEngine(0 === $w % 5 ? 'bing' : 'google')
+                    ->setDevice(0 === $w % 3 ? 'mobile' : 'desktop')
                     ->setCountry($country)
                     ->setCheckedAt($checkedAt);
 
                 $manager->persist($ranking);
                 $previousPosition = $position;
-                $rankingIndex++;
+                ++$rankingIndex;
 
                 FixtureHelper::batchFlush($manager, $rankingIndex);
             }

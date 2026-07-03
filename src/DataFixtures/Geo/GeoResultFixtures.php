@@ -42,7 +42,7 @@ final class GeoResultFixtures extends Fixture implements DependentFixtureInterfa
         $faker = FixtureHelper::faker();
         $providers = GeoProvider::cases();
 
-        for ($p = 0; $p < FixtureConfig::GEO_PROMPTS; $p++) {
+        for ($p = 0; $p < FixtureConfig::GEO_PROMPTS; ++$p) {
             $geoPrompt = $this->getReference(FixtureReference::geoPrompt($p), GeoPrompt::class);
 
             // Déterminer le profil de visibilité
@@ -51,7 +51,7 @@ final class GeoResultFixtures extends Fixture implements DependentFixtureInterfa
 
             $resultCount = min(3, (int) ceil(FixtureConfig::GEO_RESULTS / FixtureConfig::GEO_PROMPTS));
 
-            for ($r = 0; $r < $resultCount; $r++) {
+            for ($r = 0; $r < $resultCount; ++$r) {
                 $provider = $providers[$r % \count($providers)];
                 $mentionedBrand = $isPerformant && random_int(0, 100) < 70;
                 $citedUrl = $isPerformant && random_int(0, 100) < 50;

@@ -53,7 +53,7 @@ final class ReportFixtures extends Fixture implements DependentFixtureInterface,
 
         $months = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin'];
 
-        for ($i = 0; $i < FixtureConfig::REPORTS; $i++) {
+        for ($i = 0; $i < FixtureConfig::REPORTS; ++$i) {
             $projectIdx = $i % FixtureConfig::PROJECTS;
             $project = $this->getReference(FixtureReference::project($projectIdx), Project::class);
             $status = $statuses[$i];
@@ -75,12 +75,12 @@ final class ReportFixtures extends Fixture implements DependentFixtureInterface,
                 $report->setStorageUrl(sprintf('https://storage.seo-ai.test/reports/report-%d.pdf', $i));
             }
 
-            if ($status === ReportStatus::SENT) {
+            if (ReportStatus::SENT === $status) {
                 $report->setSentToEmail($faker->email());
                 $report->setSentAt(new \DateTimeImmutable(sprintf('-%d days', random_int(1, 15))));
             }
 
-            if ($status === ReportStatus::FAILED) {
+            if (ReportStatus::FAILED === $status) {
                 $report->setErrorMessage('Erreur lors de la génération du PDF : timeout du service DomPDF.');
             }
 

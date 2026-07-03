@@ -43,7 +43,7 @@ final class AiUsageFixtures extends Fixture implements DependentFixtureInterface
         $operations = ['seo_analysis', 'article_generation', 'keyword_research', 'content_optimization', 'geo_analysis'];
         $models = ['claude-haiku-4-5-20251001', 'claude-sonnet-4-20250514'];
 
-        for ($i = 0; $i < FixtureConfig::AI_USAGES; $i++) {
+        for ($i = 0; $i < FixtureConfig::AI_USAGES; ++$i) {
             $userIdx = $i % FixtureConfig::USERS;
             $projectIdx = $i % FixtureConfig::PROJECTS;
 
