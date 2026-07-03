@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Form;
 
 use App\Entity\TopicResearch;
+use App\Enum\PipelineQualityMode;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
@@ -46,6 +47,15 @@ final class TopicResearchType extends AbstractType
                     'Spanish' => 'es',
                     'Italian' => 'it',
                 ],
+            ])
+            ->add('qualityMode', ChoiceType::class, [
+                'label' => 'Cost mode',
+                'choices' => [
+                    'Balanced' => PipelineQualityMode::BALANCED,
+                    'Economy' => PipelineQualityMode::ECONOMY,
+                    'Quality' => PipelineQualityMode::QUALITY,
+                ],
+                'choice_label' => static fn (PipelineQualityMode $mode): string => $mode->label(),
             ])
             ->add('sector', TextType::class, [
                 'label' => 'Sector',

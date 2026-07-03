@@ -4,13 +4,18 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Entity\KeywordSuggestion;
 use App\Entity\Project;
 use App\Entity\TopicResearch;
 use App\Entity\User;
 use App\Form\TopicResearchType;
+use App\Repository\KeywordSuggestionRepository;
 use App\Repository\TopicResearchRepository;
 use App\Security\Voter\ProjectVoter;
+use App\Service\Cost\CostAwarePipelineService;
+use App\Service\KeywordDiscovery\AuditKeywordDiscoveryService;
 use App\Service\Pipeline\ArticleGenerationPipelineService;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -35,7 +40,9 @@ final class TopicResearchController extends AbstractController
     public function new(
         Project $project,
         Request $request,
-        ArticleGenerationPipelineService $pipelineService,
+        CostAwarePipelineService $pipelineService,
+        AuditKeywordDiscoveryService $auditKeywordDiscoveryService,
+        KeywordSuggestionRepository $keywordSuggestionRepository,
     ): Response {
         $this->denyAccessUnlessGranted(ProjectVoter::MANAGE_CONTENT, $project);
 
@@ -60,6 +67,7 @@ final class TopicResearchController extends AbstractController
                 'sector' => $topicResearch->getSector(),
                 'audience' => $topicResearch->getAudience(),
                 'businessObjective' => $topicResearch->getBusinessObjective(),
+                'qualityMode' => $topicResearch->getQualityMode(),
             ]);
 
             $this->addFlash('success', 'Pipeline V2 started.');
@@ -70,9 +78,86 @@ final class TopicResearchController extends AbstractController
             ]);
         }
 
+        $keywordDiscoverySummary = $auditKeywordDiscoveryService->discover($project, false);
+
         return $this->render('topic_research/new.html.twig', [
             'project' => $project,
             'form' => $form,
+            'keywordSuggestions' => $keywordSuggestionRepository->findForProject($project, 25),
+            'keywordDiscoverySummary' => $keywordDiscoverySummary,
+        ]);
+    }
+
+    #[Route('/keyword-discovery', name: 'app_topic_research_discover_keywords', methods: ['POST'])]
+    public function discoverKeywords(
+        Project $project,
+        Request $request,
+        AuditKeywordDiscoveryService $auditKeywordDiscoveryService,
+    ): RedirectResponse {
+        $this->denyAccessUnlessGranted(ProjectVoter::MANAGE_CONTENT, $project);
+
+        if (!$this->isCsrfTokenValid('discover_keywords_' . $project->getId(), (string) $request->request->get('_token', ''))) {
+            throw $this->createAccessDeniedException('Invalid keyword discovery CSRF token.');
+        }
+
+        $summary = $auditKeywordDiscoveryService->discover($project, true);
+        if (!$summary['audit_used']) {
+            $this->addFlash('warning', 'No completed audit available for keyword discovery.');
+        } else {
+            $message = sprintf(
+                'Keyword opportunities refreshed: %d added, %d updated, %d skipped.',
+                $summary['created'],
+                $summary['updated'],
+                $summary['skipped'],
+            );
+            if ($summary['fallback_used']) {
+                $message .= ' Economic fallback was used.';
+            }
+
+            $this->addFlash('success', $message);
+        }
+
+        return $this->redirectToRoute('app_topic_research_new', [
+            'project' => $project->getId(),
+        ]);
+    }
+
+    #[Route('/suggestions/{keywordSuggestion}/generate', name: 'app_topic_research_generate_from_suggestion', methods: ['POST'])]
+    public function generateFromSuggestion(
+        Project $project,
+        KeywordSuggestion $keywordSuggestion,
+        Request $request,
+        CostAwarePipelineService $pipelineService,
+        EntityManagerInterface $entityManager,
+    ): RedirectResponse {
+        $this->denyAccessUnlessGranted(ProjectVoter::MANAGE_CONTENT, $project);
+
+        if ($keywordSuggestion->getProject()?->getId() !== $project->getId()) {
+            throw $this->createNotFoundException('Keyword suggestion not found for this project.');
+        }
+
+        if (!$this->isCsrfTokenValid('generate_keyword_suggestion_' . $keywordSuggestion->getId(), (string) $request->request->get('_token', ''))) {
+            throw $this->createAccessDeniedException('Invalid keyword suggestion CSRF token.');
+        }
+
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $keywordSuggestion->setIsSelected(true);
+        $entityManager->flush();
+
+        $started = $pipelineService->start($project, $user, $keywordSuggestion->getTerm(), [
+            'country' => $project->getTargetCountry() ?? 'FR',
+            'language' => $project->getDefaultLanguage() ?? 'fr',
+        ]);
+
+        $this->addFlash('success', 'Pipeline V2 started from audit opportunity.');
+
+        return $this->redirectToRoute('app_topic_research_show', [
+            'project' => $project->getId(),
+            'topicResearch' => $started->getId(),
         ]);
     }
 

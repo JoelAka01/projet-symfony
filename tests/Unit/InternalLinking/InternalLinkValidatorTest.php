@@ -25,13 +25,16 @@ final class InternalLinkValidatorTest extends TestCase
 
         $result = $validator->validate(
             $project,
-            '<h2><a href="/service/">Service</a></h2><p><a href="/contact/">Contact</a> <a href="/invented/">Invented</a></p>',
+            '<h2><a href="/service/">Service</a></h2><p>Pour approfondir ce point, <a href="/contact/">Contact</a> <a href="/invented/">Invented</a></p><p><a href="/">en savoir plus</a> <a href="/service/">Service</a></p>',
             $pages,
         );
 
         self::assertFalse($result['is_valid']);
         self::assertSame(1, $result['heading_links']);
+        self::assertGreaterThanOrEqual(1, $result['paragraphs_with_multiple_links']);
         self::assertContains('/invented/', $result['unknown_urls']);
+        self::assertContains('en savoir plus', $result['generic_anchors']);
+        self::assertContains('Pour approfondir ce point', $result['repetitive_phrases']);
     }
 
     private function page(Project $project, string $url, SitePageType $type): SitePage

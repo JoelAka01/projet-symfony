@@ -8,6 +8,7 @@ use App\Entity\Project;
 use App\Entity\TopicResearch;
 use App\Entity\User;
 use App\Enum\PipelineStatus;
+use App\Enum\PipelineQualityMode;
 use App\Message\Pipeline\AnalyzeIntelligenceMessage;
 use App\Message\Pipeline\AnalyzeSerpMessage;
 use App\Message\Pipeline\ApplyInternalLinksMessage;
@@ -30,7 +31,8 @@ final class ArticleGenerationPipelineService
      *     language?: string|null,
      *     sector?: string|null,
      *     audience?: string|null,
-     *     businessObjective?: string|null
+     *     businessObjective?: string|null,
+     *     qualityMode?: PipelineQualityMode|string|null
      * } $options
      */
     public function start(Project $project, User $user, string $keyword, array $options = []): TopicResearch
@@ -45,6 +47,7 @@ final class ArticleGenerationPipelineService
             ->setSector($this->nullableString($options['sector'] ?? null))
             ->setAudience($this->nullableString($options['audience'] ?? null))
             ->setBusinessObjective($this->nullableString($options['businessObjective'] ?? null))
+            ->setQualityMode($this->qualityMode($options['qualityMode'] ?? null))
             ->setStatus(PipelineStatus::NEW);
 
         $this->entityManager->persist($topicResearch);
@@ -122,5 +125,18 @@ final class ArticleGenerationPipelineService
         }
 
         return trim((string) $value);
+    }
+
+    private function qualityMode(mixed $value): PipelineQualityMode
+    {
+        if ($value instanceof PipelineQualityMode) {
+            return $value;
+        }
+
+        if (is_scalar($value)) {
+            return PipelineQualityMode::tryFrom((string) $value) ?? PipelineQualityMode::BALANCED;
+        }
+
+        return PipelineQualityMode::BALANCED;
     }
 }
