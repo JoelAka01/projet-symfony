@@ -6,8 +6,8 @@ namespace App\Entity;
 
 use App\Entity\Traits\TimestampableTrait;
 use App\Entity\Traits\UuidPrimaryKeyTrait;
-use App\Enum\PipelineStatus;
 use App\Enum\PipelineQualityMode;
+use App\Enum\PipelineStatus;
 use App\Repository\TopicResearchRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;

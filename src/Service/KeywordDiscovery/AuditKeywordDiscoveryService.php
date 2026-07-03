@@ -411,7 +411,7 @@ final class AuditKeywordDiscoveryService
 
     /**
      * @param array<string, mixed> $data
-     * @param list<string>        $keys
+     * @param list<string>         $keys
      *
      * @return list<mixed>
      */
@@ -433,7 +433,7 @@ final class AuditKeywordDiscoveryService
 
     /**
      * @param array<string, mixed> $data
-     * @param list<string>        $path
+     * @param list<string>         $path
      *
      * @return list<mixed>
      */
@@ -651,7 +651,7 @@ final class AuditKeywordDiscoveryService
 
         $tokens = array_values(array_filter(
             explode(' ', $this->normalizeTerm($term)),
-            static fn (string $token): bool => !in_array($token, self::STOP_WORDS, true),
+            static fn(string $token): bool => !in_array($token, self::STOP_WORDS, true),
         ));
 
         return ucfirst(implode(' ', array_slice($tokens, 0, 3))) ?: 'Audit opportunities';
@@ -742,7 +742,7 @@ final class AuditKeywordDiscoveryService
         $tokens = preg_split('/\s+/', $normalized, -1, PREG_SPLIT_NO_EMPTY) ?: [];
         $tokens = array_values(array_unique(array_filter(
             $tokens,
-            static fn (string $token): bool => mb_strlen($token) > 2 && !in_array($token, self::STOP_WORDS, true),
+            static fn(string $token): bool => mb_strlen($token) > 2 && !in_array($token, self::STOP_WORDS, true),
         )));
         sort($tokens);
 

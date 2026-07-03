@@ -39,7 +39,7 @@ final class AuditDataReuseService
         $analysis
             ->setTopicResearch($topicResearch)
             ->setCompetitors(array_map(
-                static fn (string $term): array => [
+                static fn(string $term): array => [
                     'url' => null,
                     'title' => $term,
                     'h1' => $term,
@@ -55,18 +55,18 @@ final class AuditDataReuseService
             ))
             ->setSerpFeatures([
                 'featured_snippets' => [],
-                'paa' => array_map(static fn (string $question): array => ['question' => $question, 'source' => 'audit'], $data['questions']),
+                'paa' => array_map(static fn(string $question): array => ['question' => $question, 'source' => 'audit'], $data['questions']),
                 'related_searches' => $data['suggested_topics'],
                 'images' => [],
                 'videos' => [],
                 'source' => 'audit_reuse',
             ])
             ->setContentGaps(array_map(
-                static fn (string $gap): array => ['topic' => $gap, 'coverage' => 'missing', 'opportunity_score' => 7, 'source' => 'audit'],
+                static fn(string $gap): array => ['topic' => $gap, 'coverage' => 'missing', 'opportunity_score' => 7, 'source' => 'audit'],
                 array_slice($data['content_gaps'], 0, 20),
             ))
             ->setQuestions(array_map(
-                static fn (string $question): array => ['question' => $question, 'intent' => 'informational', 'cluster' => 'Audit questions', 'priority_score' => 7, 'source' => 'audit'],
+                static fn(string $question): array => ['question' => $question, 'intent' => 'informational', 'cluster' => 'Audit questions', 'priority_score' => 7, 'source' => 'audit'],
                 array_slice($data['questions'], 0, 30),
             ))
             ->setAverageWordCount(0)
@@ -142,7 +142,7 @@ final class AuditDataReuseService
 
     /**
      * @param array<string, mixed> $data
-     * @param list<string>        $keys
+     * @param list<string>         $keys
      *
      * @return list<mixed>
      */
