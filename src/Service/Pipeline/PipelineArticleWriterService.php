@@ -43,12 +43,13 @@ final class PipelineArticleWriterService
         $result = $this->claudeClient->requestJson(
             $topicResearch,
             TopicResearch::STEP_ARTICLE,
-            $this->systemPrompt(),
+            $this->systemPrompt($topicResearch->getLanguage() ?? $project->getDefaultLanguage() ?? 'fr'),
             [
                 'topic' => [
                     'keyword' => $topicResearch->getPrimaryKeyword(),
                     'country' => $topicResearch->getCountry(),
                     'language' => $topicResearch->getLanguage(),
+                    'target_language' => $this->languageName($topicResearch->getLanguage() ?? $project->getDefaultLanguage() ?? 'fr'),
                     'sector' => $topicResearch->getSector(),
                     'audience' => $topicResearch->getAudience(),
                     'business_objective' => $topicResearch->getBusinessObjective(),
@@ -136,16 +137,24 @@ final class PipelineArticleWriterService
         return $article;
     }
 
-    private function systemPrompt(): string
+    private function systemPrompt(string $language): string
     {
-        return <<<'PROMPT'
+        $targetLanguage = $this->languageName($language);
+
+        return <<<PROMPT
 You are an expert SEO writer producing the article step of an asynchronous editorial pipeline.
 Write a complete, useful, CMS-ready article that follows the provided outline section by section.
+Write every user-facing field in {$targetLanguage}. This includes title, seo_title, meta_description, excerpt, content_html, FAQ, image alt text, anchors, and source suggestions.
+If reused audit, SERP, keyword, question, entity, or brief data is in another language, translate and adapt it naturally into {$targetLanguage}; do not copy foreign-language wording into the final article.
 Cover the priority questions, naturally integrate the entities and semantic concepts, and avoid unsupported statistics or invented citations.
-Add a natural internal linking section inside content_html when internal_pages_available is provided.
+When internal_pages_available is provided, integrate internal links directly inside already useful paragraphs.
 Use only URLs listed in internal_pages_available. Never invent an internal URL.
-Place internal links in relevant paragraphs, never in headings.
+Place internal links in relevant paragraphs, never in headings, tables, or pricing sections unless the link directly helps the pricing decision.
 Add at minimum, when available: 1 home link, 2 service/product/category links, 1 contact or quote link, and 2 complementary blog links.
+Use descriptive anchors such as target keywords, page titles, or precise service names.
+Never use generic anchors like "ce produit", "cette offre", "cliquez ici", "en savoir plus", or "ce lien".
+Do not add repetitive link-only sentences such as "Pour approfondir ce point" or "Consultez ce produit".
+Limit internal links to one per paragraph. Contact or quote links must appear in a conversion-oriented sentence.
 Vary anchors and never repeat the exact same anchor.
 Return only one valid JSON object with this schema:
 {
@@ -163,6 +172,18 @@ Return only one valid JSON object with this schema:
 Allowed HTML tags in content_html: p, h2, h3, h4, ul, ol, li, strong, em, blockquote, a, table, thead, tbody, tr, th, td, code, pre, hr, br.
 Do not include scripts, styles, iframes, forms, SVG, an H1, or Markdown fences.
 PROMPT;
+    }
+
+    private function languageName(string $language): string
+    {
+        return match (strtolower(trim($language))) {
+            'fr', 'fr-fr', 'fr_be', 'fr-ca' => 'French',
+            'en', 'en-us', 'en-gb' => 'English',
+            'de', 'de-de' => 'German',
+            'es', 'es-es' => 'Spanish',
+            'it', 'it-it' => 'Italian',
+            default => sprintf('the language identified by code "%s"', $language),
+        };
     }
 
     /** @return list<array<string, mixed>> */

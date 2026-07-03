@@ -11,6 +11,25 @@ use App\Repository\SitePageRepository;
 
 final class InternalLinkValidator
 {
+    private const BANNED_ANCHORS = [
+        'ce produit',
+        'cette offre',
+        'cliquez ici',
+        'en savoir plus',
+        'en savoir plus ici',
+        'ce lien',
+        'cette page',
+        'cette page utile',
+        'ce service',
+    ];
+    private const REPETITIVE_PHRASES = [
+        'Pour approfondir ce point',
+        'Consultez ce produit',
+        'Cette offre',
+        'Ce lien',
+        'En savoir plus ici',
+    ];
+
     public function __construct(private readonly SitePageRepository $sitePageRepository) {}
 
     /**
@@ -24,6 +43,9 @@ final class InternalLinkValidator
      *     has_service_product_or_category: bool,
      *     unknown_urls: list<string>,
      *     heading_links: int,
+     *     generic_anchors: list<string>,
+     *     repetitive_phrases: list<string>,
+     *     paragraphs_with_multiple_links: int,
      *     issues: list<string>
      * }
      */
@@ -36,8 +58,10 @@ final class InternalLinkValidator
         $internalUrls = [];
         $unknownUrls = [];
         $headingLinks = 0;
+        $genericAnchors = [];
         $hasContactOrQuote = false;
         $hasServiceProductOrCategory = false;
+        $paragraphInternalLinkCounts = [];
 
         foreach ($links as $link) {
             $key = $this->urlKey($link['href']);
@@ -48,6 +72,13 @@ final class InternalLinkValidator
             $sitePage = $known[$key] ?? null;
             if ($sitePage instanceof SitePage) {
                 $internalUrls[] = $sitePage->getUrl();
+                $paragraphKey = $link['paragraph_key'];
+                if (null !== $paragraphKey) {
+                    $paragraphInternalLinkCounts[$paragraphKey] = ($paragraphInternalLinkCounts[$paragraphKey] ?? 0) + 1;
+                }
+                if ($this->isBannedAnchor($link['anchor'])) {
+                    $genericAnchors[] = $link['anchor'];
+                }
                 if (in_array($sitePage->getPageType(), [SitePageType::CONTACT, SitePageType::QUOTE], true)) {
                     $hasContactOrQuote = true;
                 }
@@ -56,6 +87,10 @@ final class InternalLinkValidator
                 }
             } elseif ($this->looksInternal($link['href'], $knownHosts)) {
                 $unknownUrls[] = $link['href'];
+                $paragraphKey = $link['paragraph_key'];
+                if (null !== $paragraphKey) {
+                    $paragraphInternalLinkCounts[$paragraphKey] = ($paragraphInternalLinkCounts[$paragraphKey] ?? 0) + 1;
+                }
             }
 
             if ($link['in_heading']) {
@@ -65,6 +100,12 @@ final class InternalLinkValidator
 
         $issues = [];
         $uniqueInternalUrls = array_values(array_unique($internalUrls));
+        $repetitivePhrases = $this->findRepetitivePhrases($contentHtml);
+        $paragraphsWithMultipleLinks = count(array_filter(
+            $paragraphInternalLinkCounts,
+            static fn(int $linkCount): bool => $linkCount > 1,
+        ));
+
         if (count($sitePages) >= 3 && count($uniqueInternalUrls) < 3) {
             $issues[] = 'At least 3 unique internal links are expected when enough pages are active.';
         }
@@ -73,6 +114,15 @@ final class InternalLinkValidator
         }
         if ($headingLinks > 0) {
             $issues[] = 'Internal links must not be placed in headings.';
+        }
+        if ([] !== $genericAnchors) {
+            $issues[] = 'Generic internal link anchors are not allowed.';
+        }
+        if ([] !== $repetitivePhrases) {
+            $issues[] = 'Repetitive internal linking sentences are not allowed.';
+        }
+        if ($paragraphsWithMultipleLinks > 0) {
+            $issues[] = 'Only one internal link per paragraph is allowed.';
         }
         if ($this->hasType($sitePages, SitePageType::CONTACT, SitePageType::QUOTE) && !$hasContactOrQuote) {
             $issues[] = 'A contact or quote link is expected when available.';
@@ -89,12 +139,15 @@ final class InternalLinkValidator
             'has_service_product_or_category' => $hasServiceProductOrCategory,
             'unknown_urls' => array_values(array_unique($unknownUrls)),
             'heading_links' => $headingLinks,
+            'generic_anchors' => array_values(array_unique($genericAnchors)),
+            'repetitive_phrases' => $repetitivePhrases,
+            'paragraphs_with_multiple_links' => $paragraphsWithMultipleLinks,
             'issues' => $issues,
         ];
     }
 
     /**
-     * @return list<array{href: string, in_heading: bool}>
+     * @return list<array{href: string, anchor: string, in_heading: bool, paragraph_key: string|null}>
      */
     private function extractLinks(string $contentHtml): array
     {
@@ -108,7 +161,9 @@ final class InternalLinkValidator
 
             $links[] = [
                 'href' => $href,
+                'anchor' => trim($anchor->textContent),
                 'in_heading' => $this->hasAncestor($anchor, ['h1', 'h2', 'h3']),
+                'paragraph_key' => $this->paragraphKey($anchor),
             ];
         }
 
@@ -224,6 +279,53 @@ final class InternalLinkValidator
         }
 
         return false;
+    }
+
+    private function paragraphKey(\DOMNode $node): ?string
+    {
+        $parent = $node->parentNode;
+        while ($parent instanceof \DOMNode) {
+            if ($parent instanceof \DOMElement && 'p' === strtolower($parent->tagName)) {
+                return spl_object_hash($parent);
+            }
+            $parent = $parent->parentNode;
+        }
+
+        return null;
+    }
+
+    /** @return list<string> */
+    private function findRepetitivePhrases(string $contentHtml): array
+    {
+        $text = html_entity_decode(strip_tags($contentHtml), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $found = [];
+        foreach (self::REPETITIVE_PHRASES as $phrase) {
+            if (str_contains(mb_strtolower($text), mb_strtolower($phrase))) {
+                $found[] = $phrase;
+            }
+        }
+
+        return $found;
+    }
+
+    private function isBannedAnchor(string $anchor): bool
+    {
+        $normalized = $this->normalizeText($anchor);
+        foreach (self::BANNED_ANCHORS as $bannedAnchor) {
+            if ($normalized === $this->normalizeText($bannedAnchor)) {
+                return true;
+            }
+        }
+
+        return mb_strlen($normalized) < 8 || str_word_count($normalized) < 2;
+    }
+
+    private function normalizeText(string $value): string
+    {
+        $value = html_entity_decode(strip_tags($value), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $value = mb_strtolower(trim($value));
+
+        return (string) preg_replace('/\s+/', ' ', $value);
     }
 
     /** @param list<SitePage> $sitePages */

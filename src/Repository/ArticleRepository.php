@@ -35,4 +35,15 @@ class ArticleRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    /** @return list<array{title: string, slug: string|null}> */
+    public function findTitlesAndSlugsForProject(Project $project): array
+    {
+        return $this->createQueryBuilder('article')
+            ->select('article.title AS title', 'article.slug AS slug')
+            ->andWhere('article.project = :project')
+            ->setParameter('project', $project)
+            ->getQuery()
+            ->getArrayResult();
+    }
 }

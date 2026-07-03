@@ -19,6 +19,48 @@ final class InternalLinkingService
 {
     private const MIN_LINKS = 3;
     private const MAX_LINKS = 8;
+    private const BANNED_ANCHORS = [
+        'ce produit',
+        'cette offre',
+        'cliquez ici',
+        'en savoir plus',
+        'en savoir plus ici',
+        'ce lien',
+        'cette page',
+        'cette page utile',
+        'ce service',
+    ];
+    private const REPETITIVE_PHRASES = [
+        'Pour approfondir ce point',
+        'Consultez ce produit',
+        'Cette offre',
+        'Ce lien',
+        'En savoir plus ici',
+    ];
+    private const CONVERSION_TERMS = [
+        'devis',
+        'contact',
+        'contacter',
+        'demander',
+        'réserver',
+        'reserver',
+        'besoin',
+        'projet',
+        'accompagnement',
+        'conseil',
+    ];
+    private const PRICING_TERMS = [
+        'tarif',
+        'tarifs',
+        'prix',
+        'forfait',
+        'abonnement',
+        'budget',
+        '€',
+        'eur',
+        'ht',
+        'ttc',
+    ];
 
     public function __construct(
         private readonly SitePageRepository $sitePageRepository,
@@ -33,6 +75,7 @@ final class InternalLinkingService
      */
     public function apply(Article $article, Project $project, string $contentHtml): array
     {
+        $contentHtml = $this->stripRepetitiveLinkSentences($contentHtml);
         $sitePages = $this->sitePageRepository->findActiveForProject($project);
         if ([] === $sitePages) {
             $validation = $this->validator->validate($project, $contentHtml, []);
@@ -61,6 +104,9 @@ final class InternalLinkingService
 
         $this->clearPreviousSuggestions($article);
         $this->unlinkUnknownInternalAnchors($dom, $knownUrlMap, $this->knownHosts($sitePages));
+        $this->unlinkRejectedInternalAnchors($dom, $knownUrlMap);
+        $usedUrls = $this->existingKnownUrls($dom, $knownUrlMap);
+        $usedAnchors = $this->existingAnchors($dom);
 
         foreach ($selectedPages as $sitePage) {
             if (count($inserted) + count($existing) >= self::MAX_LINKS) {
@@ -75,24 +121,24 @@ final class InternalLinkingService
                 continue;
             }
 
-            $anchor = $this->chooseAnchor($sitePage, $usedAnchors);
-            if (null === $anchor) {
+            $anchors = $this->candidateAnchors($sitePage, $usedAnchors);
+            if ([] === $anchors) {
                 $skipped[] = $this->linkPayload($sitePage, '', 'no_anchor');
                 $this->persistSuggestion($article, $sitePage, $sitePage->getTitle(), null, InternalLinkSuggestionStatus::REJECTED);
                 continue;
             }
 
-            $placement = $this->insertAnchor($dom, $root, $sitePage, $anchor);
+            $placement = $this->insertAnchor($dom, $root, $sitePage, $anchors);
             if (null === $placement) {
-                $skipped[] = $this->linkPayload($sitePage, $anchor, 'not_inserted');
-                $this->persistSuggestion($article, $sitePage, $anchor, null, InternalLinkSuggestionStatus::FAILED);
+                $skipped[] = $this->linkPayload($sitePage, implode(', ', $anchors), 'not_contextual');
+                $this->persistSuggestion($article, $sitePage, $anchors[0], null, InternalLinkSuggestionStatus::REJECTED);
                 continue;
             }
 
-            $usedUrls[$pageKey] = $anchor;
-            $usedAnchors[mb_strtolower($anchor)] = true;
-            $inserted[] = $this->linkPayload($sitePage, $anchor, $placement);
-            $this->persistSuggestion($article, $sitePage, $anchor, $position++, InternalLinkSuggestionStatus::INSERTED);
+            $usedUrls[$pageKey] = $placement['anchor'];
+            $usedAnchors[mb_strtolower($placement['anchor'])] = true;
+            $inserted[] = $this->linkPayload($sitePage, $placement['anchor'], $placement['status']);
+            $this->persistSuggestion($article, $sitePage, $placement['anchor'], $position++, InternalLinkSuggestionStatus::INSERTED);
         }
 
         $linkedHtml = $this->innerHtml($root);
@@ -212,8 +258,12 @@ final class InternalLinkingService
         return $count;
     }
 
-    /** @param array<string, bool> $usedAnchors */
-    private function chooseAnchor(SitePage $sitePage, array $usedAnchors): ?string
+    /**
+     * @param array<string, bool> $usedAnchors
+     *
+     * @return list<string>
+     */
+    private function candidateAnchors(SitePage $sitePage, array $usedAnchors): array
     {
         $anchors = array_merge(
             $sitePage->getAnchorSuggestions(),
@@ -221,60 +271,55 @@ final class InternalLinkingService
             $this->fallbackAnchors($sitePage),
         );
 
+        $candidates = [];
         foreach ($anchors as $anchor) {
             if (!is_string($anchor)) {
                 continue;
             }
             $anchor = trim($anchor);
-            if ('' === $anchor || isset($usedAnchors[mb_strtolower($anchor)])) {
+            if ('' === $anchor || isset($usedAnchors[mb_strtolower($anchor)]) || $this->isBannedAnchor($anchor)) {
                 continue;
             }
 
-            return mb_substr($anchor, 0, 120);
+            $candidates[] = mb_substr($anchor, 0, 120);
         }
 
-        return null;
+        return array_values(array_unique($candidates));
     }
 
     /** @return list<string> */
     private function fallbackAnchors(SitePage $sitePage): array
     {
-        return match ($sitePage->getPageType()) {
-            SitePageType::HOME => ['site officiel', 'page d\'accueil'],
-            SitePageType::CONTACT => ['nous contacter', 'prendre contact'],
-            SitePageType::QUOTE => ['demander un devis', 'obtenir un devis'],
-            SitePageType::SERVICE => ['ce service', 'notre service dedie'],
-            SitePageType::PRODUCT => ['ce produit', 'cette offre'],
-            SitePageType::CATEGORY => ['cette categorie', 'nos solutions associees'],
-            SitePageType::BLOG => ['ce guide complementaire', 'cet article complementaire'],
-            SitePageType::OTHER => ['cette page utile', 'en savoir plus'],
-        };
-    }
-
-    private function insertAnchor(\DOMDocument $dom, \DOMElement $root, SitePage $sitePage, string $anchor): ?string
-    {
-        foreach ($this->paragraphs($root) as $paragraph) {
-            if ($this->insertInMatchingText($dom, $paragraph, $sitePage, $anchor)) {
-                return 'matched_text';
+        $anchors = [];
+        foreach ([$sitePage->getTargetKeyword(), $sitePage->getTitle()] as $candidate) {
+            if (is_string($candidate) && '' !== trim($candidate)) {
+                $anchors[] = trim($candidate);
             }
         }
 
-        $paragraph = $this->bestFallbackParagraph($root);
-        if (!$paragraph instanceof \DOMElement) {
-            return null;
+        return $anchors;
+    }
+
+    /**
+     * @param list<string> $anchors
+     *
+     * @return array{status: string, anchor: string}|null
+     */
+    private function insertAnchor(\DOMDocument $dom, \DOMElement $root, SitePage $sitePage, array $anchors): ?array
+    {
+        foreach ($this->paragraphs($root) as $paragraph) {
+            if (!$this->canLinkParagraph($paragraph, $sitePage)) {
+                continue;
+            }
+
+            foreach ($anchors as $anchor) {
+                if ($this->insertInMatchingText($dom, $paragraph, $sitePage, $anchor)) {
+                    return ['status' => 'matched_text', 'anchor' => $anchor];
+                }
+            }
         }
 
-        if ('' !== trim($paragraph->textContent)) {
-            $paragraph->appendChild($dom->createTextNode(' '));
-        }
-        $paragraph->appendChild($dom->createTextNode($this->introFor($sitePage) . ' '));
-        $link = $dom->createElement('a');
-        $link->setAttribute('href', $sitePage->getUrl());
-        $link->appendChild($dom->createTextNode($anchor));
-        $paragraph->appendChild($link);
-        $paragraph->appendChild($dom->createTextNode('.'));
-
-        return 'fallback_sentence';
+        return null;
     }
 
     private function insertInMatchingText(\DOMDocument $dom, \DOMElement $paragraph, SitePage $sitePage, string $anchor): bool
@@ -292,6 +337,9 @@ final class InternalLinkingService
 
             $offset = mb_stripos($node->wholeText, $anchor);
             if (false === $offset) {
+                continue;
+            }
+            if (!$this->isWholePhraseMatch($node->wholeText, $offset, $anchor)) {
                 continue;
             }
 
@@ -331,24 +379,38 @@ final class InternalLinkingService
         return $paragraphs;
     }
 
-    private function bestFallbackParagraph(\DOMElement $root): ?\DOMElement
+    private function canLinkParagraph(\DOMElement $paragraph, SitePage $sitePage): bool
     {
-        $paragraphs = $this->paragraphs($root);
-        if ([] === $paragraphs) {
-            return null;
+        if ($paragraph->getElementsByTagName('a')->length > 0) {
+            return false;
         }
 
-        return $paragraphs[(int) floor((count($paragraphs) - 1) / 2)];
+        $text = mb_strtolower($paragraph->textContent);
+        if ($this->containsAny($text, self::REPETITIVE_PHRASES)) {
+            return false;
+        }
+
+        if ($this->containsAny($text, self::PRICING_TERMS) && !in_array($sitePage->getPageType(), [SitePageType::CONTACT, SitePageType::QUOTE], true)) {
+            return false;
+        }
+
+        if (in_array($sitePage->getPageType(), [SitePageType::CONTACT, SitePageType::QUOTE], true)) {
+            return $this->containsAny($text, self::CONVERSION_TERMS);
+        }
+
+        return true;
     }
 
-    private function introFor(SitePage $sitePage): string
+    /** @param list<string> $needles */
+    private function containsAny(string $haystack, array $needles): bool
     {
-        return match ($sitePage->getPageType()) {
-            SitePageType::CONTACT, SitePageType::QUOTE => 'Pour avancer sur votre projet, vous pouvez aussi',
-            SitePageType::HOME => 'Pour replacer le sujet dans l\'offre globale, consultez',
-            SitePageType::BLOG => 'Un contenu complementaire utile est disponible ici :',
-            default => 'Pour approfondir ce point, consultez',
-        };
+        foreach ($needles as $needle) {
+            if (str_contains($haystack, mb_strtolower($needle))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function unlinkUnknownInternalAnchors(\DOMDocument $dom, array $knownUrlMap, array $knownHosts): void
@@ -362,6 +424,28 @@ final class InternalLinkingService
             $href = trim($anchor->getAttribute('href'));
             $key = $this->urlKey($href);
             if (null === $key || isset($knownUrlMap[$key]) || !$this->looksInternal($href, $knownHosts)) {
+                continue;
+            }
+
+            $text = $dom->createTextNode($anchor->textContent);
+            $anchor->parentNode?->replaceChild($text, $anchor);
+        }
+    }
+
+    private function unlinkRejectedInternalAnchors(\DOMDocument $dom, array $knownUrlMap): void
+    {
+        $anchors = [];
+        foreach ($dom->getElementsByTagName('a') as $anchor) {
+            $anchors[] = $anchor;
+        }
+
+        foreach ($anchors as $anchor) {
+            $key = $this->urlKey($anchor->getAttribute('href'));
+            if (null === $key || !isset($knownUrlMap[$key])) {
+                continue;
+            }
+
+            if (!$this->isBannedAnchor($anchor->textContent) && !$this->hasAncestor($anchor, ['h1', 'h2', 'h3', 'table', 'thead', 'tbody', 'tr', 'td', 'th'])) {
                 continue;
             }
 
@@ -389,7 +473,7 @@ final class InternalLinkingService
         $used = [];
         foreach ($dom->getElementsByTagName('a') as $anchor) {
             $key = $this->urlKey($anchor->getAttribute('href'));
-            if (null !== $key && isset($knownUrlMap[$key])) {
+            if (null !== $key && isset($knownUrlMap[$key]) && !$this->isBannedAnchor($anchor->textContent)) {
                 $used[$this->canonicalPageKey($knownUrlMap[$key])] = trim($anchor->textContent);
             }
         }
@@ -403,7 +487,7 @@ final class InternalLinkingService
         $anchors = [];
         foreach ($dom->getElementsByTagName('a') as $anchor) {
             $text = trim($anchor->textContent);
-            if ('' !== $text) {
+            if ('' !== $text && !$this->isBannedAnchor($text)) {
                 $anchors[mb_strtolower($text)] = true;
             }
         }
@@ -507,6 +591,55 @@ final class InternalLinkingService
         }
 
         return trim($html);
+    }
+
+    private function stripRepetitiveLinkSentences(string $contentHtml): string
+    {
+        $dom = $this->loadFragment($contentHtml);
+        $root = $this->rootElement($dom);
+        $nodes = [];
+        foreach (['p', 'li'] as $tagName) {
+            foreach ($root->getElementsByTagName($tagName) as $node) {
+                if ($this->containsAny(mb_strtolower($node->textContent), self::REPETITIVE_PHRASES)) {
+                    $nodes[] = $node;
+                }
+            }
+        }
+
+        foreach ($nodes as $node) {
+            $node->parentNode?->removeChild($node);
+        }
+
+        return $this->innerHtml($root);
+    }
+
+    private function isBannedAnchor(string $anchor): bool
+    {
+        $normalized = $this->normalizeText($anchor);
+        foreach (self::BANNED_ANCHORS as $bannedAnchor) {
+            if ($normalized === $this->normalizeText($bannedAnchor)) {
+                return true;
+            }
+        }
+
+        return mb_strlen($normalized) < 8 || str_word_count($normalized) < 2;
+    }
+
+    private function normalizeText(string $value): string
+    {
+        $value = html_entity_decode(strip_tags($value), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $value = mb_strtolower(trim($value));
+
+        return (string) preg_replace('/\s+/', ' ', $value);
+    }
+
+    private function isWholePhraseMatch(string $text, int $offset, string $anchor): bool
+    {
+        $before = $offset > 0 ? mb_substr($text, $offset - 1, 1) : '';
+        $afterOffset = $offset + mb_strlen($anchor);
+        $after = $afterOffset < mb_strlen($text) ? mb_substr($text, $afterOffset, 1) : '';
+
+        return !preg_match('/[\p{L}\p{N}]/u', $before) && !preg_match('/[\p{L}\p{N}]/u', $after);
     }
 
     private function clearPreviousSuggestions(Article $article): void

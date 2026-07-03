@@ -8,6 +8,7 @@ use App\Entity\TopicResearch;
 use App\Enum\PipelineStatus;
 use App\Message\Pipeline\OptimizeSeoMessage;
 use App\Repository\TopicResearchRepository;
+use App\Service\Cost\ArticleQualityGateService;
 use App\Service\Pipeline\SeoScorerService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -19,6 +20,7 @@ final class OptimizeSeoHandler
     public function __construct(
         private readonly TopicResearchRepository $topicResearchRepository,
         private readonly SeoScorerService $seoScorer,
+        private readonly ArticleQualityGateService $qualityGate,
         private readonly EntityManagerInterface $entityManager,
         private readonly LoggerInterface $logger,
     ) {}
@@ -45,6 +47,7 @@ final class OptimizeSeoHandler
             $this->entityManager->flush();
 
             $this->seoScorer->score($topicResearch, $article, $contentBrief);
+            $this->qualityGate->assertPasses($article, $contentBrief);
             $topicResearch
                 ->setCurrentStep(null)
                 ->setStatus(PipelineStatus::READY_TO_PUBLISH)

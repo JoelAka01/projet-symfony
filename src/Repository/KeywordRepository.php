@@ -39,4 +39,15 @@ class KeywordRepository extends ServiceEntityRepository
 
         return $qb->getQuery()->getResult();
     }
+
+    /** @return list<Keyword> */
+    public function findForProject(Project $project): array
+    {
+        return $this->createQueryBuilder('keyword')
+            ->andWhere('keyword.project = :project')
+            ->setParameter('project', $project)
+            ->orderBy('keyword.term', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 }

@@ -31,6 +31,8 @@ final class SitePageDiscoveryService
     {
         $created = 0;
         $updated = 0;
+        /** @var array<string, SitePage> */
+        $pendingByUrl = [];
 
         $primaryDomain = $project->getDomains()->first();
         if ($primaryDomain instanceof Domain) {
@@ -41,6 +43,7 @@ final class SitePageDiscoveryService
                 SitePageType::HOME,
                 $project->getName(),
                 80,
+                $pendingByUrl,
             );
             $created += $result['created'];
             $updated += $result['updated'];
@@ -61,6 +64,7 @@ final class SitePageDiscoveryService
                 $type,
                 $this->targetKeyword($auditPage, $title),
                 $this->priorityForType($type),
+                $pendingByUrl,
             );
             $created += $result['created'];
             $updated += $result['updated'];
@@ -73,7 +77,7 @@ final class SitePageDiscoveryService
             }
 
             $targetKeyword = $article->getPrimaryKeyword()?->getTerm() ?? $article->getTitle();
-            $result = $this->upsertPage($project, $url, $article->getTitle(), SitePageType::BLOG, $targetKeyword, 45);
+            $result = $this->upsertPage($project, $url, $article->getTitle(), SitePageType::BLOG, $targetKeyword, 45, $pendingByUrl);
             $created += $result['created'];
             $updated += $result['updated'];
         }
@@ -84,6 +88,8 @@ final class SitePageDiscoveryService
     }
 
     /**
+     * @param array<string, SitePage> $pendingByUrl
+     *
      * @return array{created: int, updated: int}
      */
     private function upsertPage(
@@ -93,18 +99,20 @@ final class SitePageDiscoveryService
         SitePageType $type,
         ?string $targetKeyword,
         int $priority,
+        array &$pendingByUrl = [],
     ): array {
         if (null === $url) {
             return ['created' => 0, 'updated' => 0];
         }
 
-        $sitePage = $this->sitePageRepository->findOneForProjectUrl($project, $url);
+        $sitePage = $pendingByUrl[$url] ?? $this->sitePageRepository->findOneForProjectUrl($project, $url);
         $created = 0;
         $updated = 1;
         if (!$sitePage instanceof SitePage) {
             $sitePage = new SitePage();
             $sitePage->setProject($project)->setUrl($url);
             $this->entityManager->persist($sitePage);
+            $pendingByUrl[$url] = $sitePage;
             $created = 1;
             $updated = 0;
         }
@@ -228,16 +236,9 @@ final class SitePageDiscoveryService
     private function anchorsFor(string $title, ?string $targetKeyword, SitePageType $type): array
     {
         $anchors = [$targetKeyword, $title];
-        $anchors[] = match ($type) {
-            SitePageType::HOME => 'page d\'accueil',
-            SitePageType::CONTACT => 'nous contacter',
-            SitePageType::QUOTE => 'demander un devis',
-            SitePageType::SERVICE => 'ce service',
-            SitePageType::PRODUCT => 'ce produit',
-            SitePageType::CATEGORY => 'cette categorie',
-            SitePageType::BLOG => 'ce guide complementaire',
-            SitePageType::OTHER => 'cette page',
-        };
+        if (in_array($type, [SitePageType::CONTACT, SitePageType::QUOTE], true)) {
+            $anchors[] = 'demander un devis';
+        }
 
         $normalized = [];
         foreach ($anchors as $anchor) {

@@ -7,6 +7,9 @@ namespace App\Service\Pipeline;
 use App\Dto\PipelineClaudeResult;
 use App\Entity\PipelineRunLog;
 use App\Entity\TopicResearch;
+use App\Service\Cost\ApiCostGuard;
+use App\Service\Cost\ApiUsageLogger;
+use App\Service\Cost\CachedAiService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -21,6 +24,9 @@ final class PipelineClaudeClient
         private readonly HttpClientInterface $httpClient,
         private readonly EntityManagerInterface $entityManager,
         private readonly LoggerInterface $logger,
+        private readonly ApiCostGuard $apiCostGuard,
+        private readonly CachedAiService $cachedAiService,
+        private readonly ApiUsageLogger $apiUsageLogger,
     ) {}
 
     /**
@@ -42,6 +48,16 @@ final class PipelineClaudeClient
         $promptPayload = json_encode($payload, JSON_THROW_ON_ERROR);
         $promptSent = "SYSTEM:\n" . $systemPrompt . "\n\nUSER:\n" . $promptPayload;
         $startedAt = microtime(true);
+        $project = $topicResearch->getProject();
+        $inputHash = $this->cachedAiService->inputHash([
+            'step' => $step,
+            'keyword' => $topicResearch->getPrimaryKeyword(),
+            'country' => $topicResearch->getCountry(),
+            'language' => $topicResearch->getLanguage(),
+            'quality_mode' => $topicResearch->getQualityMode()->value,
+            'system_prompt' => $systemPrompt,
+            'payload' => $payload,
+        ]);
 
         $runLog = (new PipelineRunLog())
             ->setTopicResearch($topicResearch)
@@ -52,6 +68,37 @@ final class PipelineClaudeClient
             ->setModel($model)
             ->setStatus(PipelineRunLog::STATUS_SUCCESS);
         $this->entityManager->persist($runLog);
+
+        if (null !== $project) {
+            $cache = $this->cachedAiService->find($step, $inputHash, $model);
+            if (null !== $cache) {
+                $parsedResponse = $cache->getResponseJson();
+                $rawResponse = json_encode($parsedResponse, JSON_THROW_ON_ERROR);
+                $runLog
+                    ->setRawResponse($rawResponse)
+                    ->setParsedResponse($parsedResponse)
+                    ->setDurationMs($this->durationMs($startedAt))
+                    ->setStatus(PipelineRunLog::STATUS_SUCCESS);
+                $this->cachedAiService->logHit($project, $step, $cache);
+
+                return new PipelineClaudeResult($parsedResponse, $rawResponse, [], $model);
+            }
+
+            if (!$this->apiCostGuard->shouldCallExternalApi($project, $step, [
+                'mode' => $topicResearch->getQualityMode(),
+                'operation_type' => 'ai',
+                'estimated_tokens' => $this->estimatedPromptTokens($promptSent) + $maxTokens,
+                'estimated_cost' => $this->cachedAiService->estimatedAiCost($this->estimatedPromptTokens($promptSent), $maxTokens),
+            ])) {
+                $message = sprintf('External AI call for "%s" was blocked by cost guard.', $step);
+                $runLog
+                    ->setDurationMs($this->durationMs($startedAt))
+                    ->setStatus(PipelineRunLog::STATUS_FAILED)
+                    ->setErrorMessage($message);
+
+                throw new \RuntimeException($message);
+            }
+        }
 
         if (null === $apiKey) {
             $message = 'CLAUDE_API_KEY is not configured.';
@@ -113,6 +160,17 @@ final class PipelineClaudeClient
                 ->setTotalCredits($inputTokens + $outputTokens + $cacheTokens)
                 ->setDurationMs($this->durationMs($startedAt))
                 ->setStatus(PipelineRunLog::STATUS_SUCCESS);
+            $this->cachedAiService->save($step, $inputHash, $model, $parsedResponse, $inputTokens + $outputTokens);
+            if (null !== $project) {
+                $this->apiUsageLogger->log(
+                    $project,
+                    'anthropic',
+                    $step,
+                    $this->cachedAiService->estimatedAiCost($inputTokens, $outputTokens),
+                    $inputTokens,
+                    $outputTokens,
+                );
+            }
 
             return new PipelineClaudeResult($parsedResponse, $rawResponse, $usage, $model);
         } catch (\Throwable $exception) {
@@ -209,6 +267,11 @@ final class PipelineClaudeClient
         }
 
         return max($min, min($max, (int) $value));
+    }
+
+    private function estimatedPromptTokens(string $prompt): int
+    {
+        return max(1, (int) ceil(mb_strlen($prompt) / 4));
     }
 
     private function limit(string $value, int $maxLength): string

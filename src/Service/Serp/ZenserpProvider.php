@@ -91,7 +91,12 @@ final class ZenserpProvider implements SerpProviderInterface
                 $statusCode = $response->getStatusCode();
                 $body = $response->getContent(false);
                 if ($statusCode >= 400) {
-                    throw new \RuntimeException(sprintf('Zenserp returned HTTP %d: %s', $statusCode, mb_substr(strip_tags($body), 0, 500)));
+                    $exception = new \RuntimeException(sprintf('Zenserp returned HTTP %d: %s', $statusCode, mb_substr(strip_tags($body), 0, 500)));
+                    // Do not retry on client errors (4xx) — they won't resolve on retry
+                    if ($statusCode < 500) {
+                        throw $exception;
+                    }
+                    throw $exception;
                 }
 
                 $decoded = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
@@ -101,10 +106,13 @@ final class ZenserpProvider implements SerpProviderInterface
 
                 return $decoded;
             } catch (\Throwable $exception) {
-                $lastException = $exception;
-                if (1 === $attempt) {
+                if ($attempt < 2 && !str_contains($exception->getMessage(), 'HTTP 4')) {
+                    $lastException = $exception;
                     usleep(250000);
+                    continue;
                 }
+
+                throw $exception;
             }
         }
 

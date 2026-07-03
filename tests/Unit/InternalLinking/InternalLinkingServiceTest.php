@@ -49,7 +49,7 @@ final class InternalLinkingServiceTest extends TestCase
         $article = (new Article())
             ->setProject($project)
             ->setTitle('Location camera')
-            ->setContentHtml('<p>La location camera professionnelle aide les equipes. Vous pouvez demander un devis.</p><p>La captation video evenement structure le rendu.</p>');
+            ->setContentHtml('<p>La location camera professionnelle aide les equipes.</p><p>Vous pouvez demander un devis pour avancer.</p><p>La captation video evenement structure le rendu.</p>');
         $pages = [
             $this->page($project, '/location-camera-professionnelle/', 'Location camera', SitePageType::SERVICE, ['location camera professionnelle']),
             $this->page($project, '/captation-video-evenement/', 'Captation video', SitePageType::SERVICE, ['captation video evenement']),
@@ -64,6 +64,80 @@ final class InternalLinkingServiceTest extends TestCase
 
         self::assertSame($once, substr_count((string) $article->getContentHtml(), '<a href='));
         self::assertSame(3, $once);
+    }
+
+    public function testItDoesNotAddArtificialFallbackSentencesWhenNoContextMatches(): void
+    {
+        $project = (new Project())->setName('Skymotion');
+        $article = (new Article())
+            ->setProject($project)
+            ->setTitle('Location camera')
+            ->setContentHtml('<p>Les equipes techniques preparent le tournage avec une regie adaptee.</p>');
+        $pages = [
+            $this->page($project, '/materiel-son-professionnel/', 'Materiel son', SitePageType::PRODUCT, ['materiel son professionnel']),
+        ];
+
+        $service = $this->service($pages);
+        $summary = $service->apply($article, $project, (string) $article->getContentHtml());
+
+        self::assertSame([], $summary['inserted_links']);
+        self::assertStringNotContainsString('Pour approfondir ce point', (string) $article->getContentHtml());
+        self::assertStringNotContainsString('<a href=', (string) $article->getContentHtml());
+    }
+
+    public function testItRejectsGenericAnchors(): void
+    {
+        $project = (new Project())->setName('Skymotion');
+        $article = (new Article())
+            ->setProject($project)
+            ->setTitle('Location camera')
+            ->setContentHtml('<p>Ce produit peut etre integre dans une production evenementielle.</p>');
+        $pages = [
+            $this->page($project, '/produit/', 'Produit', SitePageType::PRODUCT, ['ce produit']),
+        ];
+
+        $service = $this->service($pages);
+        $summary = $service->apply($article, $project, (string) $article->getContentHtml());
+
+        self::assertSame([], $summary['inserted_links']);
+        self::assertStringNotContainsString('<a href="/produit/">ce produit</a>', (string) $article->getContentHtml());
+    }
+
+    public function testItLimitsInternalLinksToOnePerParagraph(): void
+    {
+        $project = (new Project())->setName('Skymotion');
+        $article = (new Article())
+            ->setProject($project)
+            ->setTitle('Location camera')
+            ->setContentHtml('<p>La location camera professionnelle et la captation video evenement structurent le dispositif.</p>');
+        $pages = [
+            $this->page($project, '/location-camera-professionnelle/', 'Location camera', SitePageType::SERVICE, ['location camera professionnelle']),
+            $this->page($project, '/captation-video-evenement/', 'Captation video', SitePageType::SERVICE, ['captation video evenement']),
+        ];
+
+        $service = $this->service($pages);
+        $service->apply($article, $project, (string) $article->getContentHtml());
+
+        self::assertSame(1, substr_count((string) $article->getContentHtml(), '<a href='));
+    }
+
+    public function testItCleansRepetitiveGeneratedSentencesBeforeReapplying(): void
+    {
+        $project = (new Project())->setName('Skymotion');
+        $article = (new Article())
+            ->setProject($project)
+            ->setTitle('Location camera')
+            ->setContentHtml('<p>Pour approfondir ce point, consultez <a href="/produit/">ce produit</a>.</p><p>La location camera professionnelle aide les equipes.</p>');
+        $pages = [
+            $this->page($project, '/location-camera-professionnelle/', 'Location camera', SitePageType::SERVICE, ['location camera professionnelle']),
+        ];
+
+        $service = $this->service($pages);
+        $service->apply($article, $project, (string) $article->getContentHtml());
+
+        self::assertStringNotContainsString('Pour approfondir ce point', (string) $article->getContentHtml());
+        self::assertStringNotContainsString('ce produit', (string) $article->getContentHtml());
+        self::assertStringContainsString('<a href="/location-camera-professionnelle/">location camera professionnelle</a>', (string) $article->getContentHtml());
     }
 
     /** @param list<SitePage> $pages */

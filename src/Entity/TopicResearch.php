@@ -7,6 +7,7 @@ namespace App\Entity;
 use App\Entity\Traits\TimestampableTrait;
 use App\Entity\Traits\UuidPrimaryKeyTrait;
 use App\Enum\PipelineStatus;
+use App\Enum\PipelineQualityMode;
 use App\Repository\TopicResearchRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -54,6 +55,9 @@ class TopicResearch
 
     #[ORM\Column(enumType: PipelineStatus::class)]
     private PipelineStatus $status = PipelineStatus::NEW;
+
+    #[ORM\Column(enumType: PipelineQualityMode::class)]
+    private PipelineQualityMode $qualityMode = PipelineQualityMode::BALANCED;
 
     #[ORM\Column(length: 10, nullable: true)]
     #[Assert\Length(max: 10)]
@@ -155,6 +159,19 @@ class TopicResearch
     public function setStatus(PipelineStatus $status): self
     {
         $this->status = $status;
+        $this->touch();
+
+        return $this;
+    }
+
+    public function getQualityMode(): PipelineQualityMode
+    {
+        return $this->qualityMode;
+    }
+
+    public function setQualityMode(PipelineQualityMode $qualityMode): self
+    {
+        $this->qualityMode = $qualityMode;
         $this->touch();
 
         return $this;
