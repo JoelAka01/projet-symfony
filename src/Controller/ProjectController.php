@@ -10,12 +10,14 @@ use App\Entity\Domain;
 use App\Entity\Project;
 use App\Entity\User;
 use App\Enum\AuditStatus;
+use App\Enum\SitePageType;
 use App\Exception\AnalysisLimitExceededException;
 use App\Exception\InvalidWebsiteUrlException;
 use App\Form\ProjectType;
 use App\Message\RunClaudeAnalysisMessage;
 use App\Message\RunWebsiteAuditMessage;
 use App\Repository\ProjectRepository;
+use App\Repository\SitePageRepository;
 use App\Security\Voter\ProjectVoter;
 use App\Service\Audit\AuditInsightsBuilder;
 use App\Service\Audit\AuditProgressStatusBuilder;
@@ -121,6 +123,7 @@ final class ProjectController extends AbstractController
         Request $request,
         ProjectManager $projectManager,
         AnalysisQuotaManager $quotaManager,
+        SitePageRepository $sitePageRepository,
     ): Response {
         $this->denyAccessUnlessGranted(ProjectVoter::VIEW, $project);
         $user = $this->getUser();
@@ -139,6 +142,8 @@ final class ProjectController extends AbstractController
             'primaryDomain' => $projectManager->getPrimaryDomain($project),
             'audits' => $audits,
             'allowance' => $quotaManager->getAllowance($user, $request->getClientIp()),
+            'sitePages' => $sitePageRepository->findForProject($project),
+            'sitePageTypes' => SitePageType::cases(),
         ]);
     }
 

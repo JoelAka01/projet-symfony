@@ -120,6 +120,10 @@ class Article extends ContentItem
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $scheduledAt = null;
 
+    #[ORM\ManyToOne(inversedBy: 'articles')]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?TopicResearch $topicResearch = null;
+
     /** @var Collection<int, ArticleImage> */
     #[ORM\OneToMany(mappedBy: 'article', targetEntity: ArticleImage::class, orphanRemoval: true)]
     private Collection $images;
@@ -394,6 +398,18 @@ class Article extends ContentItem
     public function setScheduledAt(?\DateTimeImmutable $scheduledAt): static
     {
         $this->scheduledAt = $scheduledAt;
+
+        return $this;
+    }
+
+    public function getTopicResearch(): ?TopicResearch
+    {
+        return $this->topicResearch;
+    }
+
+    public function setTopicResearch(?TopicResearch $topicResearch): static
+    {
+        $this->topicResearch = $topicResearch;
 
         return $this;
     }

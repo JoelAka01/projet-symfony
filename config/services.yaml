@@ -30,6 +30,12 @@ services:
         arguments:
             $clients: !tagged_iterator app.cms_provider_client
 
+    App\Service\Serp\SerpProviderInterface: '@App\Service\Serp\ZenserpProvider'
+
+    App\Service\Serp\ZenserpProvider:
+        arguments:
+            $zenserpApiKey: '%env(default::ZENSERP_API_KEY)%'
+
     App\Service\Billing\ClientIpHasher:
         arguments:
             $appSecret: '%kernel.secret%'

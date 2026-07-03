@@ -11,6 +11,7 @@ use App\Entity\CmsPublication;
 use App\Enum\ArticleStatus;
 use App\Exception\CmsIntegrationException;
 use App\Repository\CmsPublicationRepository;
+use App\Service\Cost\ArticleQualityGateService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -21,6 +22,7 @@ final class CmsPublishingService
         private readonly CmsPublicationRepository $publicationRepository,
         private readonly EntityManagerInterface $entityManager,
         private readonly LoggerInterface $logger,
+        private readonly ArticleQualityGateService $qualityGate,
     ) {}
 
     public function publish(Article $article, CmsConnection $connection, bool $publish): CmsPublishResult
@@ -35,6 +37,13 @@ final class CmsPublishingService
 
         if ('' === trim((string) $article->getContentHtml())) {
             throw new CmsIntegrationException('The article has no HTML content to publish.');
+        }
+
+        if ($publish) {
+            $failures = $this->qualityGate->failures($article, $article->getTopicResearch()?->getContentBrief());
+            if ([] !== $failures) {
+                throw new CmsIntegrationException('Quality Gate failed: ' . implode(' ', $failures));
+            }
         }
 
         $publication = $this->publicationRepository->findOneForArticleAndConnection($article, $connection);

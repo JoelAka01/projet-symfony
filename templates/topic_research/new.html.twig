@@ -1,0 +1,84 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}New V2 run | {{ project.name }}{% endblock %}
+
+{% block body %}
+    <div class="back-navigation">
+        <a class="back-link" href="{{ path('app_topic_research_index', { project: project.id }) }}">
+            Back to V2 runs
+        </a>
+    </div>
+
+    <div class="auth-panel wide">
+        <p class="eyebrow">Article pipeline V2</p>
+        <h1>New structured run</h1>
+        {{ form_start(form, { attr: { class: 'form-stack' } }) }}
+            {{ form_widget(form) }}
+            <div class="form-actions">
+                <button class="button primary" type="submit">Start V2 run</button>
+                <a class="button secondary" href="{{ path('app_article_index', { project: project.id }) }}">Cancel</a>
+            </div>
+        {{ form_end(form) }}
+    </div>
+
+    <div class="auth-panel wide">
+        <p class="eyebrow">Keyword discovery</p>
+        <h2>Utiliser les opportunités détectées dans l’audit</h2>
+
+        <form method="post" action="{{ path('app_topic_research_discover_keywords', { project: project.id }) }}" class="form-actions">
+            <input type="hidden" name="_token" value="{{ csrf_token('discover_keywords_' ~ project.id) }}">
+            <button class="button secondary" type="submit">Utiliser les opportunités détectées dans l’audit</button>
+        </form>
+
+        {% if keywordDiscoverySummary.audit_used %}
+            <p class="table-subtitle">
+                {{ keywordDiscoverySummary.created }} added,
+                {{ keywordDiscoverySummary.updated }} refreshed,
+                {{ keywordDiscoverySummary.skipped }} skipped.
+            </p>
+        {% else %}
+            <p class="table-subtitle">No completed audit available yet.</p>
+        {% endif %}
+
+        {% if keywordSuggestions is not empty %}
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Mot-clé</th>
+                            <th>Source</th>
+                            <th>Intent</th>
+                            <th>Cluster</th>
+                            <th>Score opportunité</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for suggestion in keywordSuggestions %}
+                            <tr>
+                                <td>
+                                    <strong>{{ suggestion.term }}</strong>
+                                    {% if suggestion.selected %}
+                                        <small class="table-subtitle">Selected</small>
+                                    {% endif %}
+                                </td>
+                                <td>{{ suggestion.source.label }}</td>
+                                <td>{{ suggestion.intent|default('INFORMATIONAL') }}</td>
+                                <td>{{ suggestion.clusterName|default('Audit opportunities') }}</td>
+                                <td>{{ suggestion.opportunityScore }}/100</td>
+                                <td>
+                                    <form method="post" action="{{ path('app_topic_research_generate_from_suggestion', { project: project.id, keywordSuggestion: suggestion.id }) }}">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('generate_keyword_suggestion_' ~ suggestion.id) }}">
+                                        <button class="button primary" type="submit">Generate V2 article</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p>No audit keyword opportunities found.</p>
+        {% endif %}
+    </div>
+{% endblock %}

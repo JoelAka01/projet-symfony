@@ -19,6 +19,8 @@ RUN apk add --no-cache \
     && make -j$(nproc) \
     && make install \
     && docker-php-ext-enable pcov \
+    && pecl install redis \
+    && docker-php-ext-enable redis \
     && rm -rf /tmp/pcov* \
     && apk del .build-deps \
     && docker-php-ext-install \

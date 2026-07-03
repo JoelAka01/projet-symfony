@@ -1,0 +1,66 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Pipeline V2 | {{ project.name }}{% endblock %}
+
+{% block body %}
+    <div class="back-navigation">
+        <a class="back-link" href="{{ path('app_article_index', { project: project.id }) }}">
+            Back to articles
+        </a>
+    </div>
+
+    <section class="hero compact">
+        <p class="eyebrow">Article pipeline V2</p>
+        <h1>{{ project.name }}</h1>
+        <p>Launch and monitor structured article runs.</p>
+        <div class="hero-actions">
+            {% if is_granted('PROJECT_MANAGE_CONTENT', project) %}
+                <a class="button primary" href="{{ path('app_topic_research_new', { project: project.id }) }}">New V2 run</a>
+                <a class="button secondary" href="{{ path('app_article_new', { project: project.id }) }}">Fast generation</a>
+            {% endif %}
+        </div>
+    </section>
+
+    <section class="panel full-panel">
+        <h2>Runs</h2>
+        {% if topicResearches is empty %}
+            <div class="empty-state">
+                <h3>No V2 runs yet</h3>
+                <p class="muted">Start a run from a primary keyword.</p>
+            </div>
+        {% else %}
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Keyword</th>
+                            <th>Status</th>
+                            <th>Step</th>
+                            <th>Article</th>
+                            <th>Created</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for topicResearch in topicResearches %}
+                            <tr>
+                                <td><strong>{{ topicResearch.primaryKeyword }}</strong></td>
+                                <td><span class="pill">{{ topicResearch.status.label() }}</span></td>
+                                <td>{{ topicResearch.currentStep ?? topicResearch.failedStep ?? 'Complete' }}</td>
+                                <td>
+                                    {% if topicResearch.article %}
+                                        {{ topicResearch.article.title }}
+                                    {% else %}
+                                        Pending
+                                    {% endif %}
+                                </td>
+                                <td>{{ topicResearch.createdAt|date('Y-m-d H:i') }}</td>
+                                <td><a class="btn-action" href="{{ path('app_topic_research_show', { project: project.id, topicResearch: topicResearch.id }) }}">Open</a></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </section>
+{% endblock %}

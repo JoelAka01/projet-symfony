@@ -1,0 +1,261 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ topicResearch.primaryKeyword }} | Pipeline V2{% endblock %}
+
+{% block body %}
+    {% set article = topicResearch.article %}
+    {% set completedSteps = [] %}
+    {% if topicResearch.serpAnalysis %}{% set completedSteps = completedSteps|merge(['serp_analysis']) %}{% endif %}
+    {% if topicResearch.intelligenceAnalysis %}{% set completedSteps = completedSteps|merge(['intelligence']) %}{% endif %}
+    {% if topicResearch.contentBrief %}{% set completedSteps = completedSteps|merge(['brief_outline']) %}{% endif %}
+    {% if article and article.contentHtml %}{% set completedSteps = completedSteps|merge(['article']) %}{% endif %}
+    {% if article and article.generationMetadata.internal_linking is defined %}{% set completedSteps = completedSteps|merge(['internal_linking']) %}{% endif %}
+    {% if article and article.seoScore is not null %}{% set completedSteps = completedSteps|merge(['seo_score']) %}{% endif %}
+
+    <div class="back-navigation">
+        <a class="back-link" href="{{ path('app_topic_research_index', { project: project.id }) }}">
+            Back to V2 runs
+        </a>
+    </div>
+
+    <section class="hero compact">
+        <p class="eyebrow">Article pipeline V2</p>
+        <h1>{{ topicResearch.primaryKeyword }}</h1>
+        <p>
+            {{ topicResearch.status.label() }}
+            · {{ topicResearch.language|default('fr')|upper }} / {{ topicResearch.country|default('FR')|upper }}
+            {% if article and article.seoScore is not null %}· SEO {{ article.seoScore }}/100{% endif %}
+        </p>
+        <div class="hero-actions">
+            {% if article %}
+                <a class="button secondary" href="{{ path('app_article_show', { project: project.id, article: article.id }) }}">Open article</a>
+            {% endif %}
+            {% if topicResearch.status.value == 'READY_TO_PUBLISH' and article %}
+                <a class="button primary" href="{{ path('app_article_show', { project: project.id, article: article.id }) }}">Publish</a>
+            {% endif %}
+        </div>
+    </section>
+
+    {% if isRunning %}
+        <script>
+            window.setTimeout(() => window.location.reload(), 5000);
+        </script>
+    {% endif %}
+
+    <section class="notice analysis-progress pipeline-progress {{ topicResearch.status.value == 'READY_TO_PUBLISH' ? 'is-finished' : '' }}">
+        <div class="analysis-progress__header">
+            {% if isRunning %}<span class="spinner" aria-hidden="true"></span>{% endif %}
+            <div>
+                <h2>{{ topicResearch.status.label() }}</h2>
+                <p class="muted">
+                    {% if topicResearch.status.value == 'FAILED' %}
+                        {{ topicResearch.errorMessage }}
+                    {% elseif topicResearch.completedAt %}
+                        Completed {{ topicResearch.completedAt|date('Y-m-d H:i') }}
+                    {% else %}
+                        Last update {{ topicResearch.updatedAt|date('Y-m-d H:i') }}
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+        {% if isRunning %}<div class="analysis-progress__track" aria-hidden="true"><span></span></div>{% endif %}
+        <ol class="analysis-progress__steps" aria-label="Pipeline progress">
+            {% for step in steps %}
+                {% set isComplete = step.key in completedSteps %}
+                {% set isActive = topicResearch.currentStep == step.key %}
+                <li class="{{ isComplete ? 'is-complete' : '' }} {{ isActive ? 'is-active' : '' }}">{{ step.label }}</li>
+            {% endfor %}
+        </ol>
+        <dl class="analysis-progress__facts">
+            <div>
+                <dt>Status</dt>
+                <dd>{{ topicResearch.status.value|replace({'_': ' '})|title }}</dd>
+            </div>
+            <div>
+                <dt>Logs</dt>
+                <dd>{{ topicResearch.runLogs|length }}</dd>
+            </div>
+            <div>
+                <dt>Questions</dt>
+                <dd>{{ topicResearch.serpAnalysis ? topicResearch.serpAnalysis.totalQuestions : 0 }}</dd>
+            </div>
+        </dl>
+    </section>
+
+    {% if is_granted('PROJECT_MANAGE_CONTENT', project) and not isRunning %}
+        <section class="panel full-panel">
+            <h2>Retry steps</h2>
+            <div class="pipeline-retry-actions">
+                {% for step in steps %}
+                    <form method="post" action="{{ path('app_topic_research_retry', { project: project.id, topicResearch: topicResearch.id }) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('retry_topic_research_' ~ topicResearch.id) }}">
+                        <input type="hidden" name="step" value="{{ step.key }}">
+                        <button class="button secondary" type="submit" {{ not topicResearch.canRetryStep(step.key) ? 'disabled' : '' }}>
+                            {{ topicResearch.failedStep == step.key ? 'Relancer cette etape' : 'Relancer ' ~ step.label }}
+                        </button>
+                    </form>
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
+
+    <section class="analytics-grid">
+        <article class="panel">
+            <h2>SERP + Questions</h2>
+            {% if topicResearch.serpAnalysis %}
+                <dl class="suggestions">
+                    <div>
+                        <dt>Average word count</dt>
+                        <dd>{{ topicResearch.serpAnalysis.averageWordCount }}</dd>
+                    </div>
+                    <div>
+                        <dt>Content gaps</dt>
+                        <dd>{{ topicResearch.serpAnalysis.contentGaps|length }}</dd>
+                    </div>
+                </dl>
+                <ul class="plain-list">
+                    {% for question in topicResearch.serpAnalysis.questions|slice(0, 8) %}
+                        <li>{{ question.question|default('') }}{% if question.intent|default('') %} · {{ question.intent }}{% endif %}</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="muted">Pending.</p>
+            {% endif %}
+        </article>
+
+        <article class="panel">
+            <h2>Intent + Semantic</h2>
+            {% if topicResearch.intelligenceAnalysis %}
+                <dl class="suggestions">
+                    <div>
+                        <dt>Primary intent</dt>
+                        <dd>{{ topicResearch.intelligenceAnalysis.primaryIntent|title }}</dd>
+                    </div>
+                    <div>
+                        <dt>Entities</dt>
+                        <dd>{{ topicResearch.intelligenceAnalysis.entities|length }}</dd>
+                    </div>
+                </dl>
+                <ul class="plain-list">
+                    {% for entity in topicResearch.intelligenceAnalysis.entities|slice(0, 10) %}
+                        <li>{{ entity.name|default('') }}{% if entity.type|default('') %} · {{ entity.type }}{% endif %}</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="muted">Pending.</p>
+            {% endif %}
+        </article>
+    </section>
+
+    <section class="panel full-panel">
+        <h2>Brief + Outline</h2>
+        {% if topicResearch.contentBrief %}
+            <div class="split-grid">
+                <article>
+                    <dl class="suggestions">
+                        <div>
+                            <dt>Audience</dt>
+                            <dd>{{ topicResearch.contentBrief.targetAudience ?? 'Not set' }}</dd>
+                        </div>
+                        <div>
+                            <dt>Objective</dt>
+                            <dd>{{ topicResearch.contentBrief.objective ?? 'Not set' }}</dd>
+                        </div>
+                        <div>
+                            <dt>Target words</dt>
+                            <dd>{{ topicResearch.contentBrief.targetWordCount ?? topicResearch.contentBrief.estimatedWordCount ?? 'Not set' }}</dd>
+                        </div>
+                    </dl>
+                </article>
+                <article>
+                    <ul class="plain-list">
+                        {% for section in topicResearch.contentBrief.outline %}
+                            <li><strong>{{ section.level|default('h2')|upper }}</strong> {{ section.title|default('Untitled section') }}</li>
+                        {% endfor %}
+                    </ul>
+                </article>
+            </div>
+        {% else %}
+            <p class="muted">Pending.</p>
+        {% endif %}
+    </section>
+
+    <section class="panel full-panel">
+        <h2>Article</h2>
+        {% if article and article.contentHtml %}
+            <dl class="fact-grid compact">
+                <div>
+                    <dt>Words</dt>
+                    <dd>{{ article.wordCount ?? 0 }}</dd>
+                </div>
+                <div>
+                    <dt>SEO score</dt>
+                    <dd>{{ article.seoScore is not null ? article.seoScore ~ '/100' : 'Pending' }}</dd>
+                </div>
+                <div>
+                    <dt>Internal links</dt>
+                    <dd>{{ article.internalLinksJson ? article.internalLinksJson|length : 0 }}</dd>
+                </div>
+                <div>
+                    <dt>Status</dt>
+                    <dd>{{ article.status.value|replace({'_': ' '})|title }}</dd>
+                </div>
+            </dl>
+            {% set internalLinking = article.generationMetadata.internal_linking|default(null) %}
+            {% if internalLinking %}
+                <h3>Internal links</h3>
+                <ul class="plain-list">
+                    {% for link in internalLinking.inserted_links|merge(internalLinking.existing_links|default([])) %}
+                        <li><a href="{{ link.url }}">{{ link.anchor }}</a> · {{ link.type }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+            {% set recommendations = article.generationMetadata.seo_review.recommendations|default([]) %}
+            {% if recommendations is not empty %}
+                <h3>SEO recommendations</h3>
+                <ul class="plain-list">
+                    {% for recommendation in recommendations %}
+                        <li>{{ recommendation.message|default('') }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+            <article class="article-preview">{{ article.contentHtml|raw }}</article>
+        {% else %}
+            <p class="muted">Pending.</p>
+        {% endif %}
+    </section>
+
+    <section class="panel full-panel">
+        <h2>Run log</h2>
+        {% if topicResearch.runLogs is empty %}
+            <p class="muted">No calls logged yet.</p>
+        {% else %}
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Step</th>
+                            <th>Attempt</th>
+                            <th>Status</th>
+                            <th>Tokens</th>
+                            <th>Duration</th>
+                            <th>Created</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in topicResearch.runLogs %}
+                            <tr>
+                                <td>{{ log.step }}</td>
+                                <td>{{ log.attempt }}</td>
+                                <td>{{ log.status }}</td>
+                                <td>{{ log.inputTokens + log.outputTokens }}</td>
+                                <td>{{ log.durationMs }} ms</td>
+                                <td>{{ log.createdAt|date('Y-m-d H:i:s') }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </section>
+{% endblock %}

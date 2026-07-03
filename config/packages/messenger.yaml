@@ -3,16 +3,31 @@ framework:
         failure_transport: failed
 
         transports:
-            async: '%env(MESSENGER_TRANSPORT_DSN)%'
-            failed: 'doctrine://default?queue_name=failed&auto_setup=1'
+            async:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+            pipeline:
+                dsn: '%env(REDIS_DSN)%/messages_pipeline'
+                retry_strategy:
+                    max_retries: 3
+                    delay: 5000
+                    multiplier: 3
+            failed:
+                dsn: 'doctrine://default?queue_name=failed&auto_setup=1'
 
         routing:
             App\Message\RunClaudeAnalysisMessage: async
             App\Message\RunWebsiteAuditMessage: async
+            App\Message\Pipeline\AnalyzeSerpMessage: pipeline
+            App\Message\Pipeline\AnalyzeIntelligenceMessage: pipeline
+            App\Message\Pipeline\GenerateBriefMessage: pipeline
+            App\Message\Pipeline\GenerateArticleMessage: pipeline
+            App\Message\Pipeline\ApplyInternalLinksMessage: pipeline
+            App\Message\Pipeline\OptimizeSeoMessage: pipeline
 
 when@test:
     framework:
         messenger:
             transports:
                 async: 'in-memory://'
+                pipeline: 'in-memory://'
                 failed: 'in-memory://'
