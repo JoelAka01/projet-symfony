@@ -8,7 +8,6 @@ use App\DataFixtures\Factory\PaymentFactory;
 use App\DataFixtures\Helper\FixtureConfig;
 use App\DataFixtures\Helper\FixtureReference;
 use App\Entity\Subscription;
-use App\Entity\User;
 use App\Enum\PaymentStatus;
 use App\Enum\SubscriptionStatus;
 use Doctrine\Bundle\FixturesBundle\Fixture;
@@ -42,7 +41,7 @@ final class PaymentFixtures extends Fixture implements DependentFixtureInterface
     {
         $paymentIndex = 0;
 
-        for ($s = 0; $s < FixtureConfig::SUBSCRIPTIONS; $s++) {
+        for ($s = 0; $s < FixtureConfig::SUBSCRIPTIONS; ++$s) {
             $subscription = $this->getReference(FixtureReference::subscription($s), Subscription::class);
             $user = $subscription->getUser();
             $plan = $subscription->getPlan();
@@ -51,7 +50,7 @@ final class PaymentFixtures extends Fixture implements DependentFixtureInterface
             // 2-3 paiements par abonnement
             $nbPayments = min(FixtureConfig::PAYMENTS - $paymentIndex, random_int(2, 3));
 
-            for ($p = 0; $p < $nbPayments; $p++) {
+            for ($p = 0; $p < $nbPayments; ++$p) {
                 if ($paymentIndex >= FixtureConfig::PAYMENTS) {
                     break 2;
                 }
@@ -61,10 +60,10 @@ final class PaymentFixtures extends Fixture implements DependentFixtureInterface
 
                 // Cohérence : dernier paiement = CANCELED pour abonnements expirés
                 $status = PaymentStatus::PAID;
-                if ($subscription->getStatus() === SubscriptionStatus::EXPIRED && $p === $nbPayments - 1) {
+                if (SubscriptionStatus::EXPIRED === $subscription->getStatus() && $p === $nbPayments - 1) {
                     $status = PaymentStatus::CANCELED;
                     $paidAt = null;
-                } elseif ($subscription->getStatus() === SubscriptionStatus::CANCELED && $p === $nbPayments - 1 && random_int(0, 100) < 30) {
+                } elseif (SubscriptionStatus::CANCELED === $subscription->getStatus() && $p === $nbPayments - 1 && random_int(0, 100) < 30) {
                     $status = PaymentStatus::REFUNDED;
                 }
 
@@ -75,7 +74,7 @@ final class PaymentFixtures extends Fixture implements DependentFixtureInterface
                 };
 
                 PaymentFactory::create($manager, $user, $subscription, $plan, $status, $amountCents, $paidAt, $adminNote);
-                $paymentIndex++;
+                ++$paymentIndex;
             }
         }
 

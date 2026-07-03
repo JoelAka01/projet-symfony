@@ -44,7 +44,7 @@ final class AuditPageFixtures extends Fixture implements DependentFixtureInterfa
         $faker = FixtureHelper::faker();
         $pageIndex = 0;
 
-        for ($a = 0; $a < FixtureConfig::AUDITS; $a++) {
+        for ($a = 0; $a < FixtureConfig::AUDITS; ++$a) {
             $ref = FixtureReference::audit($a);
             if (!$this->hasReference($ref, Audit::class)) {
                 continue;
@@ -67,12 +67,12 @@ final class AuditPageFixtures extends Fixture implements DependentFixtureInterfa
             $domain = $audit->getDomain()?->getRootDomain() ?? 'example.com';
             $pageCount = $audit->getPagesCrawled() ?? random_int(5, 12);
 
-            for ($p = 0; $p < $pageCount; $p++) {
+            for ($p = 0; $p < $pageCount; ++$p) {
                 $path = $paths[$p % \count($paths)];
                 $url = sprintf('https://%s%s', $domain, $path);
 
                 $statusCode = match (true) {
-                    $p === 0 => 200,                       // Page d'accueil toujours 200
+                    0 === $p => 200,                       // Page d'accueil toujours 200
                     random_int(0, 100) < 5 => 404,         // 5% de 404
                     random_int(0, 100) < 8 => 301,         // 8% de redirections
                     default => 200,
@@ -83,15 +83,15 @@ final class AuditPageFixtures extends Fixture implements DependentFixtureInterfa
                     $audit,
                     $url,
                     $statusCode,
-                    $statusCode === 200 ? $faker->sentence(6) : null,
-                    $statusCode === 200 ? $faker->sentence(15) : null,
-                    $statusCode === 200 ? $faker->sentence(5) : null,
-                    $statusCode === 200 ? random_int(200, 2500) : null,
+                    200 === $statusCode ? $faker->sentence(6) : null,
+                    200 === $statusCode ? $faker->sentence(15) : null,
+                    200 === $statusCode ? $faker->sentence(5) : null,
+                    200 === $statusCode ? random_int(200, 2500) : null,
                     random_int(150, 4500),
                 );
 
                 $this->addReference(FixtureReference::auditPage($pageIndex), $page);
-                $pageIndex++;
+                ++$pageIndex;
 
                 FixtureHelper::batchFlush($manager, $pageIndex);
             }

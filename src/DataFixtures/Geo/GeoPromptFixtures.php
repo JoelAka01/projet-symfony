@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\DataFixtures\Geo;
 
-use App\DataFixtures\Helper\FixtureConfig;
 use App\DataFixtures\Helper\FixtureReference;
 use App\DataFixtures\Seo\KeywordFixtures;
 use App\Entity\GeoPrompt;
@@ -77,7 +76,7 @@ final class GeoPromptFixtures extends Fixture implements DependentFixtureInterfa
                 ->setTopic($topic)
                 ->setIsActive($i < 17); // Les 2 derniers (freelance) inactifs
 
-            if ($kwIdx !== null) {
+            if (null !== $kwIdx) {
                 $keyword = $this->getReference(FixtureReference::keyword($kwIdx), Keyword::class);
                 $geoPrompt->setKeyword($keyword);
             }
