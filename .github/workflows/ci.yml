@@ -63,7 +63,7 @@ jobs:
     env:
       APP_ENV: test
       APP_SECRET: ci-secret-replace-in-prod
-      DATABASE_URL: postgresql://app:app@127.0.0.1:5432/app_test?serverVersion=16&charset=utf8
+      DATABASE_URL: postgresql://app:app@127.0.0.1:5432/app_test_test?serverVersion=16&charset=utf8
       MESSENGER_TRANSPORT_DSN: in-memory://
       MAILER_DSN: null://null
 

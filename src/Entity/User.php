@@ -95,6 +95,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(mappedBy: 'owner', targetEntity: Project::class)]
     private Collection $ownedProjects;
 
+    /** @var Collection<int, Project> */
+    #[ORM\ManyToMany(targetEntity: Project::class, mappedBy: 'members')]
+    private Collection $memberProjects;
+
 
 
     /** @var Collection<int, ProjectGuest> */
@@ -115,6 +119,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->initializeTimestamps();
         $this->organizationUsers = new ArrayCollection();
         $this->ownedProjects = new ArrayCollection();
+        $this->memberProjects = new ArrayCollection();
         $this->projectGuestMemberships = new ArrayCollection();
         $this->auditLogs = new ArrayCollection();
         $this->rateLimitEvents = new ArrayCollection();
@@ -458,6 +463,31 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function removeGuestProject(Project $project): self
     {
         $project->removeGuest($this);
+
+        return $this;
+    }
+
+    /** @return Collection<int, Project> */
+    public function getMemberProjects(): Collection
+    {
+        return $this->memberProjects;
+    }
+
+    public function addMemberProject(Project $project): self
+    {
+        if (!$this->memberProjects->contains($project)) {
+            $this->memberProjects->add($project);
+            $project->addMember($this);
+        }
+
+        return $this;
+    }
+
+    public function removeMemberProject(Project $project): self
+    {
+        if ($this->memberProjects->removeElement($project)) {
+            $project->removeMember($this);
+        }
 
         return $this;
     }
