@@ -8,10 +8,14 @@ use App\Entity\Organization;
 use App\Entity\Project;
 use App\Entity\User;
 use App\Enum\ProjectStatus;
+use App\Enum\SupportedCountry;
+use App\Enum\SupportedLanguage;
 use Doctrine\ORM\EntityRepository;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -53,13 +57,32 @@ final class AdminProjectType extends AbstractType
                 ],
                 'choice_value' => static fn(?ProjectStatus $status): string => null === $status ? '' : $status->value,
             ])
-            ->add('defaultLanguage', TextType::class, [
-                'label' => 'Default language',
+            ->add('language', ChoiceType::class, [
+                'label' => 'Project language',
+                'choices' => SupportedLanguage::choices(),
+                'required' => false,
+                'placeholder' => '— Not set —',
+            ])
+            ->add('targetCountry', ChoiceType::class, [
+                'label' => 'Target country',
+                'choices' => SupportedCountry::choices(),
+                'required' => false,
+                'placeholder' => '— Not set —',
+            ])
+            ->add('contentLanguage', ChoiceType::class, [
+                'label' => 'Content language',
+                'choices' => SupportedLanguage::choices(),
+                'required' => false,
+                'placeholder' => '— Same as project language —',
+            ])
+            ->add('autoDetectLanguage', CheckboxType::class, [
+                'label' => 'Auto-detect language',
                 'required' => false,
             ])
-            ->add('targetCountry', TextType::class, [
-                'label' => 'Target country',
+            ->add('languageConfidence', IntegerType::class, [
+                'label' => 'Language confidence (%)',
                 'required' => false,
+                'attr' => ['min' => 0, 'max' => 100],
             ]);
     }
 
