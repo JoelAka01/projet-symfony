@@ -7,6 +7,7 @@ namespace App\Tests\Functional;
 use App\Entity\Project;
 use App\Entity\ProjectInvitation;
 use App\Entity\User;
+use App\Enum\ProjectGuestAccess;
 use App\Repository\ProjectInvitationRepository;
 use App\Repository\ProjectRepository;
 use App\Repository\UserRepository;
@@ -74,6 +75,7 @@ final class ProjectInvitationTest extends WebTestCase
             'status' => 'pending',
         ]);
         self::assertInstanceOf(ProjectInvitation::class, $invitation);
+        self::assertSame(ProjectGuestAccess::CONTENT, $invitation->getAccess());
 
         // 5. Access read-only guest page as anonymous user
         $client->getCookieJar()->clear(); // Log out
@@ -178,6 +180,7 @@ final class ProjectInvitationTest extends WebTestCase
         $guestUserLoaded = self::getContainer()->get(UserRepository::class)->find($guestUser->getId());
         self::assertInstanceOf(User::class, $guestUserLoaded);
         self::assertTrue($project->getGuests()->contains($guestUserLoaded));
+        self::assertSame(ProjectGuestAccess::CONTENT, $project->getGuestAccess($guestUserLoaded));
 
         // 10. Verify invitation status updated to accepted
         $invitationRepository = self::getContainer()->get(ProjectInvitationRepository::class);
