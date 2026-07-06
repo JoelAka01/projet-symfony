@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\MessageHandler\Pipeline;
 
+use App\Dto\SerpResultDto;
 use App\Entity\TopicResearch;
 use App\Enum\PipelineStatus;
 use App\Message\Pipeline\AnalyzeSerpMessage;
@@ -65,7 +66,16 @@ final class AnalyzeSerpHandler
 
             $country = $topicResearch->getCountry() ?? 'FR';
             $language = $topicResearch->getLanguage() ?? 'fr';
-            $serpResult = $this->cachedSerpService->search($project, $topicResearch->getPrimaryKeyword(), $country, $language, $topicResearch->getQualityMode());
+            $serpResult = new SerpResultDto([], [], [], [], []);
+            try {
+                $serpResult = $this->cachedSerpService->search($project, $topicResearch->getPrimaryKeyword(), $country, $language, $topicResearch->getQualityMode());
+            } catch (\Throwable $exception) {
+                $this->logger->warning('Pipeline SERP search unavailable; continuing with empty SERP data.', [
+                    'topic_research_id' => $topicResearch->getId(),
+                    'error' => $exception->getMessage(),
+                ]);
+            }
+
             $suggestions = [];
             try {
                 $suggestions = $this->cachedSerpService->suggest($project, $topicResearch->getPrimaryKeyword(), $country, $language, $topicResearch->getQualityMode());
