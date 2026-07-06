@@ -106,7 +106,7 @@
         </div>
 
         {% if is_granted('PROJECT_MANAGE_CONTENT', project) %}
-            <form method="post" action="{{ path('app_site_page_create', { project: project.id }) }}" class="inline-form">
+            <form method="post" action="{{ path('app_site_page_create', { project: project.id }) }}" class="form-stack inline-form">
                 <input type="hidden" name="_token" value="{{ csrf_token('create_site_page_' ~ project.id) }}">
                 <div class="form-grid">
                     <label>

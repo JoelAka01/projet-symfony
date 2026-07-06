@@ -392,6 +392,22 @@ a {
     line-height: 1.6;
 }
 
+.plain-list.list-rows {
+    padding-left: 0;
+    list-style: none;
+}
+
+.list-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid #e6edf5;
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
 .insight-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -912,26 +928,25 @@ tr:last-child td {
     gap: 20px;
 }
 
-.form-stack label {
+.form-stack label,
+.form-grid label,
+.inline-form label {
+    display: grid;
+    gap: 6px;
     color: #334155;
     font-size: 0.875rem;
     font-weight: 600;
 }
 
-.form-stack input {
-    width: 100%;
-    min-height: 44px;
-    padding: 10px 14px;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    color: #0f172a;
-    font: inherit;
-    background: #f8fafc;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
+.form-stack input,
+.form-grid input,
+.inline-form input,
 .form-stack textarea,
-.form-stack select {
+.form-grid textarea,
+.inline-form textarea,
+.form-stack select,
+.form-grid select,
+.inline-form select {
     width: 100%;
     min-height: 44px;
     padding: 10px 14px;
@@ -944,8 +959,14 @@ tr:last-child td {
 }
 
 .form-stack input:focus,
+.form-grid input:focus,
+.inline-form input:focus,
 .form-stack textarea:focus,
-.form-stack select:focus {
+.form-grid textarea:focus,
+.inline-form textarea:focus,
+.form-stack select:focus,
+.form-grid select:focus,
+.inline-form select:focus {
     outline: none;
     border-color: #0f766e;
     background-color: #ffffff;
@@ -1006,6 +1027,19 @@ tr:last-child td {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 16px;
+}
+
+.inline-form {
+    margin: 0 0 24px;
+    padding: 20px;
+    border: 1px solid #e6edf5;
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
+.invite-form {
+    max-width: 400px;
+    margin-top: 12px;
 }
 
 .form-actions,
@@ -1726,9 +1760,19 @@ tr:last-child td {
 
 .section-heading {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
     gap: 16px;
+    margin-bottom: 20px;
+}
+
+.section-heading h2 {
+    margin: 0;
+}
+
+.section-heading form {
+    margin: 0;
+    flex-shrink: 0;
 }
 
 .section-heading a {
