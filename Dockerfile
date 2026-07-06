@@ -1,28 +1,19 @@
-FROM php:8.3-cli-alpine
+FROM php:8.3-cli
 
-RUN apk add --no-cache \
+RUN apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates \
-        curl-dev \
+        libcurl4-openssl-dev \
         git \
-        icu-dev \
+        libicu-dev \
         libzip-dev \
         libxml2-dev \
-        oniguruma-dev \
-        postgresql-dev \
+        libonig-dev \
+        libpq-dev \
         unzip \
-    && apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
-    && curl -fsSL https://github.com/krakjoe/pcov/archive/refs/tags/v1.0.11.tar.gz -o /tmp/pcov.tar.gz \
-    && tar -xf /tmp/pcov.tar.gz -C /tmp \
-    && cd /tmp/pcov-1.0.11 \
-    && phpize \
-    && ./configure \
-    && make -j$(nproc) \
-    && make install \
+    && pecl install pcov \
     && docker-php-ext-enable pcov \
     && pecl install redis \
     && docker-php-ext-enable redis \
-    && rm -rf /tmp/pcov* \
-    && apk del .build-deps \
     && docker-php-ext-install \
         curl \
         dom \
@@ -31,7 +22,8 @@ RUN apk add --no-cache \
         opcache \
         pdo \
         pdo_pgsql \
-        zip
+        zip \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
