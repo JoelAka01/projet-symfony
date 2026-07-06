@@ -11,6 +11,7 @@ use App\Message\Pipeline\ApplyInternalLinksMessage;
 use App\Repository\TopicResearchRepository;
 use App\Service\InternalLinking\InternalLinkingService;
 use App\Service\Pipeline\ArticleGenerationPipelineService;
+use App\Service\Pipeline\PipelineStepControlService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -22,6 +23,7 @@ final class ApplyInternalLinksHandler
         private readonly TopicResearchRepository $topicResearchRepository,
         private readonly InternalLinkingService $internalLinkingService,
         private readonly ArticleGenerationPipelineService $pipelineService,
+        private readonly PipelineStepControlService $stepControl,
         private readonly EntityManagerInterface $entityManager,
         private readonly LoggerInterface $logger,
     ) {}
@@ -37,11 +39,22 @@ final class ApplyInternalLinksHandler
             return;
         }
 
-        $startedAt = microtime(true);
-        $runLog = $this->createRunLog($topicResearch);
-        $this->entityManager->persist($runLog);
-
         try {
+            $disabledConfigs = $this->stepControl->disabledConfigsForPipelineStep(TopicResearch::STEP_INTERNAL_LINKING);
+            if ([] !== $disabledConfigs) {
+                $topicResearch->markRunning(TopicResearch::STEP_INTERNAL_LINKING, PipelineStatus::INTERNAL_LINKING);
+                $this->stepControl->logSkippedStep($topicResearch, TopicResearch::STEP_INTERNAL_LINKING, $disabledConfigs);
+                $this->stepControl->completeSkippedStep($topicResearch, TopicResearch::STEP_INTERNAL_LINKING);
+                $this->entityManager->flush();
+                $this->pipelineService->dispatchNext($topicResearch, TopicResearch::STEP_INTERNAL_LINKING);
+
+                return;
+            }
+
+            $startedAt = microtime(true);
+            $runLog = $this->createRunLog($topicResearch);
+            $this->entityManager->persist($runLog);
+
             $article = $topicResearch->getArticle();
             $project = $topicResearch->getProject();
             if (null === $article || null === $project || null === $article->getContentHtml()) {
@@ -66,10 +79,12 @@ final class ApplyInternalLinksHandler
             $this->entityManager->flush();
             $this->pipelineService->dispatchNext($topicResearch, TopicResearch::STEP_INTERNAL_LINKING);
         } catch (\Throwable $exception) {
-            $runLog
-                ->setDurationMs($this->durationMs($startedAt))
-                ->setStatus(PipelineRunLog::STATUS_FAILED)
-                ->setErrorMessage($exception->getMessage());
+            if (isset($runLog, $startedAt)) {
+                $runLog
+                    ->setDurationMs($this->durationMs($startedAt))
+                    ->setStatus(PipelineRunLog::STATUS_FAILED)
+                    ->setErrorMessage($exception->getMessage());
+            }
 
             $topicResearch->markFailed(TopicResearch::STEP_INTERNAL_LINKING, $exception->getMessage());
             $this->entityManager->flush();

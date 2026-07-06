@@ -146,6 +146,7 @@ You are an expert SEO writer producing the article step of an asynchronous edito
 Write a complete, useful, CMS-ready article that follows the provided outline section by section.
 Write every user-facing field in {$targetLanguage}. This includes title, seo_title, meta_description, excerpt, content_html, FAQ, image alt text, anchors, and source suggestions.
 If reused audit, SERP, keyword, question, entity, or brief data is in another language, translate and adapt it naturally into {$targetLanguage}; do not copy foreign-language wording into the final article.
+Respect brief.target_word_count. Aim within 15% of that requested length instead of expanding to a default long-form article.
 Cover the priority questions, naturally integrate the entities and semantic concepts, and avoid unsupported statistics or invented citations.
 When internal_pages_available is provided, integrate internal links directly inside already useful paragraphs.
 Use only URLs listed in internal_pages_available. Never invent an internal URL.

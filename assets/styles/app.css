@@ -689,6 +689,12 @@ a {
     background: #cff4fc;
 }
 
+.flash-warning {
+    color: #664d03;
+    border-color: #ffecb5;
+    background: #fff3cd;
+}
+
 .table-wrap {
     width: 100%;
     overflow-x: auto;
@@ -1870,6 +1876,81 @@ tr:last-child td {
 
 .admin-subheading {
     margin-top: 24px;
+}
+
+.pipeline-settings-form {
+    display: grid;
+    gap: 20px;
+}
+
+.pipeline-step-list {
+    display: grid;
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.pipeline-step-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 16px;
+    border: 1px solid #d9e2ec;
+    border-radius: 8px;
+    background: #ffffff;
+}
+
+.pipeline-step-row.is-disabled {
+    border-color: #facc15;
+    background: #fffbeb;
+}
+
+.pipeline-step-row.is-required {
+    background: #f8fafc;
+}
+
+.pipeline-step-row strong,
+.pipeline-step-row small {
+    display: block;
+}
+
+.pipeline-step-row small {
+    margin-top: 4px;
+    color: #627d98;
+}
+
+.pipeline-warning {
+    margin: 8px 0 0;
+    color: #92400e;
+    font-size: 0.86rem;
+}
+
+.switch-control {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 94px;
+    font-weight: 800;
+    color: #0f766e;
+}
+
+.switch-control input {
+    width: 42px;
+    height: 24px;
+    accent-color: #0f766e;
+}
+
+.locked-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 94px;
+    padding: 7px 10px;
+    border-radius: 999px;
+    color: #102a43;
+    font-size: 0.82rem;
+    font-weight: 800;
+    background: #e6edf5;
 }
 
 /* Back Link & Navigation */

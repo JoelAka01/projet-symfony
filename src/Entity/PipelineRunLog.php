@@ -19,6 +19,7 @@ class PipelineRunLog
     public const STATUS_SUCCESS = 'success';
     public const STATUS_FAILED = 'failed';
     public const STATUS_RETRIED = 'retried';
+    public const STATUS_SKIPPED = 'skipped';
 
     #[ORM\ManyToOne(inversedBy: 'runLogs')]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]

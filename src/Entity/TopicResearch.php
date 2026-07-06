@@ -59,6 +59,10 @@ class TopicResearch
     #[ORM\Column(enumType: PipelineQualityMode::class)]
     private PipelineQualityMode $qualityMode = PipelineQualityMode::BALANCED;
 
+    #[ORM\Column]
+    #[Assert\Range(min: 600, max: 4000)]
+    private int $targetWordCount = 1400;
+
     #[ORM\Column(length: 10, nullable: true)]
     #[Assert\Length(max: 10)]
     private ?string $country = null;
@@ -172,6 +176,19 @@ class TopicResearch
     public function setQualityMode(PipelineQualityMode $qualityMode): self
     {
         $this->qualityMode = $qualityMode;
+        $this->touch();
+
+        return $this;
+    }
+
+    public function getTargetWordCount(): int
+    {
+        return $this->targetWordCount;
+    }
+
+    public function setTargetWordCount(int $targetWordCount): self
+    {
+        $this->targetWordCount = max(600, min(4000, $targetWordCount));
         $this->touch();
 
         return $this;

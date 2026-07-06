@@ -8,6 +8,7 @@ use App\Entity\TopicResearch;
 use App\Enum\PipelineQualityMode;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -56,6 +57,19 @@ final class TopicResearchType extends AbstractType
                     'Quality' => PipelineQualityMode::QUALITY,
                 ],
                 'choice_label' => static fn(PipelineQualityMode $mode): string => $mode->label(),
+            ])
+            ->add('targetWordCount', IntegerType::class, [
+                'label' => 'Target word count',
+                'help' => 'Recommended: 800-1800 for short or standard blog posts. Maximum 4000.',
+                'attr' => [
+                    'min' => 600,
+                    'max' => 4000,
+                    'step' => 100,
+                ],
+                'constraints' => [
+                    new Assert\NotBlank(),
+                    new Assert\Range(min: 600, max: 4000),
+                ],
             ])
             ->add('sector', TextType::class, [
                 'label' => 'Sector',

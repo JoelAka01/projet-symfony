@@ -32,7 +32,8 @@ final class ArticleGenerationPipelineService
      *     sector?: string|null,
      *     audience?: string|null,
      *     businessObjective?: string|null,
-     *     qualityMode?: PipelineQualityMode|string|null
+     *     qualityMode?: PipelineQualityMode|string|null,
+     *     targetWordCount?: int|string|null
      * } $options
      */
     public function start(Project $project, User $user, string $keyword, array $options = []): TopicResearch
@@ -48,6 +49,7 @@ final class ArticleGenerationPipelineService
             ->setAudience($this->nullableString($options['audience'] ?? null))
             ->setBusinessObjective($this->nullableString($options['businessObjective'] ?? null))
             ->setQualityMode($this->qualityMode($options['qualityMode'] ?? null))
+            ->setTargetWordCount($this->targetWordCount($options['targetWordCount'] ?? null))
             ->setStatus(PipelineStatus::NEW);
 
         $this->entityManager->persist($topicResearch);
@@ -138,5 +140,14 @@ final class ArticleGenerationPipelineService
         }
 
         return PipelineQualityMode::BALANCED;
+    }
+
+    private function targetWordCount(mixed $value): int
+    {
+        if (!is_numeric($value)) {
+            return 1400;
+        }
+
+        return max(600, min(4000, (int) $value));
     }
 }

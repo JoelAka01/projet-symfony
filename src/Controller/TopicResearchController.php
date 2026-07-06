@@ -68,6 +68,7 @@ final class TopicResearchController extends AbstractController
                 'audience' => $topicResearch->getAudience(),
                 'businessObjective' => $topicResearch->getBusinessObjective(),
                 'qualityMode' => $topicResearch->getQualityMode(),
+                'targetWordCount' => $topicResearch->getTargetWordCount(),
             ]);
 
             $this->addFlash('success', 'Pipeline V2 started.');

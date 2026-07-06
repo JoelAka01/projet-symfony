@@ -1,0 +1,76 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Pipeline Settings | SEO GEO AI{% endblock %}
+
+{% block body %}
+    {% include 'admin/_nav.html.twig' %}
+
+    <section class="hero compact admin-hero">
+        <p class="eyebrow">Pipeline Control Center</p>
+        <div class="hero-top-bar">
+            <div>
+                <h1>Pipeline Settings</h1>
+                <p>Turn fragile or expensive article workflow steps on and off without changing code. Required safety steps stay locked.</p>
+            </div>
+        </div>
+    </section>
+
+    <form method="post" class="pipeline-settings-form">
+        <input type="hidden" name="_token" value="{{ csrf_token('admin_pipeline_settings') }}">
+
+        <section class="panel full-panel">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Workflow controls</p>
+                    <h2>Optional steps</h2>
+                </div>
+                <button class="button primary" type="submit">Save settings</button>
+            </div>
+
+            <div class="pipeline-step-list">
+                {% for row in rows %}
+                    {% set config = row.config %}
+                    {% if not config.required %}
+                        <div class="pipeline-step-row {{ not config.enabled ? 'is-disabled' : '' }}">
+                            <div>
+                                <strong>{{ config.label }}</strong>
+                                <small><code>{{ config.stepKey }}</code> · fallback: {{ config.fallbackMode|replace({'_': ' '}) }}</small>
+                                {% if row.warning %}
+                                    <p class="pipeline-warning">{{ row.warning }}</p>
+                                {% endif %}
+                            </div>
+                            <label class="switch-control" aria-label="Toggle {{ config.label }}">
+                                <input type="checkbox" name="enabled[{{ config.stepKey }}]" value="1" {{ config.enabled ? 'checked' : '' }}>
+                                <span>{{ config.enabled ? 'ON' : 'OFF' }}</span>
+                            </label>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="panel full-panel">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Safety rails</p>
+                    <h2>Required steps</h2>
+                </div>
+            </div>
+
+            <div class="pipeline-step-list">
+                {% for row in rows %}
+                    {% set config = row.config %}
+                    {% if config.required %}
+                        <div class="pipeline-step-row is-required">
+                            <div>
+                                <strong>{{ config.label }}</strong>
+                                <small><code>{{ config.stepKey }}</code> · cannot be disabled</small>
+                            </div>
+                            <span class="locked-badge">Required</span>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </section>
+    </form>
+{% endblock %}

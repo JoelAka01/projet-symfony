@@ -18,6 +18,7 @@ use App\Repository\PaymentRepository;
 use App\Repository\ProjectRepository;
 use App\Repository\SubscriptionRepository;
 use App\Repository\UserRepository;
+use App\Service\Pipeline\PipelineStepControlService;
 use App\Service\Project\ProjectManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -273,6 +274,41 @@ final class AdminController extends AbstractController
         $this->addFlash('success', 'Project and its related crawl data were deleted.');
 
         return $this->redirectToRoute('app_admin_projects');
+    }
+
+    #[Route('/pipeline-settings', name: 'pipeline_settings', methods: ['GET', 'POST'])]
+    public function pipelineSettings(
+        Request $request,
+        PipelineStepControlService $stepControl,
+        EntityManagerInterface $entityManager,
+    ): Response {
+        $rows = $stepControl->ensureDefaults();
+
+        if ($request->isMethod('POST')) {
+            if (!$this->isCsrfTokenValid('admin_pipeline_settings', $request->request->getString('_token'))) {
+                throw $this->createAccessDeniedException('Invalid pipeline settings CSRF token.');
+            }
+
+            $enabledKeys = $request->request->all('enabled');
+            foreach ($rows as $row) {
+                $config = $row['config'];
+                $config->setIsEnabled($config->isRequired() || array_key_exists($config->getStepKey(), $enabledKeys));
+            }
+            $entityManager->flush();
+
+            foreach ($rows as $row) {
+                if (!$row['config']->isEnabled() && null !== $row['warning']) {
+                    $this->addFlash('warning', $row['warning']);
+                }
+            }
+            $this->addFlash('success', 'Pipeline settings updated. Changes apply to the next pipeline step without redeployment.');
+
+            return $this->redirectToRoute('app_admin_pipeline_settings');
+        }
+
+        return $this->render('admin/pipeline_settings.html.twig', [
+            'rows' => $rows,
+        ]);
     }
 
     /**
