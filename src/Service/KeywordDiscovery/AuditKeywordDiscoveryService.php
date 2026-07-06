@@ -14,6 +14,7 @@ use App\Repository\KeywordRepository;
 use App\Repository\KeywordSuggestionRepository;
 use App\Service\Cost\ApiCostGuard;
 use App\Service\Cost\ApiUsageLogger;
+use App\Service\Language\LanguagePromptInjector;
 use App\Service\Serp\SerpProviderInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -49,6 +50,7 @@ final class AuditKeywordDiscoveryService
         private readonly LoggerInterface $logger,
         private readonly ApiCostGuard $apiCostGuard,
         private readonly ApiUsageLogger $apiUsageLogger,
+        private readonly LanguagePromptInjector $languagePromptInjector,
     ) {}
 
     /**
@@ -301,7 +303,7 @@ final class AuditKeywordDiscoveryService
                 $suggestions = $this->serpProvider->suggest(
                     $seed,
                     $project->getTargetCountry() ?? 'FR',
-                    $project->getDefaultLanguage() ?? 'fr',
+                    $project->getEffectiveContentLanguage(),
                 );
                 $this->apiUsageLogger->log($project, 'zenserp', 'keyword_discovery_serp_suggest', estimatedCost: 0.003);
             } catch (\Throwable $exception) {
@@ -342,10 +344,11 @@ final class AuditKeywordDiscoveryService
 
         $model = $this->envString('CLAUDE_MODEL') ?? 'claude-haiku-4-5-20251001';
         $baseUrl = rtrim($this->envString('CLAUDE_API_BASE_URL') ?? 'https://api.anthropic.com', '/');
+        $contentLanguage = $project->getEffectiveContentLanguage();
         $payload = [
             'project_name' => $project->getName(),
             'country' => $project->getTargetCountry() ?? 'FR',
-            'language' => $project->getDefaultLanguage() ?? 'fr',
+            'language' => $contentLanguage,
             'audit_extract' => $this->compactAnalysis($analysis),
         ];
 
@@ -370,7 +373,10 @@ final class AuditKeywordDiscoveryService
                     'model' => $model,
                     'max_tokens' => 800,
                     'temperature' => 0.2,
-                    'system' => 'Return strict JSON only. Generate 5 to 10 concise seed keywords for economical SEO keyword discovery.',
+                    'system' => $this->languagePromptInjector->appendToPrompt(
+                        'Return strict JSON only. Generate 5 to 10 concise seed keywords for economical SEO keyword discovery.',
+                        $contentLanguage,
+                    ),
                     'messages' => [[
                         'role' => 'user',
                         'content' => [[

@@ -9,6 +9,7 @@ use App\Service\Audit\AuditInsightsBuilder;
 use App\Service\Audit\AuditProgressNotifier;
 use App\Service\Billing\AnalysisQuotaManager;
 use App\Service\Billing\PlanCatalog;
+use App\Service\Language\LanguagePromptInjector;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -31,6 +32,7 @@ final class ClaudeSeoAnalysisService
         private readonly ClaudeSeoAnalysisSchema $responseSchema,
         private readonly LoggerInterface $logger,
         private readonly AuditProgressNotifier $notifier,
+        private readonly LanguagePromptInjector $languagePromptInjector,
         private readonly ?AiUsageRecorder $usageRecorder = null,
         private readonly ?AnalysisQuotaManager $quotaManager = null,
     ) {}
@@ -78,6 +80,7 @@ final class ClaudeSeoAnalysisService
         ]);
 
         $crawlSummary = $this->insightsBuilder->buildClaudePayload($audit);
+        $contentLanguage = $audit->getProject()?->getEffectiveContentLanguage() ?? 'fr';
 
         try {
             $tokenBudgets = $maxTokens < self::MAX_OUTPUT_TOKENS
@@ -101,6 +104,7 @@ final class ClaudeSeoAnalysisService
                     $maxDurationSeconds,
                     $crawlSummary,
                     true,
+                    $contentLanguage,
                 );
 
                 $statusCode = $response->getStatusCode();
@@ -120,6 +124,7 @@ final class ClaudeSeoAnalysisService
                         $maxDurationSeconds,
                         $crawlSummary,
                         false,
+                        $contentLanguage,
                     );
                     $statusCode = $response->getStatusCode();
                     $body = $response->getContent(false);
@@ -298,8 +303,12 @@ PROMPT;
         int $maxDurationSeconds,
         array $crawlSummary,
         bool $structuredOutput,
+        string $contentLanguage = 'fr',
     ): \Symfony\Contracts\HttpClient\ResponseInterface {
-        $systemPrompt = $this->structuredSystemPrompt();
+        $systemPrompt = $this->languagePromptInjector->appendToPrompt(
+            $this->structuredSystemPrompt(),
+            $contentLanguage,
+        );
         if (!$structuredOutput) {
             $systemPrompt .= <<<'PROMPT'
 
