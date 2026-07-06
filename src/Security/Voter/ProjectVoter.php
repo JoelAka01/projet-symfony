@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Security\Voter;
 
 use App\Entity\Project;
+use App\Entity\ProjectGuest;
 use App\Entity\User;
+use App\Enum\ProjectGuestAccess;
 use App\Enum\ProjectStatus;
 use App\Enum\UserRole;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
@@ -75,7 +77,8 @@ final class ProjectVoter extends Voter
     private function canManage(Project $project, User $user, TokenInterface $token): bool
     {
         return $this->isOwner($project, $user)
-            || $this->hasOrganizationRole($project, $user, UserRole::OWNER, UserRole::ADMIN, UserRole::EDITOR);
+            || $this->hasOrganizationRole($project, $user, UserRole::OWNER, UserRole::ADMIN, UserRole::EDITOR)
+            || $this->hasFullGuestAccess($project, $user);
     }
 
     private function canManageContent(Project $project, User $user, TokenInterface $token): bool
@@ -86,13 +89,26 @@ final class ProjectVoter extends Voter
 
     private function isProjectGuest(Project $project, User $user): bool
     {
-        foreach ($project->getGuests() as $guest) {
-            if ($this->isSameUser($guest, $user)) {
-                return true;
+        return null !== $this->findProjectGuest($project, $user);
+    }
+
+    private function hasFullGuestAccess(Project $project, User $user): bool
+    {
+        $projectGuest = $this->findProjectGuest($project, $user);
+
+        return null !== $projectGuest && ProjectGuestAccess::FULL === $projectGuest->getAccess();
+    }
+
+    private function findProjectGuest(Project $project, User $user): ?ProjectGuest
+    {
+        foreach ($project->getProjectGuests() as $projectGuest) {
+            $guestUser = $projectGuest->getUser();
+            if (null !== $guestUser && $this->isSameUser($guestUser, $user)) {
+                return $projectGuest;
             }
         }
 
-        return false;
+        return null;
     }
 
     private function canDelete(Project $project, User $user): bool
