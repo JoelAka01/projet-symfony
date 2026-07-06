@@ -14,12 +14,12 @@ final class ArticleQualityGateService
     private const MIN_WORD_COUNT = 600;
 
     /** @return list<string> */
-    public function failures(Article $article, ?ContentBrief $brief = null): array
+    public function failures(Article $article, ?ContentBrief $brief = null, bool $requireSeoScore = true): array
     {
         $failures = [];
         $html = (string) $article->getContentHtml();
 
-        if (($article->getSeoScore() ?? 0) < self::MIN_SEO_SCORE) {
+        if ($requireSeoScore && ($article->getSeoScore() ?? 0) < self::MIN_SEO_SCORE) {
             $failures[] = 'SEO score is below the minimum threshold.';
         }
 
@@ -50,9 +50,9 @@ final class ArticleQualityGateService
         return $failures;
     }
 
-    public function assertPasses(Article $article, ?ContentBrief $brief = null): void
+    public function assertPasses(Article $article, ?ContentBrief $brief = null, bool $requireSeoScore = true): void
     {
-        $failures = $this->failures($article, $brief);
+        $failures = $this->failures($article, $brief, $requireSeoScore);
         if ([] !== $failures) {
             throw new \RuntimeException('Quality Gate failed: ' . implode(' ', $failures));
         }

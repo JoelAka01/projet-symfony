@@ -10,6 +10,7 @@ use App\Message\Pipeline\AnalyzeIntelligenceMessage;
 use App\Repository\TopicResearchRepository;
 use App\Service\Pipeline\ArticleGenerationPipelineService;
 use App\Service\Pipeline\IntelligenceAnalyzerService;
+use App\Service\Pipeline\PipelineStepControlService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -21,6 +22,7 @@ final class AnalyzeIntelligenceHandler
         private readonly TopicResearchRepository $topicResearchRepository,
         private readonly IntelligenceAnalyzerService $intelligenceAnalyzer,
         private readonly ArticleGenerationPipelineService $pipelineService,
+        private readonly PipelineStepControlService $stepControl,
         private readonly EntityManagerInterface $entityManager,
         private readonly LoggerInterface $logger,
     ) {}
@@ -40,6 +42,18 @@ final class AnalyzeIntelligenceHandler
             $serpAnalysis = $topicResearch->getSerpAnalysis();
             if (null === $serpAnalysis) {
                 throw new \RuntimeException('SERP analysis is required before the intelligence step.');
+            }
+
+            $disabledConfigs = $this->stepControl->disabledConfigsForPipelineStep(TopicResearch::STEP_INTELLIGENCE);
+            if ([] !== $disabledConfigs) {
+                $topicResearch->markRunning(TopicResearch::STEP_INTELLIGENCE, PipelineStatus::INTELLIGENCE_ANALYZING);
+                $this->stepControl->logSkippedStep($topicResearch, TopicResearch::STEP_INTELLIGENCE, $disabledConfigs);
+                $this->entityManager->persist($this->stepControl->fallbackIntelligenceAnalysis($topicResearch, 'step skipped by admin'));
+                $this->stepControl->completeSkippedStep($topicResearch, TopicResearch::STEP_INTELLIGENCE);
+                $this->entityManager->flush();
+                $this->pipelineService->dispatchNext($topicResearch, TopicResearch::STEP_INTELLIGENCE);
+
+                return;
             }
 
             $topicResearch->markRunning(TopicResearch::STEP_INTELLIGENCE, PipelineStatus::INTELLIGENCE_ANALYZING);

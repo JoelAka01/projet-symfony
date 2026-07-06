@@ -12,6 +12,7 @@ use App\Repository\TopicResearchRepository;
 use App\Service\Cost\AuditDataReuseService;
 use App\Service\Cost\CachedSerpService;
 use App\Service\Pipeline\ArticleGenerationPipelineService;
+use App\Service\Pipeline\PipelineStepControlService;
 use App\Service\Pipeline\SerpQuestionAnalyzerService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -26,6 +27,7 @@ final class AnalyzeSerpHandler
         private readonly AuditDataReuseService $auditDataReuseService,
         private readonly SerpQuestionAnalyzerService $serpQuestionAnalyzer,
         private readonly ArticleGenerationPipelineService $pipelineService,
+        private readonly PipelineStepControlService $stepControl,
         private readonly EntityManagerInterface $entityManager,
         private readonly LoggerInterface $logger,
     ) {}
@@ -42,6 +44,18 @@ final class AnalyzeSerpHandler
         }
 
         try {
+            $disabledConfigs = $this->stepControl->disabledConfigsForPipelineStep(TopicResearch::STEP_SERP_ANALYSIS);
+            if ([] !== $disabledConfigs) {
+                $topicResearch->markRunning(TopicResearch::STEP_SERP_ANALYSIS, PipelineStatus::SERP_ANALYZING);
+                $this->stepControl->logSkippedStep($topicResearch, TopicResearch::STEP_SERP_ANALYSIS, $disabledConfigs);
+                $this->entityManager->persist($this->stepControl->fallbackSerpAnalysis($topicResearch, 'step skipped by admin'));
+                $this->stepControl->completeSkippedStep($topicResearch, TopicResearch::STEP_SERP_ANALYSIS);
+                $this->entityManager->flush();
+                $this->pipelineService->dispatchNext($topicResearch, TopicResearch::STEP_SERP_ANALYSIS);
+
+                return;
+            }
+
             $topicResearch->markRunning(TopicResearch::STEP_SERP_ANALYSIS, PipelineStatus::SERP_ANALYZING);
             $this->entityManager->flush();
 

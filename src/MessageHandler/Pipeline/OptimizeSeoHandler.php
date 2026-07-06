@@ -9,6 +9,7 @@ use App\Enum\PipelineStatus;
 use App\Message\Pipeline\OptimizeSeoMessage;
 use App\Repository\TopicResearchRepository;
 use App\Service\Cost\ArticleQualityGateService;
+use App\Service\Pipeline\PipelineStepControlService;
 use App\Service\Pipeline\SeoScorerService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -21,6 +22,7 @@ final class OptimizeSeoHandler
         private readonly TopicResearchRepository $topicResearchRepository,
         private readonly SeoScorerService $seoScorer,
         private readonly ArticleQualityGateService $qualityGate,
+        private readonly PipelineStepControlService $stepControl,
         private readonly EntityManagerInterface $entityManager,
         private readonly LoggerInterface $logger,
     ) {}
@@ -46,8 +48,15 @@ final class OptimizeSeoHandler
             $topicResearch->markRunning(TopicResearch::STEP_SEO_SCORE, PipelineStatus::SEO_OPTIMIZING);
             $this->entityManager->flush();
 
-            $this->seoScorer->score($topicResearch, $article, $contentBrief);
-            $this->qualityGate->assertPasses($article, $contentBrief);
+            $disabledConfigs = $this->stepControl->disabledConfigsForPipelineStep(TopicResearch::STEP_SEO_SCORE);
+            if ([] === $disabledConfigs) {
+                $this->seoScorer->score($topicResearch, $article, $contentBrief);
+                $this->qualityGate->assertPasses($article, $contentBrief);
+            } else {
+                $this->stepControl->logSkippedStep($topicResearch, TopicResearch::STEP_SEO_SCORE, $disabledConfigs);
+                $this->qualityGate->assertPasses($article, $contentBrief, false);
+            }
+
             $topicResearch
                 ->setCurrentStep(null)
                 ->setStatus(PipelineStatus::READY_TO_PUBLISH)

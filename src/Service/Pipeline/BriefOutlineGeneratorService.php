@@ -27,6 +27,7 @@ final class BriefOutlineGeneratorService
                     'keyword' => $topicResearch->getPrimaryKeyword(),
                     'country' => $topicResearch->getCountry(),
                     'language' => $topicResearch->getLanguage(),
+                    'target_word_count' => $topicResearch->getTargetWordCount(),
                     'sector' => $topicResearch->getSector(),
                     'audience' => $topicResearch->getAudience(),
                     'business_objective' => $topicResearch->getBusinessObjective(),
@@ -50,6 +51,7 @@ final class BriefOutlineGeneratorService
         );
 
         $parsed = $result->parsedResponse;
+        $targetWordCount = $topicResearch->getTargetWordCount();
         $brief = $topicResearch->getContentBrief() ?? new ContentBrief();
         $brief
             ->setTopicResearch($topicResearch)
@@ -57,7 +59,7 @@ final class BriefOutlineGeneratorService
             ->setObjective($this->nullableString($parsed['objective'] ?? null))
             ->setIntent($this->nullableString($parsed['intent'] ?? $intelligenceAnalysis->getPrimaryIntent()))
             ->setToneRecommendation($this->nullableString($parsed['tone_recommendation'] ?? null))
-            ->setTargetWordCount($this->nullableInt($parsed['target_word_count'] ?? null))
+            ->setTargetWordCount($targetWordCount)
             ->setKeyEntities($this->listOfObjects($parsed['key_entities'] ?? []))
             ->setKeyQuestions($this->listOfObjects($parsed['key_questions'] ?? []))
             ->setCompetitorInsights($this->objectOrList($parsed['competitor_insights'] ?? []))
@@ -67,7 +69,7 @@ final class BriefOutlineGeneratorService
             ->setOutline($this->listOfObjects($parsed['outline'] ?? []))
             ->setFaqSuggestions($this->listOfObjects($parsed['faq_suggestions'] ?? []))
             ->setTableSuggestions($this->listOfObjects($parsed['table_suggestions'] ?? []))
-            ->setEstimatedWordCount($this->nullableInt($parsed['estimated_word_count'] ?? $parsed['target_word_count'] ?? null))
+            ->setEstimatedWordCount($targetWordCount)
             ->setGeneratedAt(new \DateTimeImmutable());
 
         return $brief;
@@ -78,6 +80,7 @@ final class BriefOutlineGeneratorService
         return <<<'PROMPT'
 You are a content strategist and outline architect for a 5-step asynchronous article pipeline.
 Create one complete brief and one structured outline from the provided SERP, questions, intent, entities, and semantic concepts.
+Respect topic.target_word_count. The returned target_word_count and estimated_word_count must match that requested value.
 Do not write the article. Do not invent citations or unverifiable facts.
 Return only one valid JSON object with this schema:
 {
@@ -108,11 +111,6 @@ PROMPT;
         }
 
         return trim((string) $value);
-    }
-
-    private function nullableInt(mixed $value): ?int
-    {
-        return is_numeric($value) ? max(0, (int) $value) : null;
     }
 
     /** @return array<int, array<string, mixed>> */

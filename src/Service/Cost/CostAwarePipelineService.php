@@ -24,7 +24,8 @@ final class CostAwarePipelineService
      *     sector?: string|null,
      *     audience?: string|null,
      *     businessObjective?: string|null,
-     *     qualityMode?: PipelineQualityMode|string|null
+     *     qualityMode?: PipelineQualityMode|string|null,
+     *     targetWordCount?: int|string|null
      * } $options
      */
     public function start(Project $project, User $user, string $keyword, array $options = []): TopicResearch

@@ -66,6 +66,13 @@ final class AdminDashboardTest extends WebTestCase
         $client->request('GET', '/admin/payments');
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', 'Simulated payments');
+
+        $client->request('GET', '/admin/pipeline-settings');
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('h1', 'Pipeline Settings');
+        self::assertSelectorTextContains('body', 'SERP Intelligence');
+        self::assertSelectorTextContains('body', 'Article Generation');
+        self::assertSelectorTextContains('body', 'Required');
     }
 
     public function testRegularUserHasUpgradeButtonAndLogoRedirectsToProjects(): void
