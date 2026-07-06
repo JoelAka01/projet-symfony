@@ -89,8 +89,10 @@ final class AuditInsightsBuilder
             'domain' => $audit->getDomain()?->getRootDomain(),
             'project' => [
                 'name' => $audit->getProject()?->getName(),
-                'default_language' => $audit->getProject()?->getDefaultLanguage(),
+                'language' => $audit->getProject()?->getLanguage(),
                 'target_country' => $audit->getProject()?->getTargetCountry(),
+                'content_language' => $audit->getProject()?->getEffectiveContentLanguage(),
+                'language_confidence' => $audit->getProject()?->getLanguageConfidence(),
             ],
             'crawl' => [
                 'status' => $audit->getStatus()->value,
