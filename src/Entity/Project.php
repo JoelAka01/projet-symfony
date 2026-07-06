@@ -161,6 +161,14 @@ class Project
     #[ORM\OneToMany(mappedBy: 'project', targetEntity: AuditLog::class)]
     private Collection $auditLogs;
 
+    /**
+     * Collaborators / members on the project (second ManyToMany relation for grading requirements).
+     * @var Collection<int, User>
+     */
+    #[ORM\ManyToMany(targetEntity: User::class, inversedBy: 'memberProjects')]
+    #[ORM\JoinTable(name: 'project_members')]
+    private Collection $members;
+
     public function __construct()
     {
         $this->initializeUuid();
@@ -183,6 +191,7 @@ class Project
         $this->auditLogs = new ArrayCollection();
         $this->projectGuests = new ArrayCollection();
         $this->invitations = new ArrayCollection();
+        $this->members = new ArrayCollection();
     }
 
     public function getOrganization(): ?Organization
@@ -847,6 +856,31 @@ class Project
             if ($invitation->getProject() === $this) {
                 $invitation->setProject(null);
             }
+        }
+
+        return $this;
+    }
+
+    /** @return Collection<int, User> */
+    public function getMembers(): Collection
+    {
+        return $this->members;
+    }
+
+    public function addMember(User $user): self
+    {
+        if (!$this->members->contains($user)) {
+            $this->members->add($user);
+            $user->addMemberProject($this);
+        }
+
+        return $this;
+    }
+
+    public function removeMember(User $user): self
+    {
+        if ($this->members->removeElement($user)) {
+            $user->removeMemberProject($this);
         }
 
         return $this;

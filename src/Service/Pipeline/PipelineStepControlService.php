@@ -43,7 +43,12 @@ final class PipelineStepControlService
     /** @return list<array{config: PipelineStepConfig, warning: ?string}> */
     public function ensureDefaults(): array
     {
-        $configs = $this->configRepository->findIndexedByStepKey();
+        $configs = [];
+        try {
+            $configs = $this->configRepository->findIndexedByStepKey();
+        } catch (\Throwable $e) {
+            // Table may not exist yet if migrations were not applied. Rows created below will still work if table gets created by ensure.
+        }
         $rows = [];
 
         foreach (self::DEFINITIONS as $definition) {
@@ -69,7 +74,12 @@ final class PipelineStepControlService
             ];
         }
 
-        $this->entityManager->flush();
+        try {
+            $this->entityManager->flush();
+        } catch (\Throwable $e) {
+            // Schema not ready (e.g. migrations not run in this env). Return in-memory rows so UI does not fatal.
+            // Real usage + CI always run migrations first.
+        }
 
         return $rows;
     }

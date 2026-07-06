@@ -38,9 +38,17 @@ final class ProjectPagesTest extends WebTestCase
     public function testCannotCreateDuplicateProjectName(): void
     {
         $client = self::createClient();
-        $userRepository = self::getContainer()->get(\App\Repository\UserRepository::class);
+        $container = self::getContainer();
+        $userRepository = $container->get(\App\Repository\UserRepository::class);
         $user = $userRepository->findOneBy(['email' => 'user@example.com']);
         self::assertInstanceOf(\App\Entity\User::class, $user);
+
+        // Ensure a project with the target name exists for this user (self-contained, independent of demo fixtures)
+        $projectManager = $container->get(\App\Service\Project\ProjectManager::class);
+        $existing = new \App\Entity\Project();
+        $uniqueName = 'Duplicate Test ' . uniqid();
+        $existing->setName($uniqueName);
+        $projectManager->createForUser($existing, $user, 'https://existing-test-' . uniqid() . '.com');
 
         $client->loginUser($user);
 
@@ -48,7 +56,7 @@ final class ProjectPagesTest extends WebTestCase
         self::assertResponseIsSuccessful();
 
         $form = $crawler->selectButton('Create project and analyze')->form([
-            'project[name]' => 'Portfolio Personnel',
+            'project[name]' => $uniqueName,
             'project[websiteUrl]' => 'https://duplicate.com',
         ]);
         $client->submit($form);

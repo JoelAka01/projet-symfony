@@ -102,9 +102,15 @@ final class WebsiteCrawlerService
                         'User-Agent' => self::USER_AGENT,
                         'Accept' => 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.1',
                     ],
-                    'max_redirects' => 0,
+                    'max_redirects' => 5,
                     'timeout' => $timeoutSeconds,
                 ]);
+
+                // Use final URL after redirects (Symfony HttpClient follows them)
+                $effectiveUrl = $response->getInfo('url') ?? $url;
+                if ($effectiveUrl !== $url) {
+                    $page->setNormalizedUrl($effectiveUrl);
+                }
 
                 $statusCode = $response->getStatusCode();
                 $headers = $response->getHeaders(false);
