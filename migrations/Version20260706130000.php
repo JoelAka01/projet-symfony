@@ -16,13 +16,13 @@ final class Version20260706130000 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql("ALTER TABLE project_guests ADD access VARCHAR(20) DEFAULT 'content' NOT NULL");
-        $this->addSql("ALTER TABLE project_invitations ADD access VARCHAR(20) DEFAULT 'content' NOT NULL");
+        $this->addSql("ALTER TABLE project_guests ADD COLUMN IF NOT EXISTS access VARCHAR(20) DEFAULT 'content' NOT NULL");
+        $this->addSql("ALTER TABLE project_invitations ADD COLUMN IF NOT EXISTS access VARCHAR(20) DEFAULT 'content' NOT NULL");
     }
 
     public function down(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE project_guests DROP access');
-        $this->addSql('ALTER TABLE project_invitations DROP access');
+        $this->addSql('ALTER TABLE project_guests DROP COLUMN IF EXISTS access');
+        $this->addSql('ALTER TABLE project_invitations DROP COLUMN IF EXISTS access');
     }
 }
