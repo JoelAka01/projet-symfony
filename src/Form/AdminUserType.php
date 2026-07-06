@@ -51,6 +51,14 @@ final class AdminUserType extends AbstractType
                 ],
                 'choice_value' => static fn(?UserRole $role): string => null === $role ? '' : $role->value,
             ])
+            ->add('locale', ChoiceType::class, [
+                'label' => 'Interface language',
+                'choices' => [
+                    'Français' => 'fr',
+                    'English' => 'en',
+                ],
+                'required' => true,
+            ])
             ->add('isVerified', CheckboxType::class, [
                 'label' => 'Email verified',
                 'required' => false,
