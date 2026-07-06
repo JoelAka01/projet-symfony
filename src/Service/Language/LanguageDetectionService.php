@@ -202,7 +202,7 @@ final class LanguageDetectionService
         if (null !== $tld && isset(self::TLD_LANGUAGE_MAP[$tld])) {
             return new LanguageDetectionResult(
                 language: self::TLD_LANGUAGE_MAP[$tld],
-                country: self::TLD_COUNTRY_MAP[$tld] ?? null,
+                country: self::TLD_COUNTRY_MAP[$tld],
                 confidence: 60,
                 detectionMethod: 'tld',
             );
