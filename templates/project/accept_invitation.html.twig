@@ -12,7 +12,8 @@
     <section class="panel" style="max-width: 600px; margin: 40px auto; padding: 32px; text-align: center;">
         <h2>Join as Guest</h2>
         <p class="muted" style="margin-bottom: 24px;">
-            By accepting, you will gain access to view this project's dashboard, view SEO audits, download reports, and manage the Content studio.
+            Access level: <strong>{{ invitation.access.label }}</strong><br>
+            {{ invitation.access.description }}
         </p>
 
         <form method="post">
