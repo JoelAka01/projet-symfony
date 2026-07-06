@@ -784,11 +784,11 @@
                 <h2>30 / 60 / 90 plan</h2>
                 <dl class="suggestions">
                     <dt>30 days</dt>
-                    <dd>{{ actionPlan.day_30|default([])|join(' ')|default('n/a') }}</dd>
+                    <dd>{{ actionPlan.day_30|default([])|filter(v => v is not iterable)|join(', ')|default('n/a') }}</dd>
                     <dt>60 days</dt>
-                    <dd>{{ actionPlan.day_60|default([])|join(' ')|default('n/a') }}</dd>
+                    <dd>{{ actionPlan.day_60|default([])|filter(v => v is not iterable)|join(', ')|default('n/a') }}</dd>
                     <dt>90 days</dt>
-                    <dd>{{ actionPlan.day_90|default([])|join(' ')|default('n/a') }}</dd>
+                    <dd>{{ actionPlan.day_90|default([])|filter(v => v is not iterable)|join(', ')|default('n/a') }}</dd>
                 </dl>
             </article>
         </section>

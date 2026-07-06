@@ -68,7 +68,12 @@ final class ClaudeSeoAnalysisResponseParser
         $decoded['geo_analysis'] = $this->arrayValue($decoded['geo_analysis'] ?? []);
         $decoded['serp_features'] = $this->arrayValue($decoded['serp_features'] ?? []);
         $decoded['priority_matrix'] = $this->arrayValue($decoded['priority_matrix'] ?? []);
-        $decoded['action_plan_30_60_90'] = $this->arrayValue($decoded['action_plan_30_60_90'] ?? $decoded['30_60_90_plan'] ?? []);
+        $actionPlan = $this->arrayValue($decoded['action_plan_30_60_90'] ?? $decoded['30_60_90_plan'] ?? []);
+        $decoded['action_plan_30_60_90'] = [
+            'day_30' => $this->stringList($actionPlan['day_30'] ?? []),
+            'day_60' => $this->stringList($actionPlan['day_60'] ?? []),
+            'day_90' => $this->stringList($actionPlan['day_90'] ?? []),
+        ];
 
         return $decoded;
     }
@@ -297,9 +302,9 @@ final class ClaudeSeoAnalysisResponseParser
 
         if (isset($decoded['day_30']) || isset($decoded['day_60']) || isset($decoded['day_90'])) {
             $decoded['action_plan_30_60_90'] = [
-                'day_30' => $decoded['day_30'] ?? [],
-                'day_60' => $decoded['day_60'] ?? [],
-                'day_90' => $decoded['day_90'] ?? [],
+                'day_30' => $this->stringList($decoded['day_30'] ?? []),
+                'day_60' => $this->stringList($decoded['day_60'] ?? []),
+                'day_90' => $this->stringList($decoded['day_90'] ?? []),
             ];
         }
 

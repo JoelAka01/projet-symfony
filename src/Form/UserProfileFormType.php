@@ -29,14 +29,6 @@ final class UserProfileFormType extends AbstractType
                     new Assert\NotBlank(message: 'Last name cannot be blank.'),
                     new Assert\Length(max: 100),
                 ],
-            ])
-            ->add('locale', \Symfony\Component\Form\Extension\Core\Type\ChoiceType::class, [
-                'label' => 'Interface language',
-                'choices' => [
-                    'Français' => 'fr',
-                    'English' => 'en',
-                ],
-                'required' => true,
             ]);
     }
 
