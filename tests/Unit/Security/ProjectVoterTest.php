@@ -8,6 +8,7 @@ use App\Entity\Organization;
 use App\Entity\OrganizationUser;
 use App\Entity\Project;
 use App\Entity\User;
+use App\Enum\ProjectGuestAccess;
 use App\Enum\ProjectStatus;
 use App\Enum\UserRole;
 use App\Security\Voter\ProjectVoter;
@@ -64,6 +65,21 @@ final class ProjectVoterTest extends TestCase
         self::assertSame(VoterInterface::ACCESS_GRANTED, $this->vote($guest, $project, ProjectVoter::MANAGE_CONTENT));
         self::assertSame(VoterInterface::ACCESS_DENIED, $this->vote($guest, $project, ProjectVoter::EDIT));
         self::assertSame(VoterInterface::ACCESS_DENIED, $this->vote($guest, $project, ProjectVoter::LAUNCH_AUDIT));
+        self::assertSame(VoterInterface::ACCESS_DENIED, $this->vote($guest, $project, ProjectVoter::DELETE));
+    }
+
+    public function testFullAccessGuestCanManageButNotDelete(): void
+    {
+        $guest = $this->user(UserRole::VIEWER);
+        $project = $this->project();
+        $project->addGuest($guest, ProjectGuestAccess::FULL);
+
+        self::assertSame(VoterInterface::ACCESS_GRANTED, $this->vote($guest, $project, ProjectVoter::VIEW));
+        self::assertSame(VoterInterface::ACCESS_GRANTED, $this->vote($guest, $project, ProjectVoter::MANAGE_CONTENT));
+        self::assertSame(VoterInterface::ACCESS_GRANTED, $this->vote($guest, $project, ProjectVoter::EDIT));
+        self::assertSame(VoterInterface::ACCESS_GRANTED, $this->vote($guest, $project, ProjectVoter::MANAGE));
+        self::assertSame(VoterInterface::ACCESS_GRANTED, $this->vote($guest, $project, ProjectVoter::LAUNCH_AUDIT));
+        self::assertSame(VoterInterface::ACCESS_DENIED, $this->vote($guest, $project, ProjectVoter::DELETE));
     }
 
     private function vote(User $user, Project $project, string $attribute): int
