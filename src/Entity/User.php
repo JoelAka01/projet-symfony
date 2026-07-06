@@ -9,6 +9,7 @@ use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use App\Entity\Traits\TimestampableTrait;
 use App\Entity\Traits\UuidPrimaryKeyTrait;
+use App\Enum\ProjectGuestAccess;
 use App\Enum\UserRole;
 use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -96,9 +97,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
 
 
-    /** @var Collection<int, Project> */
-    #[ORM\ManyToMany(targetEntity: Project::class, mappedBy: 'guests')]
-    private Collection $guestProjects;
+    /** @var Collection<int, ProjectGuest> */
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: ProjectGuest::class, orphanRemoval: true)]
+    private Collection $projectGuestMemberships;
 
     /** @var Collection<int, AuditLog> */
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: AuditLog::class)]
@@ -114,7 +115,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->initializeTimestamps();
         $this->organizationUsers = new ArrayCollection();
         $this->ownedProjects = new ArrayCollection();
-        $this->guestProjects = new ArrayCollection();
+        $this->projectGuestMemberships = new ArrayCollection();
         $this->auditLogs = new ArrayCollection();
         $this->rateLimitEvents = new ArrayCollection();
     }
@@ -427,27 +428,36 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    /** @return Collection<int, ProjectGuest> */
+    public function getProjectGuestMemberships(): Collection
+    {
+        return $this->projectGuestMemberships;
+    }
+
     /** @return Collection<int, Project> */
     public function getGuestProjects(): Collection
     {
-        return $this->guestProjects;
+        $projects = [];
+        foreach ($this->projectGuestMemberships as $membership) {
+            $project = $membership->getProject();
+            if (null !== $project) {
+                $projects[] = $project;
+            }
+        }
+
+        return new ArrayCollection($projects);
     }
 
-    public function addGuestProject(Project $project): self
+    public function addGuestProject(Project $project, ProjectGuestAccess $access = ProjectGuestAccess::CONTENT): self
     {
-        if (!$this->guestProjects->contains($project)) {
-            $this->guestProjects->add($project);
-            $project->addGuest($this);
-        }
+        $project->addGuest($this, $access);
 
         return $this;
     }
 
     public function removeGuestProject(Project $project): self
     {
-        if ($this->guestProjects->removeElement($project)) {
-            $project->removeGuest($this);
-        }
+        $project->removeGuest($this);
 
         return $this;
     }

@@ -6,6 +6,7 @@ namespace App\Entity;
 
 use App\Entity\Traits\TimestampableTrait;
 use App\Entity\Traits\UuidPrimaryKeyTrait;
+use App\Enum\ProjectGuestAccess;
 use App\Repository\ProjectInvitationRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -33,6 +34,9 @@ class ProjectInvitation
 
     #[ORM\Column(length: 20)]
     private string $status = 'pending'; // 'pending' or 'accepted'
+
+    #[ORM\Column(enumType: ProjectGuestAccess::class)]
+    private ProjectGuestAccess $access = ProjectGuestAccess::CONTENT;
 
     public function __construct()
     {
@@ -85,6 +89,18 @@ class ProjectInvitation
     public function setStatus(string $status): self
     {
         $this->status = $status;
+
+        return $this;
+    }
+
+    public function getAccess(): ProjectGuestAccess
+    {
+        return $this->access;
+    }
+
+    public function setAccess(ProjectGuestAccess $access): self
+    {
+        $this->access = $access;
 
         return $this;
     }
