@@ -1,0 +1,5 @@
+# UI Translations - French (Default)
+# Add keys and translations as the UI is internationalized
+
+app:
+    name: 'SaaS SEO'
