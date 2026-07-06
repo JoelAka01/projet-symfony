@@ -11,13 +11,17 @@ use App\Entity\Project;
 use App\Entity\User;
 use App\Enum\ProjectStatus;
 use App\Enum\UserRole;
+use App\Service\Language\LanguageDetectionService;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 
 final class ProjectManager
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly ProjectWebsiteUrlNormalizer $websiteUrlNormalizer,
+        private readonly LanguageDetectionService $languageDetector,
+        private readonly LoggerInterface $logger,
     ) {}
 
     public function createForUser(Project $project, User $owner, string $websiteUrl): void
@@ -31,6 +35,7 @@ final class ProjectManager
         $organization->addProject($project);
 
         $this->syncPrimaryDomain($project, $normalizedWebsiteUrl);
+        $this->autoDetectLanguageIfNeeded($project, $normalizedWebsiteUrl);
 
         $this->entityManager->persist($project);
         $this->entityManager->flush();
@@ -44,6 +49,7 @@ final class ProjectManager
 
         $normalizedWebsiteUrl = $this->websiteUrlNormalizer->requireValid($websiteUrl);
         $this->syncPrimaryDomain($project, $normalizedWebsiteUrl);
+        $this->autoDetectLanguageIfNeeded($project, $normalizedWebsiteUrl);
 
         $this->entityManager->persist($project);
         $this->entityManager->flush();
@@ -74,6 +80,51 @@ final class ProjectManager
     public function getPrimaryWebsiteUrl(Project $project): ?string
     {
         return $this->getPrimaryDomain($project)?->getRootDomain();
+    }
+
+    /**
+     * Runs automatic language detection on the given URL and pre-fills
+     * the project's language, country, and confidence fields.
+     *
+     * Only runs when:
+     *   - autoDetectLanguage is enabled on the project
+     *   - the project does not already have a language set
+     */
+    private function autoDetectLanguageIfNeeded(Project $project, string $websiteUrl): void
+    {
+        if (!$project->isAutoDetectLanguage()) {
+            return;
+        }
+
+        // Don't overwrite user-provided values
+        if (null !== $project->getLanguage()) {
+            return;
+        }
+
+        try {
+            $result = $this->languageDetector->detect($websiteUrl);
+
+            if ($result->isConfident() && null !== $result->language) {
+                $project->setLanguage($result->language);
+                $project->setLanguageConfidence($result->confidence);
+
+                if (null !== $result->country && null === $project->getTargetCountry()) {
+                    $project->setTargetCountry($result->country);
+                }
+            }
+
+            $this->logger->info('Language auto-detection completed for project.', [
+                'project' => $project->getName(),
+                'url' => $websiteUrl,
+                'result' => $result->toArray(),
+            ]);
+        } catch (\Throwable $exception) {
+            $this->logger->warning('Language auto-detection failed for project.', [
+                'project' => $project->getName(),
+                'url' => $websiteUrl,
+                'error' => $exception->getMessage(),
+            ]);
+        }
     }
 
     private function syncPrimaryDomain(Project $project, string $normalizedWebsiteUrl): Domain

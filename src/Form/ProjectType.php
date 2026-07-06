@@ -6,7 +6,10 @@ namespace App\Form;
 
 use App\Entity\Project;
 use App\Enum\ProjectStatus;
+use App\Enum\SupportedCountry;
+use App\Enum\SupportedLanguage;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -39,21 +42,31 @@ final class ProjectType extends AbstractType
                     new Assert\Length(max: 255),
                 ],
             ])
-            ->add('defaultLanguage', TextType::class, [
-                'label' => 'Default language',
-                'required' => false,
-                'attr' => [
-                    'placeholder' => 'en',
-                    'maxlength' => 10,
-                ],
+            ->add('language', ChoiceType::class, [
+                'label' => 'Project language',
+                'choices' => SupportedLanguage::choices(),
+                'required' => true,
+                'placeholder' => '— Select language —',
+                'help' => 'The language of the analysed website. All SEO analysis will use this language.',
             ])
-            ->add('targetCountry', TextType::class, [
+            ->add('targetCountry', ChoiceType::class, [
                 'label' => 'Target country',
+                'choices' => SupportedCountry::choices(),
+                'required' => true,
+                'placeholder' => '— Select country —',
+                'help' => 'The primary market for this project. Used for local SERP and search volumes.',
+            ])
+            ->add('contentLanguage', ChoiceType::class, [
+                'label' => 'Content language',
+                'choices' => SupportedLanguage::choices(),
                 'required' => false,
-                'attr' => [
-                    'placeholder' => 'US',
-                    'maxlength' => 10,
-                ],
+                'placeholder' => '— Same as project language —',
+                'help' => 'Override the language used for content generation. Leave empty to use the project language.',
+            ])
+            ->add('autoDetectLanguage', CheckboxType::class, [
+                'label' => 'Auto-detect language from website',
+                'required' => false,
+                'help' => 'When enabled, the language and country will be automatically detected from the website URL.',
             ]);
 
         if (true === $options['include_status']) {
