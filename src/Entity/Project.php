@@ -12,6 +12,7 @@ use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use App\Entity\Traits\TimestampableTrait;
 use App\Entity\Traits\UuidPrimaryKeyTrait;
+use App\Enum\ProjectGuestAccess;
 use App\Enum\ProjectStatus;
 use App\Repository\ProjectRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -88,10 +89,9 @@ class Project
 
 
 
-    /** @var Collection<int, User> */
-    #[ORM\ManyToMany(targetEntity: User::class, inversedBy: 'guestProjects')]
-    #[ORM\JoinTable(name: 'project_guests')]
-    private Collection $guests;
+    /** @var Collection<int, ProjectGuest> */
+    #[ORM\OneToMany(mappedBy: 'project', targetEntity: ProjectGuest::class, orphanRemoval: true, cascade: ['persist'])]
+    private Collection $projectGuests;
 
     /** @var Collection<int, ProjectInvitation> */
     #[ORM\OneToMany(mappedBy: 'project', targetEntity: ProjectInvitation::class, orphanRemoval: true)]
@@ -181,7 +181,7 @@ class Project
         $this->publisherBacklinkExchanges = new ArrayCollection();
         $this->analyticsDailySnapshots = new ArrayCollection();
         $this->auditLogs = new ArrayCollection();
-        $this->guests = new ArrayCollection();
+        $this->projectGuests = new ArrayCollection();
         $this->invitations = new ArrayCollection();
     }
 
@@ -759,24 +759,68 @@ class Project
         return $this;
     }
 
+    /** @return Collection<int, ProjectGuest> */
+    public function getProjectGuests(): Collection
+    {
+        return $this->projectGuests;
+    }
+
     /** @return Collection<int, User> */
     public function getGuests(): Collection
     {
-        return $this->guests;
+        $guests = [];
+        foreach ($this->projectGuests as $projectGuest) {
+            $user = $projectGuest->getUser();
+            if (null !== $user) {
+                $guests[] = $user;
+            }
+        }
+
+        return new ArrayCollection($guests);
     }
 
-    public function addGuest(User $user): self
+    public function findProjectGuest(User $user): ?ProjectGuest
     {
-        if (!$this->guests->contains($user)) {
-            $this->guests->add($user);
+        foreach ($this->projectGuests as $projectGuest) {
+            $guestUser = $projectGuest->getUser();
+            if (null !== $guestUser && ($guestUser === $user || $guestUser->getId() === $user->getId())) {
+                return $projectGuest;
+            }
         }
+
+        return null;
+    }
+
+    public function getGuestAccess(User $user): ?ProjectGuestAccess
+    {
+        return $this->findProjectGuest($user)?->getAccess();
+    }
+
+    public function addGuest(User $user, ProjectGuestAccess $access = ProjectGuestAccess::CONTENT): self
+    {
+        $existingMembership = $this->findProjectGuest($user);
+        if (null !== $existingMembership) {
+            $existingMembership->setAccess($access);
+
+            return $this;
+        }
+
+        $projectGuest = new ProjectGuest();
+        $projectGuest
+            ->setProject($this)
+            ->setUser($user)
+            ->setAccess($access);
+        $this->projectGuests->add($projectGuest);
 
         return $this;
     }
 
     public function removeGuest(User $user): self
     {
-        $this->guests->removeElement($user);
+        $membership = $this->findProjectGuest($user);
+        if (null !== $membership) {
+            $this->projectGuests->removeElement($membership);
+        }
 
         return $this;
     }
