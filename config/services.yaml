@@ -25,6 +25,15 @@ services:
     # this creates a service per class whose id is the fully-qualified class name
     App\:
         resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'
+            - '../src/Repository/'
+
+    App\Repository\:
+        resource: '../src/Repository/'
+        tags: ['doctrine.repository_service']
 
     App\Service\Cms\CmsClientRegistry:
         arguments:
