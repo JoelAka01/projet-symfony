@@ -163,6 +163,7 @@ class Project
 
     /**
      * Collaborators / members on the project (second ManyToMany relation for grading requirements).
+     *
      * @var Collection<int, User>
      */
     #[ORM\ManyToMany(targetEntity: User::class, inversedBy: 'memberProjects')]
