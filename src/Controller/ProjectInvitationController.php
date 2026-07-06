@@ -8,6 +8,7 @@ use App\Entity\Audit;
 use App\Entity\Project;
 use App\Entity\ProjectInvitation;
 use App\Entity\User;
+use App\Enum\ProjectGuestAccess;
 use App\Form\ProjectInvitationType;
 use App\Repository\AuditRepository;
 use App\Repository\ProjectInvitationRepository;
@@ -87,9 +88,15 @@ final class ProjectInvitationController extends AbstractController
 
 
 
+            $access = $form->get('access')->getData();
+            if (!$access instanceof ProjectGuestAccess) {
+                $access = ProjectGuestAccess::CONTENT;
+            }
+
             $invitation = new ProjectInvitation();
             $invitation->setProject($project);
             $invitation->setEmail($email);
+            $invitation->setAccess($access);
 
             $entityManager->persist($invitation);
             $entityManager->flush();
@@ -206,7 +213,7 @@ final class ProjectInvitationController extends AbstractController
 
         if ($request = $this->container->get('request_stack')->getCurrentRequest()) {
             if ($request->isMethod('POST')) {
-                $project->addGuest($user);
+                $project->addGuest($user, $invitation->getAccess());
                 $invitation->setStatus('accepted');
                 $entityManager->flush();
 
@@ -242,6 +249,50 @@ final class ProjectInvitationController extends AbstractController
             $entityManager->flush();
             $this->addFlash('success', 'Invitation has been cancelled.');
         }
+
+        return $this->redirectToRoute('app_project_guests_index', ['id' => $project->getId()]);
+    }
+
+    #[Route('/projects/{id}/guests/{userId}/access', name: 'app_project_guest_update_access', methods: ['POST'])]
+    public function updateGuestAccess(
+        Project $project,
+        string $userId,
+        Request $request,
+        UserRepository $userRepository,
+        EntityManagerInterface $entityManager,
+    ): Response {
+        $this->denyAccessUnlessGranted(ProjectVoter::EDIT, $project);
+
+        if (!$this->isCsrfTokenValid('update_guest_access_' . $userId, (string) $request->request->get('_token', ''))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token.');
+        }
+
+        $guest = $userRepository->find($userId);
+        if (null === $guest) {
+            $this->addFlash('error', 'Guest not found.');
+
+            return $this->redirectToRoute('app_project_guests_index', ['id' => $project->getId()]);
+        }
+
+        $membership = $project->findProjectGuest($guest);
+        if (null === $membership) {
+            $this->addFlash('error', 'This user is not a guest of the project.');
+
+            return $this->redirectToRoute('app_project_guests_index', ['id' => $project->getId()]);
+        }
+
+        $accessValue = (string) $request->request->get('access', ProjectGuestAccess::CONTENT->value);
+        $access = ProjectGuestAccess::tryFrom($accessValue);
+        if (null === $access) {
+            $this->addFlash('error', 'Invalid access level selected.');
+
+            return $this->redirectToRoute('app_project_guests_index', ['id' => $project->getId()]);
+        }
+
+        $membership->setAccess($access);
+        $entityManager->flush();
+
+        $this->addFlash('success', sprintf('Access level updated for %s.', $guest->getDisplayName()));
 
         return $this->redirectToRoute('app_project_guests_index', ['id' => $project->getId()]);
     }
