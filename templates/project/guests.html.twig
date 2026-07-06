@@ -13,102 +13,153 @@
         </a>
     </div>
 
-    <section class="panel full-panel" style="margin-top: 24px;">
-        <h2>Project Guests & Invitations</h2>
-        <p class="muted" style="margin-bottom: 24px;">Invite guests to collaborate on this project. Choose <strong>Content only</strong> for read access and article management, or <strong>Full access</strong> to allow everything except deleting the project.</p>
-
-        <div class="split-grid">
-            <div>
-                <h3>Invite a New Guest</h3>
-                <form method="post" action="{{ path('app_project_invitation_invite', { id: project.id }) }}" class="form-stack invite-form">
-                    <input type="hidden" name="project_invitation[_token]" value="{{ csrf_token('project_invitation') }}">
-                    <label for="invite_email">
-                        Email address
-                        <input type="email" id="invite_email" name="project_invitation[email]" required placeholder="guest@example.com">
-                    </label>
-                    <label for="invite_access">
-                        Access level
-                        <select id="invite_access" name="project_invitation[access]" required>
-                            {% for access in enum_cases('App\\Enum\\ProjectGuestAccess') %}
-                                <option value="{{ access.value }}"{% if access.value == 'content' %} selected{% endif %}>
-                                    {{ access.label }}
-                                </option>
-                            {% endfor %}
-                        </select>
-                    </label>
-                    <p class="muted" id="invite_access_help" style="margin-top: -8px; font-size: 0.9rem;">
-                        {{ enum('App\\Enum\\ProjectGuestAccess').CONTENT.description }}
-                    </p>
-                    <button type="submit" class="button primary">Send Invitation</button>
-                </form>
-            </div>
-            
-            <div>
-                <h3>Active Guests</h3>
-                {% if project.projectGuests is empty %}
-                    <p class="muted" style="margin-top: 12px;">No guests have joined this project yet.</p>
-                {% else %}
-                    <ul class="plain-list list-rows" style="margin-top: 12px;">
-                        {% for membership in project.projectGuests %}
-                            {% set guest = membership.user %}
-                            <li class="list-row" style="flex-wrap: wrap; gap: 8px;">
-                                <span>
-                                    <strong>{{ guest.displayName }}</strong>
-                                    <span class="muted">({{ guest.email }})</span>
-                                    <span class="pill">{{ membership.access.label }}</span>
-                                </span>
-                                <div style="display: flex; gap: 8px; align-items: center;">
-                                    <form method="post" action="{{ path('app_project_guest_update_access', { id: project.id, userId: guest.id }) }}" style="margin: 0; display: flex; gap: 6px; align-items: center;">
-                                        <input type="hidden" name="_token" value="{{ csrf_token('update_guest_access_' ~ guest.id) }}">
-                                        <select name="access" aria-label="Access level for {{ guest.displayName }}">
-                                            {% for access in enum_cases('App\\Enum\\ProjectGuestAccess') %}
-                                                <option value="{{ access.value }}"{% if membership.access == access %} selected{% endif %}>
-                                                    {{ access.label }}
-                                                </option>
-                                            {% endfor %}
-                                        </select>
-                                        <button type="submit" class="btn-action" style="padding: 4px 8px; font-size: 0.8rem;">Update</button>
-                                    </form>
-                                    <form method="post" action="{{ path('app_project_guest_remove', { id: project.id, userId: guest.id }) }}" style="margin: 0;" onsubmit="return confirm('Remove this guest from the project?');">
-                                        <input type="hidden" name="_token" value="{{ csrf_token('remove_guest_' ~ guest.id) }}">
-                                        <button type="submit" class="btn-action btn-danger" style="padding: 4px 8px; font-size: 0.8rem;">Remove</button>
-                                    </form>
-                                </div>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                {% endif %}
-
-                <h3 style="margin-top: 24px;">Pending Invitations</h3>
-                {% set pending_invites = [] %}
-                {% for invite in project.invitations %}
-                    {% if invite.status == 'pending' %}
-                        {% set pending_invites = pending_invites|merge([invite]) %}
-                    {% endif %}
-                {% endfor %}
-
-                {% if pending_invites is empty %}
-                    <p class="muted" style="margin-top: 12px;">No pending invitations.</p>
-                {% else %}
-                    <ul class="plain-list list-rows" style="margin-top: 12px;">
-                        {% for invite in pending_invites %}
-                            <li class="list-row">
-                                <span>
-                                    <strong>{{ invite.email }}</strong>
-                                    <span class="muted">Sent: {{ invite.createdAt|date('Y-m-d') }}</span>
-                                    <span class="pill">{{ invite.access.label }}</span>
-                                </span>
-                                <form method="post" action="{{ path('app_project_invitation_cancel', { id: project.id, invitationId: invite.id }) }}" style="margin: 0;" onsubmit="return confirm('Cancel this invitation?');">
-                                    <input type="hidden" name="_token" value="{{ csrf_token('cancel_invitation_' ~ invite.id) }}">
-                                    <button type="submit" class="btn-action btn-danger" style="padding: 4px 8px; font-size: 0.8rem;">Cancel</button>
-                                </form>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                {% endif %}
-            </div>
-        </div>
+    <section class="hero compact">
+        <p class="eyebrow">Project collaboration</p>
+        <h1>Guests & Invitations</h1>
+        <p>Invite guests to collaborate on <strong>{{ project.name }}</strong>. Choose <strong>Content only</strong> for read access and article management, or <strong>Full access</strong> to allow everything except deleting the project.</p>
     </section>
+
+    <div class="split-grid guests-layout">
+        <div class="panel">
+            <h2>Invite a New Guest</h2>
+            <p class="muted guests-panel-intro">Send an email invitation with the access level that fits this collaborator.</p>
+            <form method="post" action="{{ path('app_project_invitation_invite', { id: project.id }) }}" class="form-stack invite-form">
+                <input type="hidden" name="project_invitation[_token]" value="{{ csrf_token('project_invitation') }}">
+                <label for="invite_email">
+                    Email address
+                    <input type="email" id="invite_email" name="project_invitation[email]" required placeholder="guest@example.com">
+                </label>
+                <label for="invite_access">
+                    Access level
+                    <select id="invite_access" name="project_invitation[access]" required>
+                        {% for access in enum_cases('App\\Enum\\ProjectGuestAccess') %}
+                            <option value="{{ access.value }}"{% if access.value == 'content' %} selected{% endif %}>
+                                {{ access.label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <p class="muted form-help" id="invite_access_help">
+                    {{ enum('App\\Enum\\ProjectGuestAccess').CONTENT.description }}
+                </p>
+                <button type="submit" class="button primary">Send Invitation</button>
+            </form>
+        </div>
+
+        <div class="panel guests-management">
+            <h2>Active Guests</h2>
+            {% if project.projectGuests is empty %}
+                <div class="empty-state guests-empty-state">
+                    <h3>No guests yet</h3>
+                    <p class="muted">No guests have joined this project. Send an invitation to get started.</p>
+                </div>
+            {% else %}
+                <div class="table-wrap guests-table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Guest</th>
+                                <th>Current access</th>
+                                <th>Manage role</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for membership in project.projectGuests %}
+                                {% set guest = membership.user %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ guest.displayName }}</strong>
+                                        <small class="table-subtitle">{{ guest.email }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="pill {{ membership.access.value == 'full' ? 'priority-low' : 'priority-medium' }}">
+                                            {{ membership.access.label }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <form method="post" action="{{ path('app_project_guest_update_access', { id: project.id, userId: guest.id }) }}" class="guest-access-form">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('update_guest_access_' ~ guest.id) }}">
+                                            <label class="guest-access-label" for="guest_access_{{ guest.id }}">
+                                                <span class="visually-hidden">Access level for {{ guest.displayName }}</span>
+                                                <select id="guest_access_{{ guest.id }}" name="access" aria-label="Access level for {{ guest.displayName }}">
+                                                    {% for access in enum_cases('App\\Enum\\ProjectGuestAccess') %}
+                                                        <option value="{{ access.value }}"{% if membership.access == access %} selected{% endif %}>
+                                                            {{ access.label }}
+                                                        </option>
+                                                    {% endfor %}
+                                                </select>
+                                            </label>
+                                            <button type="submit" class="btn-action btn-primary">Update</button>
+                                        </form>
+                                    </td>
+                                    <td>
+                                        <div class="row-actions">
+                                            <form method="post" action="{{ path('app_project_guest_remove', { id: project.id, userId: guest.id }) }}" onsubmit="return confirm('Remove this guest from the project?');">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('remove_guest_' ~ guest.id) }}">
+                                                <button type="submit" class="btn-action btn-danger">Remove</button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+
+            <div class="guests-section-divider">
+                <h2>Pending Invitations</h2>
+            </div>
+            {% set pending_invites = [] %}
+            {% for invite in project.invitations %}
+                {% if invite.status == 'pending' %}
+                    {% set pending_invites = pending_invites|merge([invite]) %}
+                {% endif %}
+            {% endfor %}
+
+            {% if pending_invites is empty %}
+                <div class="empty-state guests-empty-state">
+                    <h3>No pending invitations</h3>
+                    <p class="muted">Invitations waiting for acceptance will appear here.</p>
+                </div>
+            {% else %}
+                <div class="table-wrap guests-table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Email</th>
+                                <th>Sent</th>
+                                <th>Access</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for invite in pending_invites %}
+                                <tr>
+                                    <td><strong>{{ invite.email }}</strong></td>
+                                    <td>{{ invite.createdAt|date('Y-m-d') }}</td>
+                                    <td>
+                                        <span class="pill {{ invite.access.value == 'full' ? 'priority-low' : 'priority-medium' }}">
+                                            {{ invite.access.label }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="row-actions">
+                                            <form method="post" action="{{ path('app_project_invitation_cancel', { id: project.id, invitationId: invite.id }) }}" onsubmit="return confirm('Cancel this invitation?');">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('cancel_invitation_' ~ invite.id) }}">
+                                                <button type="submit" class="btn-action btn-danger">Cancel</button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        </div>
+    </div>
 
     <script>
         (function () {
