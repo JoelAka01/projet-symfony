@@ -67,15 +67,29 @@ class Project
     #[Groups(['project:read', 'project:write'])]
     private ProjectStatus $status = ProjectStatus::ACTIVE;
 
-    #[ORM\Column(length: 10, nullable: true)]
+    #[ORM\Column(name: 'language', length: 10, nullable: true)]
     #[Assert\Length(max: 10)]
     #[Groups(['project:read', 'project:write'])]
-    private ?string $defaultLanguage = null;
+    private ?string $language = null;
 
     #[ORM\Column(length: 10, nullable: true)]
     #[Assert\Length(max: 10)]
     #[Groups(['project:read', 'project:write'])]
     private ?string $targetCountry = null;
+
+    #[ORM\Column(length: 10, nullable: true)]
+    #[Assert\Length(max: 10)]
+    #[Groups(['project:read', 'project:write'])]
+    private ?string $contentLanguage = null;
+
+    #[ORM\Column(options: ['default' => true])]
+    #[Groups(['project:read', 'project:write'])]
+    private bool $autoDetectLanguage = true;
+
+    #[ORM\Column(type: 'smallint', nullable: true)]
+    #[Assert\Range(min: 0, max: 100)]
+    #[Groups(['project:read'])]
+    private ?int $languageConfidence = null;
 
     #[ORM\Column(type: 'smallint', nullable: true)]
     #[Assert\Range(min: 0, max: 100)]
@@ -86,9 +100,6 @@ class Project
     #[Assert\Range(min: 0, max: 100)]
     #[Groups(['project:read'])]
     private ?int $geoScore = null;
-
-
-
     /** @var Collection<int, ProjectGuest> */
     #[ORM\OneToMany(mappedBy: 'project', targetEntity: ProjectGuest::class, orphanRemoval: true, cascade: ['persist'])]
     private Collection $projectGuests;
@@ -233,16 +244,28 @@ class Project
         return $this;
     }
 
-    public function getDefaultLanguage(): ?string
+    public function getLanguage(): ?string
     {
-        return $this->defaultLanguage;
+        return $this->language;
     }
 
-    public function setDefaultLanguage(?string $defaultLanguage): self
+    public function setLanguage(?string $language): self
     {
-        $this->defaultLanguage = $defaultLanguage;
+        $this->language = null !== $language ? strtolower(trim($language)) : null;
 
         return $this;
+    }
+
+    /** @deprecated Use getLanguage() instead */
+    public function getDefaultLanguage(): ?string
+    {
+        return $this->getLanguage();
+    }
+
+    /** @deprecated Use setLanguage() instead */
+    public function setDefaultLanguage(?string $defaultLanguage): self
+    {
+        return $this->setLanguage($defaultLanguage);
     }
 
     public function getTargetCountry(): ?string
@@ -252,10 +275,56 @@ class Project
 
     public function setTargetCountry(?string $targetCountry): self
     {
-        $this->targetCountry = $targetCountry;
+        $this->targetCountry = null !== $targetCountry ? strtoupper(trim($targetCountry)) : null;
 
         return $this;
     }
+
+    public function getContentLanguage(): ?string
+    {
+        return $this->contentLanguage;
+    }
+
+    public function setContentLanguage(?string $contentLanguage): self
+    {
+        $this->contentLanguage = null !== $contentLanguage ? strtolower(trim($contentLanguage)) : null;
+
+        return $this;
+    }
+
+    /**
+     * Returns the language that should be used for content generation.
+     * Falls back to project language, then to 'fr'.
+     */
+    public function getEffectiveContentLanguage(): string
+    {
+        return $this->contentLanguage ?? $this->language ?? 'fr';
+    }
+
+    public function isAutoDetectLanguage(): bool
+    {
+        return $this->autoDetectLanguage;
+    }
+
+    public function setAutoDetectLanguage(bool $autoDetectLanguage): self
+    {
+        $this->autoDetectLanguage = $autoDetectLanguage;
+
+        return $this;
+    }
+
+    public function getLanguageConfidence(): ?int
+    {
+        return $this->languageConfidence;
+    }
+
+    public function setLanguageConfidence(?int $languageConfidence): self
+    {
+        $this->languageConfidence = $languageConfidence;
+
+        return $this;
+    }
+
 
     public function getSeoScore(): ?int
     {
