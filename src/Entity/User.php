@@ -87,6 +87,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(['user:read'])]
     private ?\DateTimeImmutable $lastLoginAt = null;
 
+    #[ORM\Column(length: 10, options: ['default' => 'fr'])]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 10)]
+    #[Groups(['user:read'])]
+    private string $locale = 'fr';
+
     /** @var Collection<int, OrganizationUser> */
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: OrganizationUser::class, orphanRemoval: true)]
     private Collection $organizationUsers;
@@ -313,6 +319,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setLastLoginAt(?\DateTimeImmutable $lastLoginAt): self
     {
         $this->lastLoginAt = $lastLoginAt;
+
+        return $this;
+    }
+
+    public function getLocale(): string
+    {
+        return $this->locale;
+    }
+
+    public function setLocale(string $locale): self
+    {
+        $this->locale = strtolower(trim($locale));
 
         return $this;
     }
