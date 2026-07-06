@@ -76,7 +76,8 @@
                             </div>
                         </div>
                     {% else %}
-                        <a href="{{ path('app_pricing') }}">Pricing</a>
+                        {% set pricingHref = (app.request.attributes.get('_route') == 'app_home') ? '#pricing' : (path('app_home') ~ '#pricing') %}
+                        <a href="{{ pricingHref }}">Pricing</a>
                         <a href="{{ path('app_login') }}">Login</a>
                         <a class="nav-button" href="{{ path('app_register') }}">Register</a>
                     {% endif %}
