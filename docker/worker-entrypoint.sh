@@ -23,6 +23,9 @@ while [ ! -f vendor/autoload.php ] || [ "$lock_hash" != "$(cat vendor/.composer.
     sleep 1
 done
 
+# Clear stale cache before warming up to prevent autowire deadlock crashes
+rm -rf "${APP_CACHE_DIR:-/tmp/symfony-cache}"/*
+
 php bin/console cache:warmup --no-interaction
 
 exec php bin/console messenger:consume async pipeline --time-limit=3600 --memory-limit=256M -vv

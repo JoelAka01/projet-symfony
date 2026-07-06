@@ -16,7 +16,13 @@ installed_hash="$(cat vendor/.composer.lock.sha256 2>/dev/null || true)"
 if [ ! -f vendor/autoload.php ] || [ "$lock_hash" != "$installed_hash" ]; then
     composer install --no-interaction --prefer-dist --no-progress --optimize-autoloader --no-scripts
     printf '%s' "$lock_hash" > vendor/.composer.lock.sha256
+else
+    # Regenerate classmap to pick up any new classes added during development
+    composer dump-autoload --optimize --no-scripts
 fi
+
+# Clear stale cache before warming up to prevent autowire deadlock crashes
+rm -rf "${APP_CACHE_DIR:-/tmp/symfony-cache}"/*
 
 php bin/console cache:warmup --no-interaction
 
