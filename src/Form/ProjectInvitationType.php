@@ -30,7 +30,7 @@ final class ProjectInvitationType extends AbstractType
         $builder->add('access', EnumType::class, [
             'class' => ProjectGuestAccess::class,
             'label' => 'Access level',
-            'choice_label' => static fn (ProjectGuestAccess $access): string => $access->label(),
+            'choice_label' => static fn(ProjectGuestAccess $access): string => $access->label(),
             'data' => ProjectGuestAccess::CONTENT,
         ]);
     }
