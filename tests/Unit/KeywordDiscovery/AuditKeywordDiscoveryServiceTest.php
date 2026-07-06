@@ -19,6 +19,7 @@ use App\Repository\ProjectApiBudgetRepository;
 use App\Service\Cost\ApiCostGuard;
 use App\Service\Cost\ApiUsageLogger;
 use App\Service\KeywordDiscovery\AuditKeywordDiscoveryService;
+use App\Service\Language\LanguagePromptInjector;
 use App\Service\Serp\SerpProviderInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
@@ -255,6 +256,7 @@ final class AuditKeywordDiscoveryServiceTest extends TestCase
             new NullLogger(),
             $apiCostGuard,
             $apiUsageLogger,
+            new LanguagePromptInjector(),
         );
     }
 

@@ -10,10 +10,12 @@ use App\Entity\User;
 use App\Enum\UserRole;
 use App\Exception\InvalidWebsiteUrlException;
 use App\Service\Crawler\CrawlerUrlNormalizer;
+use App\Service\Language\LanguageDetectionService;
 use App\Service\Project\ProjectManager;
 use App\Service\Project\ProjectWebsiteUrlNormalizer;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
 
 final class ProjectManagerTest extends TestCase
 {
@@ -26,6 +28,11 @@ final class ProjectManagerTest extends TestCase
         $manager = new ProjectManager(
             $entityManager,
             new ProjectWebsiteUrlNormalizer(new CrawlerUrlNormalizer()),
+            new LanguageDetectionService(
+                $this->createMock(\Symfony\Contracts\HttpClient\HttpClientInterface::class),
+                new NullLogger()
+            ),
+            new NullLogger(),
         );
 
         $owner = $this->user();
@@ -49,6 +56,11 @@ final class ProjectManagerTest extends TestCase
         $manager = new ProjectManager(
             $this->createMock(EntityManagerInterface::class),
             new ProjectWebsiteUrlNormalizer(new CrawlerUrlNormalizer()),
+            new LanguageDetectionService(
+                $this->createMock(\Symfony\Contracts\HttpClient\HttpClientInterface::class),
+                new NullLogger()
+            ),
+            new NullLogger(),
         );
 
         $this->expectException(InvalidWebsiteUrlException::class);

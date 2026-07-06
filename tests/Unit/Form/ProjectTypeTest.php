@@ -26,7 +26,7 @@ final class ProjectTypeTest extends TypeTestCase
         $form->submit([
             'name' => 'Updated project',
             'websiteUrl' => 'example.com',
-            'defaultLanguage' => 'en',
+            'language' => 'en',
             'targetCountry' => 'US',
             'status' => ProjectStatus::PAUSED->value,
         ]);
@@ -34,7 +34,7 @@ final class ProjectTypeTest extends TypeTestCase
         self::assertTrue($form->isSynchronized());
         self::assertSame('Updated project', $project->getName());
         self::assertSame('example.com', $form->get('websiteUrl')->getData());
-        self::assertSame('en', $project->getDefaultLanguage());
+        self::assertSame('en', $project->getLanguage());
         self::assertSame('US', $project->getTargetCountry());
         self::assertSame(ProjectStatus::PAUSED, $project->getStatus());
     }

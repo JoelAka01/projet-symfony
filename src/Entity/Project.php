@@ -325,7 +325,6 @@ class Project
         return $this;
     }
 
-
     public function getSeoScore(): ?int
     {
         return $this->seoScore;

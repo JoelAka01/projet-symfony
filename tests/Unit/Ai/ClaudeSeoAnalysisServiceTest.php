@@ -11,6 +11,7 @@ use App\Service\Ai\ClaudeSeoAnalysisService;
 use App\Service\Audit\AuditInsightsBuilder;
 use App\Service\Audit\AuditProgressNotifier;
 use App\Service\Audit\AuditProgressStatusBuilder;
+use App\Service\Language\LanguagePromptInjector;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
@@ -103,6 +104,7 @@ final class ClaudeSeoAnalysisServiceTest extends TestCase
             new ClaudeSeoAnalysisSchema(),
             new NullLogger(),
             $notifier,
+            new LanguagePromptInjector(),
         );
 
         $service->analyze($audit);
@@ -185,6 +187,7 @@ final class ClaudeSeoAnalysisServiceTest extends TestCase
             new ClaudeSeoAnalysisSchema(),
             new NullLogger(),
             $notifier,
+            new LanguagePromptInjector(),
         );
 
         $service->analyze($audit);
@@ -256,6 +259,7 @@ final class ClaudeSeoAnalysisServiceTest extends TestCase
             new ClaudeSeoAnalysisSchema(),
             new NullLogger(),
             $notifier,
+            new LanguagePromptInjector(),
         );
 
         $service->analyze($audit);
