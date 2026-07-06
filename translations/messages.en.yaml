@@ -1,0 +1,5 @@
+# UI Translations - English
+# Add keys and translations as the UI is internationalized
+
+app:
+    name: 'SEO SaaS'
