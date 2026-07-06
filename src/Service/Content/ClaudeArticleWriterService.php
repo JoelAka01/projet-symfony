@@ -11,6 +11,7 @@ use App\Enum\ArticleStatus;
 use App\Exception\CmsIntegrationException;
 use App\Repository\AuditRepository;
 use App\Service\Ai\AiUsageRecorder;
+use App\Service\Language\LanguagePromptInjector;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -24,6 +25,7 @@ final class ClaudeArticleWriterService
         private readonly EntityManagerInterface $entityManager,
         private readonly LoggerInterface $logger,
         private readonly AiUsageRecorder $usageRecorder,
+        private readonly LanguagePromptInjector $languagePromptInjector,
     ) {}
 
     public function generate(
@@ -51,11 +53,14 @@ final class ClaudeArticleWriterService
         $analysis = is_array($auditMetadata['ai_analysis'] ?? null) ? $auditMetadata['ai_analysis'] : [];
         unset($analysis['raw_response']);
 
+        $contentLanguage = $project->getEffectiveContentLanguage();
+
         $payload = [
             'project' => [
                 'name' => $project->getName(),
-                'language' => $project->getDefaultLanguage(),
+                'language' => $project->getLanguage(),
                 'country' => $project->getTargetCountry(),
+                'content_language' => $contentLanguage,
             ],
             'article' => [
                 'working_title' => $article->getTitle(),
@@ -85,7 +90,10 @@ final class ClaudeArticleWriterService
                     'model' => $model,
                     'max_tokens' => 12000,
                     'temperature' => 0.35,
-                    'system' => $this->systemPrompt(),
+                    'system' => $this->languagePromptInjector->appendToPrompt(
+                        $this->systemPrompt(),
+                        $contentLanguage,
+                    ),
                     'messages' => [[
                         'role' => 'user',
                         'content' => [[
