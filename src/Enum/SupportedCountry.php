@@ -12,15 +12,7 @@ enum SupportedCountry: string
     case CH = 'CH';
     case US = 'US';
     case GB = 'GB';
-    case ES = 'ES';
-    case DE = 'DE';
-    case IT = 'IT';
-    case NL = 'NL';
-    case PT = 'PT';
-    case BR = 'BR';
-    case MX = 'MX';
-    case AT = 'AT';
-    case LU = 'LU';
+    case CI = 'CI';
 
     public function label(): string
     {
@@ -31,15 +23,7 @@ enum SupportedCountry: string
             self::CH => 'Suisse',
             self::US => 'United States',
             self::GB => 'United Kingdom',
-            self::ES => 'España',
-            self::DE => 'Deutschland',
-            self::IT => 'Italia',
-            self::NL => 'Nederland',
-            self::PT => 'Portugal',
-            self::BR => 'Brasil',
-            self::MX => 'México',
-            self::AT => 'Österreich',
-            self::LU => 'Luxembourg',
+            self::CI => 'Côte d\'Ivoire',
         };
     }
 
@@ -74,13 +58,9 @@ enum SupportedCountry: string
     public function defaultLanguage(): SupportedLanguage
     {
         return match ($this) {
-            self::FR, self::BE, self::LU => SupportedLanguage::FR,
+            self::FR, self::BE, self::CI => SupportedLanguage::FR,
             self::US, self::GB, self::CA => SupportedLanguage::EN,
-            self::ES, self::MX => SupportedLanguage::ES,
-            self::DE, self::AT, self::CH => SupportedLanguage::DE,
-            self::IT => SupportedLanguage::IT,
-            self::PT, self::BR => SupportedLanguage::PT,
-            self::NL => SupportedLanguage::NL,
+            self::CH => SupportedLanguage::DE,
         };
     }
 }
