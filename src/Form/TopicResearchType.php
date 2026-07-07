@@ -33,10 +33,7 @@ final class TopicResearchType extends AbstractType
                     'France' => 'FR',
                     'United States' => 'US',
                     'United Kingdom' => 'GB',
-                    'Canada' => 'CA',
-                    'Germany' => 'DE',
-                    'Spain' => 'ES',
-                    'Italy' => 'IT',
+                    'Côte d\'Ivoire' => 'CI',
                 ],
             ])
             ->add('language', ChoiceType::class, [
