@@ -30,7 +30,7 @@ final class ProjectManagerTest extends TestCase
             new ProjectWebsiteUrlNormalizer(new CrawlerUrlNormalizer()),
             new LanguageDetectionService(
                 $this->createMock(\Symfony\Contracts\HttpClient\HttpClientInterface::class),
-                new NullLogger()
+                new NullLogger(),
             ),
             new NullLogger(),
         );
@@ -58,7 +58,7 @@ final class ProjectManagerTest extends TestCase
             new ProjectWebsiteUrlNormalizer(new CrawlerUrlNormalizer()),
             new LanguageDetectionService(
                 $this->createMock(\Symfony\Contracts\HttpClient\HttpClientInterface::class),
-                new NullLogger()
+                new NullLogger(),
             ),
             new NullLogger(),
         );
