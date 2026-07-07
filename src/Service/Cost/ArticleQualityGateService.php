@@ -23,7 +23,7 @@ final class ArticleQualityGateService
             $failures[] = 'SEO score is below the minimum threshold.';
         }
 
-        if ($this->internalLinkCount($html) < self::MIN_INTERNAL_LINKS) {
+        if ($this->internalLinkCount($article) < self::MIN_INTERNAL_LINKS) {
             $failures[] = 'Article needs at least 3 internal links.';
         }
 
@@ -58,9 +58,30 @@ final class ArticleQualityGateService
         }
     }
 
-    private function internalLinkCount(string $html): int
+    private function internalLinkCount(Article $article): int
     {
-        preg_match_all('/<a\s+[^>]*href=["\'](\/(?!\/)|[^"\']*localhost)[^"\']*["\']/i', $html, $matches);
+        // Use the authoritative linking result from InternalLinkingService if available
+        $metadata = $article->getGenerationMetadata();
+        if (isset($metadata['internal_linking'])) {
+            $linking = $metadata['internal_linking'];
+
+            // If no site pages were available, skip the check entirely
+            if (0 === ($linking['available_pages'] ?? 0)) {
+                return self::MIN_INTERNAL_LINKS;
+            }
+
+            return count($linking['inserted_links'] ?? []) + count($linking['existing_links'] ?? []);
+        }
+
+        // Fallback: also count from internalLinksJson (set by both pipeline and legacy writer)
+        $linksJson = $article->getInternalLinksJson();
+        if (is_array($linksJson) && [] !== $linksJson) {
+            return count($linksJson);
+        }
+
+        // Last resort: count <a> tags in HTML (all non-external links)
+        $html = (string) $article->getContentHtml();
+        preg_match_all('/<a\s+[^>]*href=["\'][^"\']+["\']/i', $html, $matches);
 
         return count($matches[0]);
     }
