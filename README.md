@@ -2,6 +2,12 @@
 
 Project for a SEO, GEO, and AI visibility SaaS platform.
 
+## Contributors
+
+- Dilan EESHVARAN (github : dilaneeshvaran)
+- Kassi Joel Emmanuel AKA (github : JoelAka01)
+- Mahamadou GORY KANTE (github : madoxSio)
+
 ## Requirements
 
 - PHP 8.2 or newer
